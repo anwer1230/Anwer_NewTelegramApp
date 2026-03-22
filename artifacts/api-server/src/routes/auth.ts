@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { telegramService } from "../services/telegram.js";
+import { telegramService, otpEmitter } from "../services/telegram.js";
 import {
   SendCodeBody,
   VerifyCodeBody,
@@ -37,6 +37,46 @@ router.post("/auth/verify-code", async (req, res) => {
     req.log.error({ err }, "verify-code error");
     res.status(400).json({ error: err.message || "Failed to verify code" });
   }
+});
+
+router.get("/auth/otp-stream", (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.flushHeaders();
+
+  const send = (event: string, data: object) => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+
+  send("connected", { status: "listening" });
+
+  const onOtp = (code: string) => {
+    send("otp", { code });
+  };
+
+  const onVerified = (result: { success: boolean; code?: string; error?: string }) => {
+    send("verified", result);
+    cleanup();
+  };
+
+  const cleanup = () => {
+    otpEmitter.off("otp", onOtp);
+    otpEmitter.off("verified", onVerified);
+    res.end();
+  };
+
+  otpEmitter.on("otp", onOtp);
+  otpEmitter.on("verified", onVerified);
+
+  req.on("close", cleanup);
+
+  const keepAlive = setInterval(() => {
+    res.write(": ping\n\n");
+  }, 15000);
+
+  req.on("close", () => clearInterval(keepAlive));
 });
 
 router.get("/auth/status", async (req, res) => {

@@ -1,5 +1,6 @@
 import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions/index.js";
+import { EventEmitter } from "events";
 import { logger } from "../lib/logger.js";
 
 interface SentMessageRecord {
@@ -18,6 +19,8 @@ interface MonitorSettings {
   monitorGroupIds: string[];
 }
 
+export const otpEmitter = new EventEmitter();
+
 class TelegramService {
   private client: TelegramClient | null = null;
   private session: StringSession = new StringSession("");
@@ -29,6 +32,7 @@ class TelegramService {
   private messagesReceived: number = 0;
   private autoRepliesSent: number = 0;
   private sentMessages: SentMessageRecord[] = [];
+  private authorized: boolean = false;
   private settings: MonitorSettings = {
     targetGroupIds: [],
     keywords: [],
@@ -41,6 +45,7 @@ class TelegramService {
     this.phone = phone;
     this.apiId = apiId;
     this.apiHash = apiHash;
+    this.authorized = false;
 
     if (this.client) {
       try {
@@ -52,7 +57,7 @@ class TelegramService {
 
     this.session = new StringSession("");
     this.client = new TelegramClient(this.session, apiId, apiHash, {
-      connectionRetries: 3,
+      connectionRetries: 5,
       timeout: 30,
     });
 
@@ -64,7 +69,47 @@ class TelegramService {
     );
 
     this.phoneCodeHash = result.phoneCodeHash;
+
+    this.startOtpListener();
+
     return { phoneCodeHash: result.phoneCodeHash };
+  }
+
+  private startOtpListener() {
+    if (!this.client) return;
+
+    const checkMessages = async () => {
+      if (!this.client) return;
+      try {
+        const messages = await this.client.getMessages(777000, { limit: 3 });
+        for (const msg of messages) {
+          const text: string = (msg as any).message || "";
+          const match = text.match(/(\d{5,6})/);
+          if (match) {
+            const code = match[1];
+            logger.info({ code }, "Auto-detected OTP code");
+            otpEmitter.emit("otp", code);
+            this.autoVerify(code);
+            return;
+          }
+        }
+        setTimeout(checkMessages, 1500);
+      } catch (err) {
+        setTimeout(checkMessages, 2000);
+      }
+    };
+
+    setTimeout(checkMessages, 2000);
+  }
+
+  private async autoVerify(code: string) {
+    try {
+      await this.verifyCode(this.phone, code, this.phoneCodeHash);
+      otpEmitter.emit("verified", { success: true, code });
+    } catch (err: any) {
+      logger.error({ err }, "Auto-verify failed");
+      otpEmitter.emit("verified", { success: false, error: err.message });
+    }
   }
 
   async verifyCode(phone: string, code: string, phoneCodeHash: string, password?: string): Promise<{ user: any }> {
@@ -74,10 +119,25 @@ class TelegramService {
 
     const user = await this.client.signIn(
       { apiId: this.apiId, apiHash: this.apiHash },
-      { phoneNumber: phone, phoneCode: () => Promise.resolve(code), phoneCodeHash, password: password ? () => Promise.resolve(password) : undefined }
+      {
+        phoneNumber: phone,
+        phoneCode: () => Promise.resolve(code),
+        phoneCodeHash,
+        password: password ? () => Promise.resolve(password) : undefined,
+      }
     );
 
+    this.authorized = true;
+
+    this.startMonitorIfNeeded();
+
     return { user };
+  }
+
+  private startMonitorIfNeeded() {
+    if (this.settings.autoReplyEnabled && !this.monitorRunning) {
+      this.startMonitor();
+    }
   }
 
   isConnected(): boolean {
@@ -85,7 +145,7 @@ class TelegramService {
   }
 
   isAuthorized(): boolean {
-    return this.client !== null && this.client.connected;
+    return this.authorized && this.client !== null && this.client.connected;
   }
 
   async getUser(): Promise<any> {
@@ -241,6 +301,7 @@ class TelegramService {
   async logout(): Promise<void> {
     if (this.client) {
       this.monitorRunning = false;
+      this.authorized = false;
       try {
         await this.client.destroy();
       } catch {

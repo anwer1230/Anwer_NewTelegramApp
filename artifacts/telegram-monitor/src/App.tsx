@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,39 +22,41 @@ const queryClient = new QueryClient({
   },
 });
 
-function ProtectedRoute({ component: Component, ...rest }: { component: React.ComponentType, path: string }) {
+function AppRoutes() {
   const { data: auth, isLoading } = useGetAuthStatus();
-  const [, setLocation] = useLocation();
-
-  React.useEffect(() => {
-    if (!isLoading && !auth?.authorized) {
-      setLocation("/login");
-    }
-  }, [isLoading, auth, setLocation]);
+  const [location] = useLocation();
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <p className="text-muted-foreground text-sm">جاري التحميل...</p>
+        </div>
       </div>
     );
   }
 
   if (!auth?.authorized) {
-    return null; // Will redirect via useEffect
+    return (
+      <Switch>
+        <Route path="/login" component={Login} />
+        <Route>
+          <Redirect to="/login" />
+        </Route>
+      </Switch>
+    );
   }
 
-  return <Component />;
-}
-
-function Router() {
   return (
     <Layout>
       <Switch>
-        <Route path="/login" component={Login} />
-        <Route path="/" render={() => <ProtectedRoute path="/" component={Dashboard} />} />
-        <Route path="/broadcast" render={() => <ProtectedRoute path="/broadcast" component={Broadcast} />} />
-        <Route path="/monitor" render={() => <ProtectedRoute path="/monitor" component={Monitor} />} />
+        <Route path="/" component={Dashboard} />
+        <Route path="/broadcast" component={Broadcast} />
+        <Route path="/monitor" component={Monitor} />
+        <Route path="/login">
+          <Redirect to="/" />
+        </Route>
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -66,7 +68,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
+          <AppRoutes />
         </WouterRouter>
         <Toaster />
       </TooltipProvider>
