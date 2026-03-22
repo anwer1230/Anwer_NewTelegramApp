@@ -29,6 +29,8 @@ async function buildAll() {
     // - use path traversal to read files (e.g. @google-cloud/secret-manager loads sibling .proto files)
     external: [
       "*.node",
+      "bufferutil",
+      "utf-8-validate",
       "sharp",
       "better-sqlite3",
       "sqlite3",
@@ -39,8 +41,6 @@ async function buildAll() {
       "re2",
       "farmhash",
       "xxhash-addon",
-      "bufferutil",
-      "utf-8-validate",
       "ssh2",
       "cpu-features",
       "dtrace-provider",

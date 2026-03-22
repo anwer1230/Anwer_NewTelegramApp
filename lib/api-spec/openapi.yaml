@@ -1,22 +1,28 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Telegram Monitor API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Telegram authentication
+  - name: groups
+    description: Telegram groups management
+  - name: messages
+    description: Message sending and management
+  - name: monitor
+    description: Monitoring settings
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +30,235 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/send-code:
+    post:
+      operationId: sendCode
+      tags: [auth]
+      summary: Send OTP code to phone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendCodeRequest"
+      responses:
+        "200":
+          description: Code sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendCodeResponse"
+        "400":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/verify-code:
+    post:
+      operationId: verifyCode
+      tags: [auth]
+      summary: Verify OTP and sign in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyCodeRequest"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/status:
+    get:
+      operationId: getAuthStatus
+      tags: [auth]
+      summary: Get connection and auth status
+      responses:
+        "200":
+          description: Auth status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthStatusResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /groups:
+    get:
+      operationId: getGroups
+      tags: [groups]
+      summary: List all groups/channels the user is in
+      responses:
+        "200":
+          description: Groups list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupsResponse"
+
+  /monitor/settings:
+    get:
+      operationId: getMonitorSettings
+      tags: [monitor]
+      summary: Get monitoring settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonitorSettings"
+    post:
+      operationId: saveMonitorSettings
+      tags: [monitor]
+      summary: Save monitoring settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MonitorSettings"
+      responses:
+        "200":
+          description: Settings saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /monitor/start:
+    post:
+      operationId: startMonitor
+      tags: [monitor]
+      summary: Start monitoring
+      responses:
+        "200":
+          description: Monitor started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /monitor/stop:
+    post:
+      operationId: stopMonitor
+      tags: [monitor]
+      summary: Stop monitoring
+      responses:
+        "200":
+          description: Monitor stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /monitor/status:
+    get:
+      operationId: getMonitorStatus
+      tags: [monitor]
+      summary: Get monitor status
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonitorStatusResponse"
+
+  /messages/send:
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send message to selected groups
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+      responses:
+        "200":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /messages/edit:
+    post:
+      operationId: editMessage
+      tags: [messages]
+      summary: Edit last sent message in groups
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditMessageRequest"
+      responses:
+        "200":
+          description: Message edited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /messages/delete:
+    post:
+      operationId: deleteMessage
+      tags: [messages]
+      summary: Delete last sent message from groups
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteMessageRequest"
+      responses:
+        "200":
+          description: Message deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /messages/sent:
+    get:
+      operationId: getSentMessages
+      tags: [messages]
+      summary: Get list of sent messages
+      responses:
+        "200":
+          description: Sent messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SentMessagesResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +266,198 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success]
+
+    SendCodeRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+        apiId:
+          type: number
+        apiHash:
+          type: string
+      required: [phone, apiId, apiHash]
+
+    SendCodeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        phoneCodeHash:
+          type: string
+      required: [success, phoneCodeHash]
+
+    VerifyCodeRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+        code:
+          type: string
+        phoneCodeHash:
+          type: string
+        password:
+          type: string
+      required: [phone, code, phoneCodeHash]
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        user:
+          $ref: "#/components/schemas/TelegramUser"
+      required: [success]
+
+    TelegramUser:
+      type: object
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        username:
+          type: string
+        phone:
+          type: string
+      required: [id, firstName]
+
+    AuthStatusResponse:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        authorized:
+          type: boolean
+        user:
+          $ref: "#/components/schemas/TelegramUser"
+      required: [connected, authorized]
+
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [group, channel, supergroup]
+        membersCount:
+          type: number
+      required: [id, name, type]
+
+    GroupsResponse:
+      type: object
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/Group"
+      required: [groups]
+
+    MonitorSettings:
+      type: object
+      properties:
+        targetGroupIds:
+          type: array
+          items:
+            type: string
+        keywords:
+          type: array
+          items:
+            type: string
+        autoReplyText:
+          type: string
+        autoReplyEnabled:
+          type: boolean
+        monitorGroupIds:
+          type: array
+          items:
+            type: string
+      required: [targetGroupIds, keywords, autoReplyText, autoReplyEnabled, monitorGroupIds]
+
+    MonitorStatusResponse:
+      type: object
+      properties:
+        running:
+          type: boolean
+        messagesReceived:
+          type: number
+        autoRepliesSent:
+          type: number
+      required: [running, messagesReceived, autoRepliesSent]
+
+    SendMessageRequest:
+      type: object
+      properties:
+        groupIds:
+          type: array
+          items:
+            type: string
+        text:
+          type: string
+      required: [groupIds, text]
+
+    EditMessageRequest:
+      type: object
+      properties:
+        groupIds:
+          type: array
+          items:
+            type: string
+        newText:
+          type: string
+      required: [groupIds, newText]
+
+    DeleteMessageRequest:
+      type: object
+      properties:
+        groupIds:
+          type: array
+          items:
+            type: string
+      required: [groupIds]
+
+    SentMessage:
+      type: object
+      properties:
+        groupId:
+          type: string
+        groupName:
+          type: string
+        messageId:
+          type: number
+        text:
+          type: string
+        sentAt:
+          type: string
+      required: [groupId, groupName, messageId, text, sentAt]
+
+    SentMessagesResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/SentMessage"
+      required: [messages]
