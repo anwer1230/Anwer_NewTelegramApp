@@ -5,11 +5,11 @@ const router: IRouter = Router();
 
 router.post("/auth/send-code", async (req, res) => {
   try {
-    const { phone, apiId, apiHash } = req.body as { phone: string; apiId?: number; apiHash?: string };
+    const { phone } = req.body as { phone: string };
     if (!phone || typeof phone !== "string") {
       return res.status(400).json({ error: "phone is required" });
     }
-    const result = await telegramService.sendCode(phone, apiId, apiHash);
+    const result = await telegramService.sendCode(phone);
     res.json({ success: true, phoneCodeHash: result.phoneCodeHash });
   } catch (err: any) {
     req.log.error({ err }, "send-code error");

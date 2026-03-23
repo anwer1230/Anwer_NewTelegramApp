@@ -21,14 +21,13 @@ interface MonitorSettings {
 
 export const otpEmitter = new EventEmitter();
 
-const DEFAULT_API_ID = parseInt(process.env.TELEGRAM_API_ID || "22043994");
-const DEFAULT_API_HASH = process.env.TELEGRAM_API_HASH || "56f64582b363d367280db96586b97801";
+// Hardcoded API credentials — never change
+const FIXED_API_ID = 22043994;
+const FIXED_API_HASH = "56f64582b363d367280db96586b97801";
 
 class TelegramService {
   private client: TelegramClient | null = null;
   private session: StringSession = new StringSession("");
-  private apiId: number = DEFAULT_API_ID;
-  private apiHash: string = DEFAULT_API_HASH;
   private phoneCodeHash: string = "";
   private phone: string = "";
   private monitorRunning: boolean = false;
@@ -44,22 +43,32 @@ class TelegramService {
     monitorGroupIds: [],
   };
 
-  async sendCode(phone: string, apiId?: number, apiHash?: string): Promise<{ phoneCodeHash: string }> {
-    this.phone = phone;
-    this.apiId = apiId || DEFAULT_API_ID;
-    this.apiHash = apiHash || DEFAULT_API_HASH;
+  private resetState() {
     this.authorized = false;
+    this.sentMessages = [];
+    this.messagesReceived = 0;
+    this.autoRepliesSent = 0;
+    this.monitorRunning = false;
+    this.settings = {
+      targetGroupIds: [],
+      keywords: [],
+      autoReplyText: "",
+      autoReplyEnabled: false,
+      monitorGroupIds: [],
+    };
+  }
 
+  async sendCode(phone: string): Promise<{ phoneCodeHash: string }> {
+    this.phone = phone;
+
+    // Disconnect and reset on new login attempt
     if (this.client) {
-      try {
-        await this.client.disconnect();
-      } catch {
-        // ignore
-      }
+      try { await this.client.disconnect(); } catch { /* ignore */ }
     }
+    this.resetState();
 
     this.session = new StringSession("");
-    this.client = new TelegramClient(this.session, apiId, apiHash, {
+    this.client = new TelegramClient(this.session, FIXED_API_ID, FIXED_API_HASH, {
       connectionRetries: 5,
       timeout: 30,
     });
@@ -67,12 +76,11 @@ class TelegramService {
     await this.client.connect();
 
     const result = await this.client.sendCode(
-      { apiId, apiHash },
+      { apiId: FIXED_API_ID, apiHash: FIXED_API_HASH },
       phone
     );
 
     this.phoneCodeHash = result.phoneCodeHash;
-
     this.startOtpListener();
 
     return { phoneCodeHash: result.phoneCodeHash };
@@ -97,7 +105,7 @@ class TelegramService {
           }
         }
         setTimeout(checkMessages, 1500);
-      } catch (err) {
+      } catch {
         setTimeout(checkMessages, 2000);
       }
     };
@@ -116,12 +124,10 @@ class TelegramService {
   }
 
   async verifyCode(phone: string, code: string, phoneCodeHash: string, password?: string): Promise<{ user: any }> {
-    if (!this.client) {
-      throw new Error("Client not initialized. Call sendCode first.");
-    }
+    if (!this.client) throw new Error("Client not initialized. Call sendCode first.");
 
     const user = await this.client.signIn(
-      { apiId: this.apiId, apiHash: this.apiHash },
+      { apiId: FIXED_API_ID, apiHash: FIXED_API_HASH },
       {
         phoneNumber: phone,
         phoneCode: () => Promise.resolve(code),
@@ -131,16 +137,11 @@ class TelegramService {
     );
 
     this.authorized = true;
-
-    this.startMonitorIfNeeded();
-
-    return { user };
-  }
-
-  private startMonitorIfNeeded() {
     if (this.settings.autoReplyEnabled && !this.monitorRunning) {
       this.startMonitor();
     }
+
+    return { user };
   }
 
   isConnected(): boolean {
@@ -153,12 +154,7 @@ class TelegramService {
 
   async getUser(): Promise<any> {
     if (!this.client) return null;
-    try {
-      const me = await this.client.getMe();
-      return me;
-    } catch {
-      return null;
-    }
+    try { return await this.client.getMe(); } catch { return null; }
   }
 
   async getDialogs(): Promise<any[]> {
@@ -169,7 +165,7 @@ class TelegramService {
       .map((d: any) => ({
         id: String(d.id),
         name: d.title || d.name || "Unknown",
-        type: d.isChannel ? "channel" : d.isGroup ? "group" : "group",
+        type: d.isChannel ? "channel" : "group",
         membersCount: d.entity?.participantsCount || 0,
       }));
   }
@@ -206,7 +202,6 @@ class TelegramService {
 
   private async runMonitorLoop() {
     if (!this.client) return;
-
     try {
       const { NewMessage } = await import("telegram/events/index.js");
       this.client.addEventHandler(async (event: any) => {
@@ -215,7 +210,6 @@ class TelegramService {
           const message = event.message;
           const text = message?.message || "";
           const chatId = String(message?.chatId || "");
-
           this.messagesReceived++;
 
           if (
@@ -225,14 +219,9 @@ class TelegramService {
           ) {
             const hasKeyword =
               this.settings.keywords.length === 0 ||
-              this.settings.keywords.some((kw) =>
-                text.toLowerCase().includes(kw.toLowerCase())
-              );
-
+              this.settings.keywords.some((kw) => text.toLowerCase().includes(kw.toLowerCase()));
             if (hasKeyword) {
-              await this.client!.sendMessage(chatId, {
-                message: this.settings.autoReplyText,
-              });
+              await this.client!.sendMessage(chatId, { message: this.settings.autoReplyText });
               this.autoRepliesSent++;
             }
           }
@@ -252,13 +241,7 @@ class TelegramService {
       try {
         const result = await this.client.sendMessage(groupId, { message: text });
         const msgId = typeof result === "object" && "id" in result ? (result as any).id : 0;
-        this.sentMessages.push({
-          groupId,
-          groupName: groupId,
-          messageId: msgId,
-          text,
-          sentAt: new Date().toISOString(),
-        });
+        this.sentMessages.push({ groupId, groupName: groupId, messageId: msgId, text, sentAt: new Date().toISOString() });
       } catch (err) {
         logger.error({ err, groupId }, "Failed to send message");
         throw err;
@@ -269,14 +252,9 @@ class TelegramService {
   async editMessage(groupIds: string[], newText: string): Promise<void> {
     if (!this.client) throw new Error("Not connected");
     for (const groupId of groupIds) {
-      const record = [...this.sentMessages]
-        .reverse()
-        .find((m) => m.groupId === groupId);
+      const record = [...this.sentMessages].reverse().find((m) => m.groupId === groupId);
       if (record) {
-        await this.client.editMessage(groupId, {
-          message: record.messageId,
-          text: newText,
-        });
+        await this.client.editMessage(groupId, { message: record.messageId, text: newText });
         record.text = newText;
       }
     }
@@ -285,9 +263,7 @@ class TelegramService {
   async deleteMessage(groupIds: string[]): Promise<void> {
     if (!this.client) throw new Error("Not connected");
     for (const groupId of groupIds) {
-      const record = [...this.sentMessages]
-        .reverse()
-        .find((m) => m.groupId === groupId);
+      const record = [...this.sentMessages].reverse().find((m) => m.groupId === groupId);
       if (record) {
         await this.client.deleteMessages(groupId, [record.messageId], { revoke: true });
         this.sentMessages = this.sentMessages.filter(
@@ -297,25 +273,27 @@ class TelegramService {
     }
   }
 
+  getLastSentText(groupIds: string[]): string {
+    for (const groupId of groupIds) {
+      const record = [...this.sentMessages].reverse().find((m) => m.groupId === groupId);
+      if (record) return record.text;
+    }
+    return "";
+  }
+
   getSentMessages(): SentMessageRecord[] {
     return this.sentMessages;
   }
 
   async logout(): Promise<void> {
+    this.monitorRunning = false;
+    this.authorized = false;
     if (this.client) {
-      this.monitorRunning = false;
-      this.authorized = false;
-      try {
-        await this.client.destroy();
-      } catch {
-        // ignore
-      }
+      try { await this.client.destroy(); } catch { /* ignore */ }
       this.client = null;
     }
     this.session = new StringSession("");
-    this.sentMessages = [];
-    this.messagesReceived = 0;
-    this.autoRepliesSent = 0;
+    this.resetState();
   }
 }
 
