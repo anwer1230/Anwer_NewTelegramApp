@@ -1,15 +1,14 @@
 import { Router, type IRouter } from "express";
 import { telegramService, otpEmitter } from "../services/telegram.js";
-import {
-  SendCodeBody,
-  VerifyCodeBody,
-} from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
 router.post("/auth/send-code", async (req, res) => {
   try {
-    const { phone, apiId, apiHash } = SendCodeBody.parse(req.body);
+    const { phone, apiId, apiHash } = req.body as { phone: string; apiId?: number; apiHash?: string };
+    if (!phone || typeof phone !== "string") {
+      return res.status(400).json({ error: "phone is required" });
+    }
     const result = await telegramService.sendCode(phone, apiId, apiHash);
     res.json({ success: true, phoneCodeHash: result.phoneCodeHash });
   } catch (err: any) {
@@ -20,7 +19,7 @@ router.post("/auth/send-code", async (req, res) => {
 
 router.post("/auth/verify-code", async (req, res) => {
   try {
-    const { phone, code, phoneCodeHash, password } = VerifyCodeBody.parse(req.body);
+    const { phone, code, phoneCodeHash, password } = req.body as { phone: string; code: string; phoneCodeHash: string; password?: string };
     const result = await telegramService.verifyCode(phone, code, phoneCodeHash, password);
     const user = result.user;
     res.json({
@@ -64,7 +63,7 @@ router.get("/auth/otp-stream", (req, res) => {
   const cleanup = () => {
     otpEmitter.off("otp", onOtp);
     otpEmitter.off("verified", onVerified);
-    res.end();
+    try { res.end(); } catch {}
   };
 
   otpEmitter.on("otp", onOtp);
@@ -73,7 +72,7 @@ router.get("/auth/otp-stream", (req, res) => {
   req.on("close", cleanup);
 
   const keepAlive = setInterval(() => {
-    res.write(": ping\n\n");
+    try { res.write(": ping\n\n"); } catch {}
   }, 15000);
 
   req.on("close", () => clearInterval(keepAlive));

@@ -36,12 +36,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { path: '/monitor', label: 'إعدادات المراقبة', eng: 'Monitor Settings', icon: Settings },
   ];
 
-  if (location === '/login') {
-    return <div className="min-h-screen relative">{children}</div>;
-  }
-
-  if (!authStatus?.authorized) {
-    return <div className="min-h-screen bg-background" />;
+  if (location === '/login' || !authStatus?.authorized) {
+    return <>{children}</>;
   }
 
   return (

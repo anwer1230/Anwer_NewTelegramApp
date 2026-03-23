@@ -21,11 +21,14 @@ interface MonitorSettings {
 
 export const otpEmitter = new EventEmitter();
 
+const DEFAULT_API_ID = parseInt(process.env.TELEGRAM_API_ID || "22043994");
+const DEFAULT_API_HASH = process.env.TELEGRAM_API_HASH || "56f64582b363d367280db96586b97801";
+
 class TelegramService {
   private client: TelegramClient | null = null;
   private session: StringSession = new StringSession("");
-  private apiId: number = 0;
-  private apiHash: string = "";
+  private apiId: number = DEFAULT_API_ID;
+  private apiHash: string = DEFAULT_API_HASH;
   private phoneCodeHash: string = "";
   private phone: string = "";
   private monitorRunning: boolean = false;
@@ -41,10 +44,10 @@ class TelegramService {
     monitorGroupIds: [],
   };
 
-  async sendCode(phone: string, apiId: number, apiHash: string): Promise<{ phoneCodeHash: string }> {
+  async sendCode(phone: string, apiId?: number, apiHash?: string): Promise<{ phoneCodeHash: string }> {
     this.phone = phone;
-    this.apiId = apiId;
-    this.apiHash = apiHash;
+    this.apiId = apiId || DEFAULT_API_ID;
+    this.apiHash = apiHash || DEFAULT_API_HASH;
     this.authorized = false;
 
     if (this.client) {
