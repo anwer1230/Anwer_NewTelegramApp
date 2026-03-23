@@ -3,7 +3,6 @@
 
 @theme inline {
   --font-sans: 'Cairo', 'Inter', sans-serif;
-  --font-english: 'Inter', sans-serif;
 
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -21,35 +20,91 @@
   --color-ring: hsl(var(--ring));
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
 }
 
+/* LIGHT MODE - Telegram Blue Theme */
 :root {
-  /* Telegram Dark Theme Inspired Palette */
-  --background: 213 28% 13%; /* #17212b */
-  --foreground: 0 0% 96%;
-  
-  --card: 212 25% 18%; /* #242f3d */
-  --card-foreground: 0 0% 98%;
-  
-  --primary: 209 52% 54%; /* #4192d9 */
+  --background: 210 20% 98%;
+  --foreground: 210 20% 10%;
+  --border: 210 15% 88%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 210 20% 10%;
+
+  --sidebar: 210 25% 96%;
+  --sidebar-foreground: 210 20% 20%;
+  --sidebar-border: 210 15% 88%;
+  --sidebar-primary: 200 85% 45%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 200 60% 94%;
+  --sidebar-accent-foreground: 200 85% 35%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 210 20% 10%;
+
+  --primary: 200 85% 45%;
   --primary-foreground: 0 0% 100%;
-  
-  --secondary: 212 25% 25%; /* #2b3a4a */
-  --secondary-foreground: 0 0% 96%;
-  
-  --muted: 213 20% 25%;
-  --muted-foreground: 214 15% 65%;
-  
-  --accent: 210 50% 60%;
-  --accent-foreground: 0 0% 100%;
-  
-  --destructive: 0 62% 50%;
+
+  --secondary: 210 15% 93%;
+  --secondary-foreground: 210 20% 25%;
+
+  --muted: 210 15% 95%;
+  --muted-foreground: 210 10% 45%;
+
+  --accent: 200 60% 94%;
+  --accent-foreground: 200 85% 35%;
+
+  --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-  
-  --border: 214 20% 22%;
-  --ring: 209 52% 54%;
-  
-  --radius: 0.75rem;
+
+  --input: 210 15% 85%;
+  --ring: 200 85% 45%;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 210 25% 8%;
+  --foreground: 210 15% 95%;
+  --border: 210 20% 18%;
+
+  --card: 210 25% 11%;
+  --card-foreground: 210 15% 95%;
+
+  --sidebar: 210 30% 6%;
+  --sidebar-foreground: 210 15% 90%;
+  --sidebar-border: 210 20% 15%;
+  --sidebar-primary: 200 85% 50%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 200 50% 15%;
+  --sidebar-accent-foreground: 200 85% 65%;
+
+  --popover: 210 25% 10%;
+  --popover-foreground: 210 15% 95%;
+
+  --primary: 200 85% 50%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 210 20% 18%;
+  --secondary-foreground: 210 15% 85%;
+
+  --muted: 210 20% 15%;
+  --muted-foreground: 210 10% 55%;
+
+  --accent: 200 50% 18%;
+  --accent-foreground: 200 85% 70%;
+
+  --destructive: 0 62% 55%;
+  --destructive-foreground: 0 0% 100%;
+
+  --input: 210 20% 22%;
+  --ring: 200 85% 50%;
 }
 
 @layer base {
@@ -58,48 +113,33 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply font-sans antialiased bg-background text-foreground;
     direction: rtl;
   }
-  
-  /* Custom scrollbar for webkit */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+
+  [dir="rtl"] {
+    text-align: right;
   }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted));
-    border-radius: 4px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary));
-  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary)); }
 }
 
-.telegram-glass {
-  background: rgba(36, 47, 61, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+/* Telegram gradient - used in headers */
+.gradient-telegram {
+  background: linear-gradient(135deg, hsl(200 85% 45%) 0%, hsl(200 85% 35%) 100%);
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
+.dark .gradient-telegram {
+  background: linear-gradient(135deg, hsl(200 85% 40%) 0%, hsl(200 85% 30%) 100%);
 }
 
-.animate-slide-up {
-  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 4px; }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+.animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }

@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldAlert, Smartphone, Loader2, CheckCircle2, Zap } from 'lucide-react';
+import { MessageCircle, Loader2, CheckCircle, AlertCircle, Phone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
 const API_BASE = '/api';
 
@@ -19,6 +25,7 @@ export default function Login() {
   const [autoDetected, setAutoDetected] = useState(false);
   const [autoVerifying, setAutoVerifying] = useState(false);
   const [dots, setDots] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
@@ -53,17 +60,21 @@ export default function Login() {
       setAutoDetected(true);
       setAutoDetecting(false);
       setAutoVerifying(true);
-      toast({ title: '✅ تم اكتشاف الكود', description: `${detectedCode} — جاري التحقق تلقائياً...` });
+      setTimeout(() => {
+        toast({ title: '✅ تم اكتشاف الكود', description: `${detectedCode} — جاري التحقق تلقائياً...` });
+      }, 0);
     });
 
     es.addEventListener('verified', async (e) => {
       const data = JSON.parse(e.data);
       setAutoVerifying(false);
       if (data.success) {
-        toast({ title: '🎉 تم تسجيل الدخول!', description: 'مرحباً بك في برنامج أنور' });
+        setTimeout(() => {
+          toast({ title: '🎉 تم تسجيل الدخول!', description: 'مرحباً بك في برنامج أنور' });
+        }, 0);
         await goToDashboard();
       } else {
-        toast({ title: 'فشل التحقق التلقائي', description: data.error || 'أدخل الكود يدوياً', variant: 'destructive' });
+        setError(data.error || 'فشل التحقق التلقائي — أدخل الكود يدوياً');
       }
       es.close();
     });
@@ -76,9 +87,10 @@ export default function Login() {
   const handleRequestCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone) {
-      toast({ title: 'خطأ', description: 'أدخل رقم الهاتف', variant: 'destructive' });
+      setError('أدخل رقم الهاتف');
       return;
     }
+    setError(null);
     setLoadingSend(true);
     try {
       const res = await fetch(`${API_BASE}/auth/send-code`, {
@@ -90,10 +102,11 @@ export default function Login() {
       if (!res.ok) throw new Error(data.error || 'فشل إرسال الرمز');
       setPhoneCodeHash(data.phoneCodeHash);
       setStep(2);
-      toast({ title: '✅ تم الإرسال', description: 'جاري البحث عن الكود تلقائياً...' });
-      startOtpStream();
+      setTimeout(() => {
+        startOtpStream();
+      }, 0);
     } catch (err: any) {
-      toast({ title: 'خطأ', description: err.message, variant: 'destructive' });
+      setError(err.message);
     } finally {
       setLoadingSend(false);
     }
@@ -101,11 +114,12 @@ export default function Login() {
 
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code) {
-      toast({ title: 'خطأ', description: 'أدخل رمز التحقق', variant: 'destructive' });
+    if (!code || code.length < 5) {
+      setError('أدخل رمز التحقق كاملاً');
       return;
     }
     eventSourceRef.current?.close();
+    setError(null);
     setLoadingVerify(true);
     try {
       const res = await fetch(`${API_BASE}/auth/verify-code`, {
@@ -115,157 +129,191 @@ export default function Login() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'رمز التحقق غير صحيح');
-      toast({ title: '🎉 تم تسجيل الدخول', description: 'مرحباً بك' });
+      setTimeout(() => {
+        toast({ title: '🎉 تم تسجيل الدخول', description: 'مرحباً بك في برنامج أنور' });
+      }, 0);
       await goToDashboard();
     } catch (err: any) {
-      toast({ title: 'خطأ', description: err.message, variant: 'destructive' });
+      setError(err.message);
     } finally {
       setLoadingVerify(false);
     }
   };
 
+  const handleBack = () => {
+    setStep(1);
+    setAutoDetecting(false);
+    setAutoDetected(false);
+    setAutoVerifying(false);
+    setCode('');
+    setError(null);
+    eventSourceRef.current?.close();
+  };
+
+  const loading = loadingSend || loadingVerify || autoVerifying;
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <div className="w-full max-w-md telegram-glass rounded-3xl p-8 shadow-2xl border border-border/50 animate-slide-up">
-        {/* Header */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-tr from-primary to-accent rounded-2xl flex items-center justify-center shadow-lg shadow-primary/25 mb-6 rotate-3">
-            <ShieldAlert className="w-10 h-10 text-white" />
-          </div>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4" dir="rtl">
+      <div className="w-full max-w-md space-y-6 animate-slide-up">
+        {/* Title above card */}
+        <div className="text-center">
           <h1 className="text-3xl font-bold text-foreground">برنامج أنور</h1>
-          <p className="text-muted-foreground mt-2 font-english">Anwer Monitor Login</p>
+          <p className="text-muted-foreground mt-1 text-sm">نظام مراقبة وبث تيليجرام</p>
         </div>
 
-        {/* Step 1: Phone */}
-        {step === 1 && (
-          <form onSubmit={handleRequestCode} className="space-y-5">
-            <div className="space-y-1">
-              <label className="text-sm font-semibold flex justify-between">
-                <span>رقم الهاتف <span className="text-destructive">*</span></span>
-                <span className="text-muted-foreground font-english text-xs">Phone Number</span>
-              </label>
-              <div className="relative">
-                <Smartphone className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
-                <input
-                  type="text"
-                  dir="ltr"
-                  placeholder="+966xxxxxxxxx"
-                  className="w-full bg-secondary/50 border-2 border-border rounded-xl py-3 pl-4 pr-12 text-foreground focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-english"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  autoFocus
-                />
-              </div>
+        <Card className="w-full shadow-lg">
+          <CardHeader className="text-center pb-4">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full gradient-telegram flex items-center justify-center">
+              <MessageCircle className="w-8 h-8 text-white" />
             </div>
+            <CardTitle className="text-xl">الاتصال بتيليجرام</CardTitle>
+            <CardDescription>
+              {step === 1
+                ? 'أدخل رقم هاتفك للمتابعة'
+                : `تم إرسال الكود إلى ${phone}`}
+            </CardDescription>
+          </CardHeader>
 
-            <button
-              type="submit"
-              disabled={loadingSend}
-              className="w-full mt-6 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground font-bold py-4 rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loadingSend ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
-                  <Zap className="w-5 h-5" />
-                  <span>طلب الكود (Request Code)</span>
-                </>
-              )}
-            </button>
-
-            <p className="text-xs text-center text-muted-foreground mt-4">
-              سيُرسَل رمز التحقق إلى تطبيق تيليغرام الخاص بك
-            </p>
-          </form>
-        )}
-
-        {/* Step 2: OTP */}
-        {step === 2 && (
-          <div className="space-y-5 animate-fade-in">
-            {/* Auto-detect status */}
-            {autoVerifying ? (
-              <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-2xl flex items-center gap-3">
-                <CheckCircle2 className="w-6 h-6 text-green-400 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-green-400">تم اكتشاف الكود — جاري التحقق...</p>
-                  <p className="text-xs text-muted-foreground font-english" dir="ltr">{code}</p>
-                </div>
-                <Loader2 className="w-5 h-5 animate-spin text-green-400" />
-              </div>
-            ) : autoDetecting ? (
-              <div className="p-4 bg-primary/10 border border-primary/20 rounded-2xl flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Zap className="w-4 h-4 text-primary animate-pulse" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-primary">جاري البحث عن الكود تلقائياً{dots}</p>
-                  <p className="text-xs text-muted-foreground">سيتم التحقق فوراً عند وصول الكود</p>
-                </div>
-              </div>
-            ) : autoDetected ? (
-              <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-2xl flex items-center gap-3">
-                <CheckCircle2 className="w-6 h-6 text-green-400 flex-shrink-0" />
-                <p className="text-sm font-bold text-green-400">تم اكتشاف الكود: {code}</p>
-              </div>
-            ) : (
-              <div className="p-4 bg-secondary/50 border border-border/50 rounded-2xl text-center">
-                <p className="text-sm font-semibold text-foreground mb-1">تم إرسال الكود إلى تيليغرام</p>
-                <p className="text-xs text-muted-foreground font-english" dir="ltr">{phone}</p>
-              </div>
+          <CardContent className="space-y-5">
+            {/* Error alert */}
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
 
-            <form onSubmit={handleVerifyCode} className="space-y-5">
-              <div className="space-y-1">
-                <label className="text-sm font-semibold flex justify-between">
-                  <span>رمز التحقق</span>
-                  <span className="text-xs text-muted-foreground">أو أدخله يدوياً</span>
-                </label>
-                <input
-                  type="text"
-                  dir="ltr"
-                  placeholder="12345"
-                  className={`w-full border-2 rounded-xl py-4 px-4 text-center tracking-[0.4em] text-2xl font-bold text-foreground focus:outline-none focus:ring-4 transition-all font-english ${
-                    autoDetected || autoVerifying
-                      ? 'bg-green-500/10 border-green-500/30 focus:border-green-500 focus:ring-green-500/10'
-                      : 'bg-secondary/50 border-border focus:border-primary focus:ring-primary/10'
-                  }`}
-                  value={code}
-                  onChange={(e) => { setCode(e.target.value); setAutoDetected(false); }}
-                  disabled={autoVerifying || loadingVerify}
-                  autoFocus={!autoDetecting}
-                />
-              </div>
+            {/* Step 1: Phone Number */}
+            {step === 1 && (
+              <form onSubmit={handleRequestCode} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="flex items-center gap-2">
+                    <Phone className="w-4 h-4" />
+                    رقم الهاتف
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    dir="ltr"
+                    placeholder="+966xxxxxxxxx"
+                    value={phone}
+                    onChange={(e) => { setPhone(e.target.value); setError(null); }}
+                    disabled={loadingSend}
+                    autoFocus
+                    className="text-left font-mono"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    سيُرسَل رمز التحقق إلى تطبيق تيليغرام الخاص بك
+                  </p>
+                </div>
 
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep(1);
-                    setAutoDetecting(false);
-                    setAutoDetected(false);
-                    setAutoVerifying(false);
-                    setCode('');
-                    eventSourceRef.current?.close();
-                  }}
-                  className="px-5 py-4 rounded-xl font-bold border border-border hover:bg-secondary transition-colors"
-                >
-                  رجوع
-                </button>
-                <button
-                  type="submit"
-                  disabled={loadingVerify || autoVerifying || !code}
-                  className="flex-1 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground font-bold py-4 rounded-xl shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {loadingVerify || autoVerifying ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                <Button type="submit" className="w-full" disabled={loadingSend}>
+                  {loadingSend ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                      جاري الإرسال...
+                    </>
                   ) : (
-                    <span>تحقق يدوياً</span>
+                    'إرسال الكود'
                   )}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
+                </Button>
+              </form>
+            )}
+
+            {/* Step 2: OTP Code */}
+            {step === 2 && (
+              <form onSubmit={handleVerifyCode} className="space-y-5">
+                {/* Auto-detection status */}
+                {autoVerifying ? (
+                  <Alert className="border-green-500/30 bg-green-500/10">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <AlertDescription className="text-green-600 dark:text-green-400 font-semibold flex items-center gap-2">
+                      تم اكتشاف الكود — جاري التحقق تلقائياً
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    </AlertDescription>
+                  </Alert>
+                ) : autoDetecting ? (
+                  <Alert className="border-primary/30 bg-primary/10">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    <AlertDescription className="text-primary font-semibold">
+                      جاري البحث عن الكود تلقائياً{dots}
+                    </AlertDescription>
+                  </Alert>
+                ) : autoDetected ? (
+                  <Alert className="border-green-500/30 bg-green-500/10">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <AlertDescription className="text-green-600 dark:text-green-400 font-semibold">
+                      تم اكتشاف الكود: {code}
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
+
+                {/* OTP Input */}
+                <div className="space-y-3">
+                  <Label className="block text-center">أدخل رمز التحقق</Label>
+                  <div className="flex justify-center" dir="ltr">
+                    <InputOTP
+                      maxLength={6}
+                      value={code}
+                      onChange={(val) => { setCode(val); setError(null); setAutoDetected(false); }}
+                      disabled={autoVerifying || loadingVerify}
+                    >
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} />
+                        <InputOTPSlot index={1} />
+                        <InputOTPSlot index={2} />
+                        <InputOTPSlot index={3} />
+                        <InputOTPSlot index={4} />
+                        <InputOTPSlot index={5} />
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleBack}
+                    disabled={loading}
+                    className="px-5"
+                  >
+                    رجوع
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1"
+                    disabled={loading || code.length < 5}
+                  >
+                    {loadingVerify ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                        جاري التحقق...
+                      </>
+                    ) : (
+                      'تحقق'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {/* Progress dots */}
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <div className={`w-3 h-3 rounded-full transition-colors duration-300 ${
+                step >= 1 ? 'bg-primary' : 'bg-muted'
+              }`} />
+              <div className={`w-8 h-0.5 transition-colors duration-300 ${
+                step === 2 ? 'bg-primary' : 'bg-muted'
+              }`} />
+              <div className={`w-3 h-3 rounded-full transition-colors duration-300 ${
+                step === 2 ? 'bg-primary' : 'bg-muted'
+              }`} />
+              <div className="w-8 h-0.5 bg-muted" />
+              <div className="w-3 h-3 rounded-full bg-muted" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

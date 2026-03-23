@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Broadcast from "./pages/Broadcast";
 import Monitor from "./pages/Monitor";
 import { Layout } from "./components/Layout";
+import { ThemeProvider } from "./components/ThemeProvider";
 import React from "react";
 
 const queryClient = new QueryClient({
@@ -65,14 +66,16 @@ function AppRoutes() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <AppRoutes />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <AppRoutes />
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
