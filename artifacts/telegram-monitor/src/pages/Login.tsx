@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, Loader2, CheckCircle, AlertCircle, Phone } from 'lucide-react';
+import { MessageCircle, Loader2, CheckCircle, AlertCircle, Phone, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,10 @@ const API_BASE = '/api';
 export default function Login() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [location] = useLocation();
+
+  // Detect "add account" mode via ?mode=add query param
+  const isAddMode = typeof window !== 'undefined' && window.location.search.includes('mode=add');
 
   const [step, setStep] = useState<1 | 2>(1);
   const [phone, setPhone] = useState('');
@@ -37,9 +42,7 @@ export default function Login() {
   }, [autoDetecting]);
 
   useEffect(() => {
-    return () => {
-      eventSourceRef.current?.close();
-    };
+    return () => { eventSourceRef.current?.close(); };
   }, []);
 
   const goToDashboard = async () => {
@@ -70,7 +73,7 @@ export default function Login() {
       setAutoVerifying(false);
       if (data.success) {
         setTimeout(() => {
-          toast({ title: '🎉 تم تسجيل الدخول!', description: 'مرحباً بك في برنامج أنور' });
+          toast({ title: '🎉 تم تسجيل الدخول!', description: isAddMode ? 'تمت إضافة الحساب بنجاح' : 'مرحباً بك في برنامج أنور' });
         }, 0);
         await goToDashboard();
       } else {
@@ -79,17 +82,12 @@ export default function Login() {
       es.close();
     });
 
-    es.onerror = () => {
-      setAutoDetecting(false);
-    };
+    es.onerror = () => { setAutoDetecting(false); };
   };
 
   const handleRequestCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone) {
-      setError('أدخل رقم الهاتف');
-      return;
-    }
+    if (!phone) { setError('أدخل رقم الهاتف'); return; }
     setError(null);
     setLoadingSend(true);
     try {
@@ -102,9 +100,7 @@ export default function Login() {
       if (!res.ok) throw new Error(data.error || 'فشل إرسال الرمز');
       setPhoneCodeHash(data.phoneCodeHash);
       setStep(2);
-      setTimeout(() => {
-        startOtpStream();
-      }, 0);
+      setTimeout(() => { startOtpStream(); }, 0);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -114,10 +110,7 @@ export default function Login() {
 
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code || code.length < 5) {
-      setError('أدخل رمز التحقق كاملاً');
-      return;
-    }
+    if (!code || code.length < 5) { setError('أدخل رمز التحقق كاملاً'); return; }
     eventSourceRef.current?.close();
     setError(null);
     setLoadingVerify(true);
@@ -130,7 +123,7 @@ export default function Login() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'رمز التحقق غير صحيح');
       setTimeout(() => {
-        toast({ title: '🎉 تم تسجيل الدخول', description: 'مرحباً بك في برنامج أنور' });
+        toast({ title: '🎉 تم تسجيل الدخول', description: isAddMode ? 'تمت إضافة الحساب بنجاح' : 'مرحباً بك في برنامج أنور' });
       }, 0);
       await goToDashboard();
     } catch (err: any) {
@@ -155,10 +148,26 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4" dir="rtl">
       <div className="w-full max-w-md space-y-6 animate-slide-up">
-        {/* Title above card */}
+
+        {/* Back to dashboard button (add-account mode) */}
+        {isAddMode && (
+          <div className="flex items-center">
+            <a
+              href="/"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowRight className="w-4 h-4" />
+              العودة إلى لوحة التحكم
+            </a>
+          </div>
+        )}
+
+        {/* Title */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-foreground">برنامج أنور</h1>
-          <p className="text-muted-foreground mt-1 text-sm">نظام مراقبة وبث تيليجرام</p>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {isAddMode ? 'إضافة حساب تيليجرام جديد' : 'نظام مراقبة وبث تيليجرام'}
+          </p>
         </div>
 
         <Card className="w-full shadow-lg">
@@ -166,16 +175,19 @@ export default function Login() {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full gradient-telegram flex items-center justify-center">
               <MessageCircle className="w-8 h-8 text-white" />
             </div>
-            <CardTitle className="text-xl">الاتصال بتيليجرام</CardTitle>
+            <CardTitle className="text-xl">
+              {isAddMode ? 'إضافة حساب جديد' : 'الاتصال بتيليجرام'}
+            </CardTitle>
             <CardDescription>
               {step === 1
-                ? 'أدخل رقم هاتفك للمتابعة'
+                ? isAddMode
+                  ? 'أدخل رقم الهاتف للحساب الجديد'
+                  : 'أدخل رقم هاتفك للمتابعة'
                 : `تم إرسال الكود إلى ${phone}`}
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-5">
-            {/* Error alert */}
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -206,16 +218,10 @@ export default function Login() {
                     سيُرسَل رمز التحقق إلى تطبيق تيليغرام الخاص بك
                   </p>
                 </div>
-
                 <Button type="submit" className="w-full" disabled={loadingSend}>
                   {loadingSend ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin ml-2" />
-                      جاري الإرسال...
-                    </>
-                  ) : (
-                    'إرسال الكود'
-                  )}
+                    <><Loader2 className="w-4 h-4 animate-spin ml-2" />جاري الإرسال...</>
+                  ) : 'إرسال الكود'}
                 </Button>
               </form>
             )}
@@ -223,7 +229,6 @@ export default function Login() {
             {/* Step 2: OTP Code */}
             {step === 2 && (
               <form onSubmit={handleVerifyCode} className="space-y-5">
-                {/* Auto-detection status */}
                 {autoVerifying ? (
                   <Alert className="border-green-500/30 bg-green-500/10">
                     <CheckCircle className="h-4 w-4 text-green-500" />
@@ -248,7 +253,6 @@ export default function Login() {
                   </Alert>
                 ) : null}
 
-                {/* OTP Input */}
                 <div className="space-y-3">
                   <Label className="block text-center">أدخل رمز التحقق</Label>
                   <div className="flex justify-center" dir="ltr">
@@ -271,28 +275,13 @@ export default function Login() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleBack}
-                    disabled={loading}
-                    className="px-5"
-                  >
+                  <Button type="button" variant="outline" onClick={handleBack} disabled={loading} className="px-5">
                     رجوع
                   </Button>
-                  <Button
-                    type="submit"
-                    className="flex-1"
-                    disabled={loading || code.length < 5}
-                  >
+                  <Button type="submit" className="flex-1" disabled={loading || code.length < 5}>
                     {loadingVerify ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin ml-2" />
-                        جاري التحقق...
-                      </>
-                    ) : (
-                      'تحقق'
-                    )}
+                      <><Loader2 className="w-4 h-4 animate-spin ml-2" />جاري التحقق...</>
+                    ) : 'تحقق'}
                   </Button>
                 </div>
               </form>
@@ -300,15 +289,9 @@ export default function Login() {
 
             {/* Progress dots */}
             <div className="flex items-center justify-center gap-2 pt-2">
-              <div className={`w-3 h-3 rounded-full transition-colors duration-300 ${
-                step >= 1 ? 'bg-primary' : 'bg-muted'
-              }`} />
-              <div className={`w-8 h-0.5 transition-colors duration-300 ${
-                step === 2 ? 'bg-primary' : 'bg-muted'
-              }`} />
-              <div className={`w-3 h-3 rounded-full transition-colors duration-300 ${
-                step === 2 ? 'bg-primary' : 'bg-muted'
-              }`} />
+              <div className={`w-3 h-3 rounded-full transition-colors duration-300 ${step >= 1 ? 'bg-primary' : 'bg-muted'}`} />
+              <div className={`w-8 h-0.5 transition-colors duration-300 ${step === 2 ? 'bg-primary' : 'bg-muted'}`} />
+              <div className={`w-3 h-3 rounded-full transition-colors duration-300 ${step === 2 ? 'bg-primary' : 'bg-muted'}`} />
               <div className="w-8 h-0.5 bg-muted" />
               <div className="w-3 h-3 rounded-full bg-muted" />
             </div>

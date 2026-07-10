@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { telegramService, otpEmitter } from "../services/telegram.js";
+import { accountManager, otpEmitter } from "../services/telegram.js";
 
 const router: IRouter = Router();
 
@@ -9,19 +9,40 @@ router.post("/auth/send-code", async (req, res) => {
     if (!phone || typeof phone !== "string") {
       return res.status(400).json({ error: "phone is required" });
     }
-    const result = await telegramService.sendCode(phone);
+
+    // Discard any previous pending login and open a fresh slot
+    accountManager.discardPending();
+    const pending = accountManager.startPendingLogin();
+
+    const result = await pending.sendCode(phone);
     res.json({ success: true, phoneCodeHash: result.phoneCodeHash });
   } catch (err: any) {
     req.log.error({ err }, "send-code error");
+    accountManager.discardPending();
     res.status(400).json({ error: err.message || "Failed to send code" });
   }
 });
 
 router.post("/auth/verify-code", async (req, res) => {
   try {
-    const { phone, code, phoneCodeHash, password } = req.body as { phone: string; code: string; phoneCodeHash: string; password?: string };
-    const result = await telegramService.verifyCode(phone, code, phoneCodeHash, password);
-    const user = result.user;
+    const { phone, code, phoneCodeHash, password } = req.body as {
+      phone: string;
+      code: string;
+      phoneCodeHash: string;
+      password?: string;
+    };
+
+    const pending = accountManager.getPending();
+    if (!pending) {
+      return res.status(400).json({ error: "No pending login. Call send-code first." });
+    }
+
+    const result = await pending.verifyCode(phone, code, phoneCodeHash, password);
+    const user = result.user as any;
+
+    // Move from pending → committed account pool
+    accountManager.commitPending();
+
     res.json({
       success: true,
       user: {
@@ -51,10 +72,7 @@ router.get("/auth/otp-stream", (req, res) => {
 
   send("connected", { status: "listening" });
 
-  const onOtp = (code: string) => {
-    send("otp", { code });
-  };
-
+  const onOtp = (code: string) => { send("otp", { code }); };
   const onVerified = (result: { success: boolean; code?: string; error?: string }) => {
     send("verified", result);
     cleanup();
@@ -74,20 +92,19 @@ router.get("/auth/otp-stream", (req, res) => {
   const keepAlive = setInterval(() => {
     try { res.write(": ping\n\n"); } catch {}
   }, 15000);
-
   req.on("close", () => clearInterval(keepAlive));
 });
 
 router.get("/auth/status", async (req, res) => {
   try {
-    const connected = telegramService.isConnected();
-    const authorized = telegramService.isAuthorized();
+    const connected = accountManager.isConnected();
+    const authorized = accountManager.isAuthorized();
     let user = null;
     if (authorized) {
-      const me = await telegramService.getUser();
+      const me = await accountManager.getUser();
       if (me) {
         user = {
-          id: String(me.id || ""),
+          id: String(me.id || me.id || ""),
           firstName: me.firstName || "",
           lastName: me.lastName || "",
           username: me.username || "",
@@ -104,7 +121,7 @@ router.get("/auth/status", async (req, res) => {
 
 router.post("/auth/logout", async (req, res) => {
   try {
-    await telegramService.logout();
+    await accountManager.logout();
     res.json({ success: true, message: "Logged out" });
   } catch (err: any) {
     req.log.error({ err }, "logout error");

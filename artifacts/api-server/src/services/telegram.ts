@@ -2,6 +2,8 @@ import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions/index.js";
 import { EventEmitter } from "events";
 import { logger } from "../lib/logger.js";
+import fs from "fs";
+import path from "path";
 
 interface SentMessageRecord {
   groupId: string;
@@ -19,22 +21,34 @@ interface MonitorSettings {
   monitorGroupIds: string[];
 }
 
-export const otpEmitter = new EventEmitter();
+interface PersistedAccount {
+  id: string;
+  phone: string;
+  sessionString: string;
+  userInfo: { id: string; firstName: string; lastName: string; username: string; phone: string } | null;
+}
 
 // Hardcoded API credentials — never change
 const FIXED_API_ID = 22043994;
 const FIXED_API_HASH = "56f64582b363d367280db96586b97801";
 
-class TelegramService {
+const SESSIONS_FILE = path.join("/tmp", "anwer_accounts.json");
+
+export const otpEmitter = new EventEmitter();
+
+// ─── Per-Account Client ───────────────────────────────────────────────────────
+export class TelegramAccountClient {
+  public readonly id: string;
+  public phone: string;
   private client: TelegramClient | null = null;
-  private session: StringSession = new StringSession("");
+  private session: StringSession;
   private phoneCodeHash: string = "";
-  private phone: string = "";
   private monitorRunning: boolean = false;
   private messagesReceived: number = 0;
   private autoRepliesSent: number = 0;
   private sentMessages: SentMessageRecord[] = [];
-  private authorized: boolean = false;
+  public authorized: boolean = false;
+  public userInfo: { id: string; firstName: string; lastName: string; username: string; phone: string } | null = null;
   private settings: MonitorSettings = {
     targetGroupIds: [],
     keywords: [],
@@ -43,52 +57,68 @@ class TelegramService {
     monitorGroupIds: [],
   };
 
-  private resetState() {
-    this.authorized = false;
-    this.sentMessages = [];
-    this.messagesReceived = 0;
-    this.autoRepliesSent = 0;
-    this.monitorRunning = false;
-    this.settings = {
-      targetGroupIds: [],
-      keywords: [],
-      autoReplyText: "",
-      autoReplyEnabled: false,
-      monitorGroupIds: [],
-    };
+  constructor(id: string, phone: string = "", sessionString: string = "") {
+    this.id = id;
+    this.phone = phone;
+    this.session = new StringSession(sessionString);
+  }
+
+  getSessionString(): string {
+    return this.session.save();
+  }
+
+  async reconnect(): Promise<boolean> {
+    try {
+      this.client = new TelegramClient(this.session, FIXED_API_ID, FIXED_API_HASH, {
+        connectionRetries: 3,
+        timeout: 30,
+      });
+      await this.client.connect();
+      const me = await this.client.getMe();
+      if (me) {
+        this.authorized = true;
+        this.userInfo = {
+          id: String((me as any).id || ""),
+          firstName: (me as any).firstName || "",
+          lastName: (me as any).lastName || "",
+          username: (me as any).username || "",
+          phone: (me as any).phone || this.phone,
+        };
+        if (this.settings.autoReplyEnabled && !this.monitorRunning) {
+          this.startMonitor();
+        }
+        return true;
+      }
+    } catch (err) {
+      logger.error({ err, accountId: this.id }, "Failed to reconnect account");
+      this.client = null;
+      this.authorized = false;
+    }
+    return false;
   }
 
   async sendCode(phone: string): Promise<{ phoneCodeHash: string }> {
     this.phone = phone;
-
-    // Disconnect and reset on new login attempt
     if (this.client) {
-      try { await this.client.disconnect(); } catch { /* ignore */ }
+      try { await this.client.disconnect(); } catch {}
     }
-    this.resetState();
-
     this.session = new StringSession("");
     this.client = new TelegramClient(this.session, FIXED_API_ID, FIXED_API_HASH, {
       connectionRetries: 5,
       timeout: 30,
     });
-
     await this.client.connect();
-
     const result = await this.client.sendCode(
       { apiId: FIXED_API_ID, apiHash: FIXED_API_HASH },
       phone
     );
-
     this.phoneCodeHash = result.phoneCodeHash;
     this.startOtpListener();
-
     return { phoneCodeHash: result.phoneCodeHash };
   }
 
   private startOtpListener() {
     if (!this.client) return;
-
     const checkMessages = async () => {
       if (!this.client) return;
       try {
@@ -98,7 +128,7 @@ class TelegramService {
           const match = text.match(/(\d{5,6})/);
           if (match) {
             const code = match[1];
-            logger.info({ code }, "Auto-detected OTP code");
+            logger.info({ code, accountId: this.id }, "Auto-detected OTP");
             otpEmitter.emit("otp", code);
             this.autoVerify(code);
             return;
@@ -109,7 +139,6 @@ class TelegramService {
         setTimeout(checkMessages, 2000);
       }
     };
-
     setTimeout(checkMessages, 2000);
   }
 
@@ -118,14 +147,13 @@ class TelegramService {
       await this.verifyCode(this.phone, code, this.phoneCodeHash);
       otpEmitter.emit("verified", { success: true, code });
     } catch (err: any) {
-      logger.error({ err }, "Auto-verify failed");
+      logger.error({ err, accountId: this.id }, "Auto-verify failed");
       otpEmitter.emit("verified", { success: false, error: err.message });
     }
   }
 
   async verifyCode(phone: string, code: string, phoneCodeHash: string, password?: string): Promise<{ user: any }> {
     if (!this.client) throw new Error("Client not initialized. Call sendCode first.");
-
     const user = await this.client.signIn(
       { apiId: FIXED_API_ID, apiHash: FIXED_API_HASH },
       {
@@ -135,12 +163,18 @@ class TelegramService {
         password: password ? () => Promise.resolve(password) : undefined,
       }
     );
-
     this.authorized = true;
+    const me = user as any;
+    this.userInfo = {
+      id: String(me?.id || ""),
+      firstName: me?.firstName || "",
+      lastName: me?.lastName || "",
+      username: me?.username || "",
+      phone: me?.phone || phone,
+    };
     if (this.settings.autoReplyEnabled && !this.monitorRunning) {
       this.startMonitor();
     }
-
     return { user };
   }
 
@@ -153,6 +187,7 @@ class TelegramService {
   }
 
   async getUser(): Promise<any> {
+    if (this.userInfo) return this.userInfo;
     if (!this.client) return null;
     try { return await this.client.getMe(); } catch { return null; }
   }
@@ -170,13 +205,8 @@ class TelegramService {
       }));
   }
 
-  getSettings(): MonitorSettings {
-    return this.settings;
-  }
-
-  saveSettings(settings: MonitorSettings): void {
-    this.settings = settings;
-  }
+  getSettings(): MonitorSettings { return this.settings; }
+  saveSettings(settings: MonitorSettings): void { this.settings = settings; }
 
   startMonitor(): void {
     if (this.monitorRunning) return;
@@ -184,13 +214,8 @@ class TelegramService {
     this.runMonitorLoop();
   }
 
-  stopMonitor(): void {
-    this.monitorRunning = false;
-  }
-
-  isMonitorRunning(): boolean {
-    return this.monitorRunning;
-  }
+  stopMonitor(): void { this.monitorRunning = false; }
+  isMonitorRunning(): boolean { return this.monitorRunning; }
 
   getStats() {
     return {
@@ -211,7 +236,6 @@ class TelegramService {
           const text = message?.message || "";
           const chatId = String(message?.chatId || "");
           this.messagesReceived++;
-
           if (
             this.settings.autoReplyEnabled &&
             this.settings.autoReplyText &&
@@ -281,20 +305,175 @@ class TelegramService {
     return "";
   }
 
-  getSentMessages(): SentMessageRecord[] {
-    return this.sentMessages;
-  }
+  getSentMessages(): SentMessageRecord[] { return this.sentMessages; }
 
-  async logout(): Promise<void> {
+  async disconnect(): Promise<void> {
     this.monitorRunning = false;
     this.authorized = false;
     if (this.client) {
-      try { await this.client.destroy(); } catch { /* ignore */ }
+      try { await this.client.destroy(); } catch {}
       this.client = null;
     }
     this.session = new StringSession("");
-    this.resetState();
   }
 }
 
-export const telegramService = new TelegramService();
+// ─── Account Manager ──────────────────────────────────────────────────────────
+class AccountManager {
+  private accounts: Map<string, TelegramAccountClient> = new Map();
+  private activeAccountId: string | null = null;
+  // Pending client being authenticated right now (not yet in accounts map)
+  private pendingClient: TelegramAccountClient | null = null;
+
+  constructor() {
+    this.loadSessions();
+  }
+
+  // ── Persistence ──────────────────────────────────────────────
+  private loadSessions(): void {
+    try {
+      if (!fs.existsSync(SESSIONS_FILE)) return;
+      const raw = fs.readFileSync(SESSIONS_FILE, "utf-8");
+      const data: { accounts: PersistedAccount[]; activeId: string | null } = JSON.parse(raw);
+      for (const acc of data.accounts || []) {
+        const client = new TelegramAccountClient(acc.id, acc.phone, acc.sessionString);
+        client.authorized = false; // will be re-verified on reconnect
+        client.userInfo = acc.userInfo;
+        this.accounts.set(acc.id, client);
+      }
+      this.activeAccountId = data.activeId || null;
+      // Reconnect all persisted accounts in background
+      for (const [id, client] of this.accounts) {
+        client.reconnect().then((ok) => {
+          if (ok) {
+            logger.info({ accountId: id }, "Account reconnected");
+            this.saveSessions();
+          }
+        }).catch(() => {});
+      }
+      logger.info({ count: this.accounts.size }, "Loaded persisted accounts");
+    } catch (err) {
+      logger.error({ err }, "Failed to load sessions");
+    }
+  }
+
+  saveSessions(): void {
+    try {
+      const accounts: PersistedAccount[] = Array.from(this.accounts.values()).map((c) => ({
+        id: c.id,
+        phone: c.phone,
+        sessionString: c.getSessionString(),
+        userInfo: c.userInfo,
+      }));
+      fs.writeFileSync(SESSIONS_FILE, JSON.stringify({ accounts, activeId: this.activeAccountId }, null, 2), "utf-8");
+    } catch (err) {
+      logger.error({ err }, "Failed to save sessions");
+    }
+  }
+
+  // ── Account CRUD ─────────────────────────────────────────────
+  getActive(): TelegramAccountClient | null {
+    if (!this.activeAccountId) return null;
+    return this.accounts.get(this.activeAccountId) || null;
+  }
+
+  getAll(): { id: string; phone: string; authorized: boolean; userInfo: any }[] {
+    return Array.from(this.accounts.values()).map((c) => ({
+      id: c.id,
+      phone: c.phone,
+      authorized: c.isAuthorized(),
+      userInfo: c.userInfo,
+      isActive: c.id === this.activeAccountId,
+    }));
+  }
+
+  getActiveId(): string | null { return this.activeAccountId; }
+
+  setActive(id: string): boolean {
+    if (!this.accounts.has(id)) return false;
+    this.activeAccountId = id;
+    this.saveSessions();
+    return true;
+  }
+
+  removeAccount(id: string): void {
+    const client = this.accounts.get(id);
+    if (client) {
+      client.disconnect().catch(() => {});
+      this.accounts.delete(id);
+    }
+    if (this.activeAccountId === id) {
+      this.activeAccountId = this.accounts.size > 0 ? this.accounts.keys().next().value : null;
+    }
+    this.saveSessions();
+  }
+
+  // ── Pending Login (for adding a new account) ─────────────────
+  startPendingLogin(): TelegramAccountClient {
+    // Create a fresh client slot for the incoming login
+    const id = `acc_${Date.now()}`;
+    const pending = new TelegramAccountClient(id, "", "");
+    this.pendingClient = pending;
+    return pending;
+  }
+
+  getPending(): TelegramAccountClient | null { return this.pendingClient; }
+
+  // Called after successful verification — moves pending → accounts
+  commitPending(): void {
+    if (!this.pendingClient) return;
+    const client = this.pendingClient;
+    this.pendingClient = null;
+    this.accounts.set(client.id, client);
+    this.activeAccountId = client.id;
+    this.saveSessions();
+  }
+
+  discardPending(): void {
+    if (this.pendingClient) {
+      this.pendingClient.disconnect().catch(() => {});
+      this.pendingClient = null;
+    }
+  }
+
+  // ── Legacy compatibility (used by existing routes) ───────────
+  isConnected(): boolean { return this.getActive()?.isConnected() ?? false; }
+  isAuthorized(): boolean { return this.getActive()?.isAuthorized() ?? false; }
+  async getUser(): Promise<any> { return this.getActive()?.getUser() ?? null; }
+  async getDialogs(): Promise<any[]> {
+    const active = this.getActive();
+    if (!active) throw new Error("No active account");
+    return active.getDialogs();
+  }
+  getSettings(): MonitorSettings { return this.getActive()?.getSettings() ?? { targetGroupIds: [], keywords: [], autoReplyText: "", autoReplyEnabled: false, monitorGroupIds: [] }; }
+  saveSettings(s: MonitorSettings): void { this.getActive()?.saveSettings(s); }
+  startMonitor(): void { this.getActive()?.startMonitor(); }
+  stopMonitor(): void { this.getActive()?.stopMonitor(); }
+  isMonitorRunning(): boolean { return this.getActive()?.isMonitorRunning() ?? false; }
+  getStats(): { running: boolean; messagesReceived: number; autoRepliesSent: number } { return this.getActive()?.getStats() ?? { running: false, messagesReceived: 0, autoRepliesSent: 0 }; }
+  async sendMessage(groupIds: string[], text: string): Promise<void> {
+    const active = this.getActive();
+    if (!active) throw new Error("No active account");
+    return active.sendMessage(groupIds, text);
+  }
+  async editMessage(groupIds: string[], newText: string): Promise<void> {
+    const active = this.getActive();
+    if (!active) throw new Error("No active account");
+    return active.editMessage(groupIds, newText);
+  }
+  async deleteMessage(groupIds: string[]): Promise<void> {
+    const active = this.getActive();
+    if (!active) throw new Error("No active account");
+    return active.deleteMessage(groupIds);
+  }
+  getSentMessages(): SentMessageRecord[] { return this.getActive()?.getSentMessages() ?? []; }
+  async logout(): Promise<void> {
+    const active = this.getActive();
+    if (active) { this.removeAccount(active.id); }
+  }
+}
+
+export const accountManager = new AccountManager();
+
+// Backward-compatible alias so existing routes importing `telegramService` keep working
+export const telegramService = accountManager;

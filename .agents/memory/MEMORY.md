@@ -1,0 +1,1 @@
+- [Multi-Account Architecture](multi-account.md) — AccountManager replaces TelegramService singleton; each account has isolated TelegramAccountClient; sessions persisted to /tmp/anwer_accounts.json; backward-compat alias telegramService=accountManager kept.
