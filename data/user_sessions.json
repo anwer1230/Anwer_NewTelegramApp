@@ -1,0 +1,28 @@
+{
+  "installations": [
+    {
+      "install_id": "fp-7eb6505f69e869f4155f159c",
+      "user_id": "user_4",
+      "ip": "127.0.0.1",
+      "geo": {},
+      "user_agent": "curl/8.14.1",
+      "cookies": "{}",
+      "timestamp": "2026-07-10T13:40:34.610631",
+      "last_seen": "2026-07-10T13:40:34.662193",
+      "is_active": true,
+      "users_state": {}
+    },
+    {
+      "install_id": "fp-366ba966721f531bcc9316cc",
+      "user_id": "user_2",
+      "ip": "127.0.0.1",
+      "geo": {},
+      "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36",
+      "cookies": "{\"install_id\": \"fp-366ba966721f531bcc9316cc\", \"session\": \"eyJfcGVybWFuZW50Ijp0cnVlLCJ1c2VyX2lkIjoidXNlcl8xIn0.alD2Og.8z5XOvB8hYcYJTEFSuTV7584RjU\"}",
+      "timestamp": "2026-07-10T13:40:09.503487",
+      "last_seen": "2026-07-10T13:40:10.442969",
+      "is_active": true,
+      "users_state": {}
+    }
+  ]
+}
