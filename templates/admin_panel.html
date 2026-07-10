@@ -32,80 +32,6 @@
             color: var(--text);
         }
 
-        #authScreen {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: radial-gradient(ellipse at center, #12123a 0%, #07071a 70%);
-            padding: 24px;
-        }
-        .auth-card {
-            background: linear-gradient(160deg, #0f0f2d, #1a1a4e);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 40px 36px;
-            width: 100%;
-            max-width: 420px;
-            box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 60px rgba(99,102,241,0.15);
-            text-align: center;
-        }
-        .auth-icon {
-            width: 80px; height: 80px;
-            background: linear-gradient(135deg, var(--indigo), var(--purple));
-            border-radius: 22px;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 20px;
-            box-shadow: 0 8px 32px rgba(99,102,241,0.4);
-            font-size: 2rem;
-        }
-        .auth-title { font-size: 1.4rem; font-weight: 900; margin-bottom: 4px; }
-        .auth-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 28px; }
-        .auth-input {
-            width: 100%;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: 12px;
-            padding: 14px 18px;
-            font-size: 0.95rem;
-            font-family: 'Cairo', sans-serif;
-            outline: none;
-            text-align: center;
-            letter-spacing: 2px;
-            transition: all 0.3s;
-            margin-bottom: 14px;
-        }
-        .auth-input:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
-        .btn-auth {
-            width: 100%;
-            background: linear-gradient(135deg, var(--indigo), var(--purple));
-            border: none; border-radius: 12px; padding: 13px;
-            color: #fff; font-size: 0.95rem; font-weight: 700;
-            font-family: 'Cairo', sans-serif;
-            cursor: pointer; transition: all 0.3s;
-            box-shadow: 0 6px 20px rgba(99,102,241,0.4);
-            margin-bottom: 10px;
-        }
-        .btn-auth:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(99,102,241,0.55); }
-        .btn-bio {
-            width: 100%;
-            background: rgba(99,102,241,0.12);
-            border: 1px solid var(--border);
-            border-radius: 12px; padding: 11px;
-            color: #a5b4fc; font-size: 0.88rem; font-weight: 600;
-            font-family: 'Cairo', sans-serif;
-            cursor: pointer; transition: all 0.3s;
-        }
-        .btn-bio:hover { background: rgba(99,102,241,0.2); }
-        #authMsg {
-            border-radius: 10px; padding: 10px 14px;
-            font-size: 0.85rem; margin-bottom: 14px;
-            display: none;
-        }
-
-        #dashboard { display: none; }
-
         .sidebar {
             position: fixed; right: 0; top: 0; bottom: 0;
             width: 240px;
@@ -157,26 +83,6 @@
             border-right-color: var(--indigo);
         }
         .nav-item i { width: 20px; text-align: center; font-size: 0.95rem; }
-        .sidebar-footer {
-            margin-top: auto;
-            padding: 16px 20px;
-            border-top: 1px solid var(--border);
-        }
-        .btn-logout {
-            width: 100%;
-            background: rgba(239,68,68,0.12);
-            border: 1px solid rgba(239,68,68,0.3);
-            border-radius: 10px;
-            padding: 9px;
-            color: #fca5a5;
-            font-size: 0.85rem;
-            font-weight: 700;
-            font-family: 'Cairo', sans-serif;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .btn-logout:hover { background: rgba(239,68,68,0.22); }
 
         .main-content {
             margin-right: 240px;
@@ -191,14 +97,6 @@
             position: sticky; top: 0; z-index: 50;
         }
         .top-bar h5 { margin: 0; font-size: 1rem; font-weight: 800; }
-        .top-bar .badge-auth {
-            background: var(--green);
-            color: #fff;
-            font-size: 0.65rem;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-weight: 700;
-        }
         .content-area { padding: 28px; }
 
         .stats-grid {
@@ -366,16 +264,74 @@
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 3px; }
+
+        /* أنماط التثبيتات الموحدة (من الواجهة الجديدة) */
+        .ib-wrap{background:#f4f6f9;border-radius:24px;padding:24px 20px;}
+        .ib-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:2px solid #eef2f6;padding-bottom:14px;margin-bottom:20px;}
+        .ib-head h2{font-size:22px;font-weight:700;color:#1e293b;margin:0;}
+        .ib-badge{background:#0f172a;color:#fff;padding:7px 20px;border-radius:40px;font-size:16px;font-weight:600;display:flex;align-items:center;gap:10px;}
+        .ib-refresh{background:rgba(255,255,255,0.18);border:none;color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+        .ib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;}
+        .ib-card{background:#fff;border:1px solid #e9edf2;border-radius:20px;padding:18px 16px;cursor:pointer;transition:.25s;box-shadow:0 4px 8px rgba(0,0,0,.02);position:relative;}
+        .ib-card:hover{transform:translateY(-4px);border-color:#b3c6e2;box-shadow:0 12px 24px rgba(0,0,0,.05);}
+        .ib-card .device{font-size:17px;font-weight:600;color:#0b1d31;display:flex;align-items:center;gap:7px;}
+        .ib-card .meta{margin-top:10px;display:flex;flex-direction:column;gap:5px;color:#334155;font-size:13px;}
+        .ib-card .meta .label{font-weight:500;color:#64748b;font-size:12px;}
+        .ib-card .badge-version{background:#dbeafe;color:#1d4ed8;padding:2px 14px;border-radius:30px;font-size:13px;font-weight:600;display:inline-block;margin-top:6px;}
+        .ib-card .stats-row{display:flex;gap:16px;margin-top:10px;background:#f8fafc;padding:8px 12px;border-radius:14px;}
+        .ib-card .stats-row .stat-item{font-size:13px;}
+        .ib-card .stats-row .stat-item span{font-weight:700;color:#0b1d31;}
+        .ib-card .click-hint{position:absolute;bottom:14px;left:18px;font-size:12px;color:#94a3b8;}
+        .ib-footer{margin-top:22px;color:#94a3b8;font-size:12px;text-align:center;border-top:1px solid #eef2f6;padding-top:14px;}
+
+        .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);display:none;justify-content:center;align-items:center;z-index:9999;padding:20px;}
+        .modal-overlay.active{display:flex;}
+        .modal-box{background:#0f172a;border:1px solid rgba(99,102,241,0.3);max-width:850px;width:100%;max-height:90vh;overflow-y:auto;border-radius:32px;padding:30px 28px;box-shadow:0 40px 80px rgba(0,0,0,0.7);animation:fadeUp 0.3s ease;color:var(--text);}
+        .sub-modal-box{max-width:550px;}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid rgba(99,102,241,0.2);padding-bottom:16px;margin-bottom:22px;flex-wrap:wrap;}
+        .modal-header h2{font-size:24px;font-weight:700;color:#e2e8f0;margin:0;}
+        .modal-close{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);width:44px;height:44px;border-radius:40px;font-size:24px;cursor:pointer;color:#fca5a5;transition:0.2s;display:flex;align-items:center;justify-content:center;}
+        .modal-close:hover{background:rgba(239,68,68,0.3);}
+        .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 22px;margin-bottom:20px;}
+        .detail-item{background:rgba(255,255,255,0.05);padding:12px 16px;border-radius:14px;border-right:4px solid var(--indigo);}
+        .detail-item .label{font-size:13px;color:var(--muted);font-weight:500;}
+        .detail-item .value{font-size:16px;font-weight:600;color:#e2e8f0;margin-top:4px;word-break:break-all;}
+        .accounts-list{background:rgba(255,255,255,0.04);border-radius:16px;padding:12px;margin:12px 0;}
+        .account-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(0,0,0,0.2);border-radius:12px;margin-bottom:8px;cursor:pointer;border:1px solid rgba(99,102,241,0.15);transition:0.2s;}
+        .account-item:hover{border-color:var(--indigo);background:rgba(99,102,241,0.08);}
+        .account-item .status-badge{font-size:12px;padding:2px 12px;border-radius:30px;font-weight:600;}
+        .status-active{background:#dcfce7;color:#166534;}
+        .status-inactive{background:#fee2e2;color:#991b1b;}
+        .account-item .telegram-name{font-size:13px;color:#94a3b8;margin-right:8px;}
+        .map-container{height:200px;border-radius:18px;overflow:hidden;margin:16px 0 12px;border:1px solid rgba(99,102,241,0.2);}
+        .map-container #realMap{height:100%;width:100%;}
+        .actions-group{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px;border-top:1px solid rgba(99,102,241,0.15);padding-top:22px;}
+        .btn{padding:10px 20px;border:none;border-radius:40px;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:0.2s;background:rgba(255,255,255,0.06);color:var(--text);flex:1 1 auto;justify-content:center;}
+        .btn-primary{background:#0f172a;color:#fff;}
+        .btn-primary:hover{background:#1e293b;}
+        .btn-danger{background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);}
+        .btn-danger:hover{background:rgba(239,68,68,0.25);}
+        .btn-success{background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3);}
+        .btn-success:hover{background:rgba(16,185,129,0.25);}
+        .btn-warning{background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);}
+        .btn-warning:hover{background:rgba(245,158,11,0.25);}
+        .btn-outline{background:transparent;border:1.5px solid rgba(148,163,184,0.4);color:#94a3b8;}
+        .btn-outline:hover{background:rgba(255,255,255,0.05);}
+        .links-section{margin-top:16px;background:rgba(255,255,255,0.04);padding:14px 18px;border-radius:16px;}
+        .links-section h4{font-size:15px;color:var(--text);margin-bottom:8px;}
+        .link-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed rgba(99,102,241,0.15);font-size:14px;color:#e2e8f0;}
+        .link-item:last-child{border:none;}
+        .link-item .copy-btn{background:rgba(99,102,241,0.15);color:#a5b4fc;border:none;padding:4px 14px;border-radius:30px;font-size:12px;cursor:pointer;}
+        .link-item .copy-btn:hover{background:rgba(99,102,241,0.25);}
+        @media (max-width:640px){.detail-grid{grid-template-columns:1fr;}.modal-box{padding:20px;}.ib-wrap{padding:16px;}}
     </style>
 </head>
 <body>
 
-<!-- شاشة المصادقة أُزيلت بطلب المستخدم — لوحة الإدارة تُفتح مباشرةً دون كلمة مرور أو بصمة -->
-
 <!-- ══════════════════════════════════════════════════════════ -->
-<!--  لوحة التحكم الرئيسية                                      -->
+<!--  لوحة التحكم الرئيسية (تظهر مباشرة)                      -->
 <!-- ══════════════════════════════════════════════════════════ -->
-<div id="dashboard">
+<div id="dashboard" style="display:block;">
 
     <nav class="sidebar">
         <div class="sidebar-logo">
@@ -391,9 +347,6 @@
         <a class="nav-item" onclick="showSection('files')" href="#"><i class="fas fa-folder-open"></i><span>متصفح الملفات</span></a>
         <a class="nav-item" onclick="showSection('installations')" href="#"><i class="fas fa-mobile-alt"></i><span>التثبيتات</span></a>
         <a class="nav-item" onclick="showSection('system')" href="#"><i class="fas fa-cog"></i><span>إعدادات النظام</span></a>
-        <div class="sidebar-footer">
-            <button class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i>خروج</button>
-        </div>
     </nav>
 
     <div class="main-content">
@@ -404,7 +357,6 @@
             </button>
             <i class="fas fa-crown" style="color:var(--indigo);font-size:1.1rem;"></i>
             <h5 id="sectionTitle">المستخدمون</h5>
-            <span class="badge-auth" id="authBadge" style="margin-right:auto;">● مصادق</span>
             <button class="btn-sm-act" onclick="refreshCurrentSection()"><i class="fas fa-sync-alt"></i>تحديث</button>
         </div>
 
@@ -428,8 +380,7 @@
 
             <!-- ────────────── قسم الكروت ────────────── -->
             <div id="sec-cards" class="section-pane fade-up" style="display:none;">
-
-                <!-- نظام البطاقات -->
+                <!-- ... (نفس المحتوى السابق) ... -->
                 <div class="panel">
                     <div class="panel-header">
                         <div class="panel-title">
@@ -463,7 +414,6 @@
                     <div id="cardStatsInfo" style="padding:6px 16px 10px;font-size:0.75rem;color:var(--muted);border-top:1px solid rgba(99,102,241,0.1);"></div>
                 </div>
 
-                <!-- إنشاء الكروت -->
                 <div class="panel">
                     <div class="panel-header">
                         <div class="panel-title"><i class="fas fa-plus-circle" style="color:var(--green);"></i>إنشاء الكروت</div>
@@ -486,7 +436,6 @@
                             <input type="number" id="cardCount" class="field" style="width:90px;" value="5" min="1" max="100" placeholder="العدد">
                             <button class="btn-primary-act" onclick="createVouchers()"><i class="fas fa-magic"></i>إنشاء</button>
                         </div>
-                        <!-- أزرار التصدير / النسخ / الإرسال -->
                         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
                             <button class="btn-sm-green" onclick="window.open('/admin/api/export_vouchers_pdf','_blank')"><i class="fas fa-file-pdf"></i>PDF</button>
                             <button class="btn-sm-act" onclick="window.location.href='/admin/api/export_vouchers_txt_fixed'"><i class="fas fa-file-alt"></i>TXT</button>
@@ -497,7 +446,6 @@
                     </div>
                 </div>
 
-                <!-- قائمة الكروت -->
                 <div class="panel">
                     <div class="panel-header">
                         <div class="panel-title"><i class="fas fa-list" style="color:#a5b4fc;"></i>بيانات البطاقات</div>
@@ -513,7 +461,6 @@
                     </div>
                 </div>
 
-                <!-- الجلسات النشطة -->
                 <div class="panel">
                     <div class="panel-header">
                         <div class="panel-title"><i class="fas fa-wifi" style="color:var(--green);"></i>الجلسات النشطة</div>
@@ -525,7 +472,6 @@
                     </div>
                 </div>
 
-                <!-- تقييد وظيفة محددة -->
                 <div class="panel cards-only-panel" id="frPanel">
                     <div class="panel-header">
                         <div class="panel-title"><i class="fas fa-lock" style="color:#f59e0b;"></i>تقييد وظيفة محددة</div>
@@ -543,7 +489,6 @@
                         <button class="btn-sm-green" onclick="saveFrRestrictions()" style="width:100%;"><i class="fas fa-save"></i>حفظ التقييد</button>
                     </div>
                 </div>
-
             </div>
 
             <!-- ────────────── باقي الأقسام ────────────── -->
@@ -650,27 +595,8 @@
                 </div>
             </div>
 
-            <!-- ────────────── قسم التثبيتات (الجديد) ────────────── -->
+            <!-- ────────────── قسم التثبيتات (الموحد) ────────────── -->
             <div id="sec-installations" class="section-pane fade-up" style="display:none;">
-                <style>
-                    #sec-installations .ib-wrap{background:#f4f6f9;border-radius:24px;padding:24px 20px;}
-                    #sec-installations .ib-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:2px solid #eef2f6;padding-bottom:14px;margin-bottom:20px;}
-                    #sec-installations .ib-head h2{font-size:22px;font-weight:700;color:#1e293b;margin:0;}
-                    #sec-installations .ib-badge{background:#0f172a;color:#fff;padding:7px 20px;border-radius:40px;font-size:16px;font-weight:600;display:flex;align-items:center;gap:10px;}
-                    #sec-installations .ib-refresh{background:rgba(255,255,255,0.18);border:none;color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
-                    #sec-installations .ib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;}
-                    #sec-installations .ib-card{background:#fff;border:1px solid #e9edf2;border-radius:20px;padding:18px 16px;cursor:pointer;transition:.25s;box-shadow:0 4px 8px rgba(0,0,0,.02);position:relative;}
-                    #sec-installations .ib-card:hover{transform:translateY(-4px);border-color:#b3c6e2;box-shadow:0 12px 24px rgba(0,0,0,.05);}
-                    #sec-installations .ib-device{font-size:17px;font-weight:600;color:#0b1d31;display:flex;align-items:center;gap:7px;}
-                    #sec-installations .ib-meta{margin-top:10px;display:flex;flex-direction:column;gap:5px;color:#334155;font-size:13px;}
-                    #sec-installations .ib-label{font-weight:500;color:#64748b;font-size:12px;}
-                    #sec-installations .ib-vid{background:#dbeafe;color:#1d4ed8;padding:2px 12px;border-radius:30px;font-size:12px;font-weight:600;display:inline-block;margin-top:5px;}
-                    #sec-installations .ib-srow{display:flex;gap:12px;margin-top:8px;background:#f8fafc;padding:7px 10px;border-radius:12px;}
-                    #sec-installations .ib-stat{font-size:12px;color:#475569;}
-                    #sec-installations .ib-stat b{color:#0b1d31;}
-                    #sec-installations .ib-hint{position:absolute;bottom:12px;left:14px;font-size:11px;color:#94a3b8;}
-                    #sec-installations .ib-footer{margin-top:22px;color:#94a3b8;font-size:12px;text-align:center;border-top:1px solid #eef2f6;padding-top:14px;}
-                </style>
                 <div class="ib-wrap">
                     <div class="ib-head">
                         <h2>📊 لوحة التثبيتات</h2>
@@ -686,61 +612,29 @@
                 </div>
             </div>
 
-            <!-- مودال تفاصيل التثبيت -->
-            <div class="ib-overlay" id="ibDetailModal" style="position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);display:none;justify-content:center;align-items:center;z-index:99999;padding:16px;">
-                <div class="ib-modal" style="background:#fff;max-width:860px;width:100%;max-height:90vh;overflow-y:auto;border-radius:28px;padding:28px 24px;box-shadow:0 40px 80px rgba(0,0,0,.3);animation:ibFadeUp .28s ease;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #eef2f6;padding-bottom:14px;margin-bottom:18px;flex-wrap:wrap;gap:8px;">
-                        <h3 id="ibModalTitle" style="font-size:20px;font-weight:700;color:#0b1d31;margin:0;">تفاصيل النسخة</h3>
-                        <button id="ibCloseModal" style="background:#f1f5f9;border:none;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;color:#334155;display:flex;align-items:center;justify-content:center;">✕</button>
+            <!-- مودال تفاصيل التثبيت (الموحد) -->
+            <div class="modal-overlay" id="ibDetailModal">
+                <div class="modal-box">
+                    <div class="modal-header">
+                        <h2 id="ibModalTitle">تفاصيل النسخة</h2>
+                        <button class="modal-close" id="ibCloseModal">✕</button>
                     </div>
                     <div id="ibModalBody"></div>
                 </div>
             </div>
 
-            <!-- مودال الحساب الفرعي -->
-            <div class="ib-overlay" id="ibAccountModal" style="position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);display:none;justify-content:center;align-items:center;z-index:999999;padding:16px;">
-                <div class="ib-modal" style="background:#fff;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;border-radius:28px;padding:28px 24px;box-shadow:0 40px 80px rgba(0,0,0,.3);animation:ibFadeUp .28s ease;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #eef2f6;padding-bottom:14px;margin-bottom:18px;flex-wrap:wrap;gap:8px;">
-                        <h3 id="ibAccModalTitle" style="font-size:20px;font-weight:700;color:#0b1d31;margin:0;">إعدادات الحساب</h3>
-                        <button id="ibCloseAccModal" style="background:#f1f5f9;border:none;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;color:#334155;display:flex;align-items:center;justify-content:center;">✕</button>
+            <!-- مودال الحساب الفرعي (الموحد) -->
+            <div class="modal-overlay" id="ibAccountModal">
+                <div class="modal-box sub-modal-box">
+                    <div class="modal-header">
+                        <h2 id="ibAccModalTitle">إعدادات الحساب</h2>
+                        <button class="modal-close" id="ibCloseAccModal">✕</button>
                     </div>
                     <div id="ibAccModalBody"></div>
                 </div>
             </div>
 
-            <style>
-                @keyframes ibFadeUp{from{opacity:0;transform:scale(.95) translateY(18px)}to{opacity:1;transform:scale(1) translateY(0)}}
-                .ib-overlay.active{display:flex!important;}
-                .ib-ditem{background:#f8fafc;padding:10px 14px;border-radius:12px;border-right:4px solid #3b82f6;margin-bottom:10px;}
-                .ib-ditem .ib-dl{font-size:12px;color:#64748b;font-weight:500;}
-                .ib-ditem .ib-dv{font-size:15px;font-weight:600;color:#0b1d31;margin-top:3px;word-break:break-all;}
-                .ib-dgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;margin-bottom:16px;}
-                @media(max-width:600px){.ib-dgrid{grid-template-columns:1fr}}
-                .ib-accs{background:#f8fafc;border-radius:14px;padding:10px;margin:10px 0;}
-                .ib-acc{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#fff;border-radius:10px;margin-bottom:6px;cursor:pointer;border:1px solid #e9edf2;transition:.2s;}
-                .ib-acc:hover{border-color:#3b82f6;background:#f0f7ff;}
-                .ib-acc:last-child{margin-bottom:0;}
-                .ib-sbadge{font-size:11px;padding:2px 10px;border-radius:30px;font-weight:600;}
-                .ib-sact{background:#dcfce7;color:#166534;}
-                .ib-sinact{background:#fee2e2;color:#991b1b;}
-                .ib-mapbox{height:190px;border-radius:16px;overflow:hidden;margin:14px 0 10px;border:1px solid #e2e8f0;}
-                .ib-mapbox #ibRealMap{height:100%;width:100%;}
-                .ib-acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;border-top:1px solid #e9edf2;padding-top:18px;}
-                .ib-btn{padding:9px 18px;border:none;border-radius:40px;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;cursor:pointer;transition:.2s;background:#f1f5f9;color:#1e293b;flex:1 1 auto;justify-content:center;}
-                .ib-btn:hover{filter:brightness(.93);}
-                .ib-btn-primary{background:#0f172a;color:#fff!important;}
-                .ib-btn-danger{background:#fee2e2;color:#b91c1c!important;}
-                .ib-btn-success{background:#dcfce7;color:#166534!important;}
-                .ib-btn-warning{background:#fef3c7;color:#92400e!important;}
-                .ib-btn-outline{background:transparent;border:1.5px solid #cbd5e1;}
-                .ib-links-box{background:#f8fafc;padding:12px 16px;border-radius:14px;margin-top:12px;}
-                .ib-links-box h4{font-size:14px;color:#1e293b;margin-bottom:6px;}
-                .ib-litem{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px dashed #e2e8f0;font-size:13px;color:#334155;}
-                .ib-litem:last-child{border:none;}
-                .ib-copybtn{background:#e2e8f0;border:none;padding:3px 12px;border-radius:30px;font-size:11px;cursor:pointer;}
-            </style>
-
-            <!-- إعدادات النظام -->
+            <!-- ────────────── إعدادات النظام ────────────── -->
             <div id="sec-system" class="section-pane fade-up" style="display:none;">
                 <div class="stats-grid">
                     <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.15);">🔐</div><div><div class="stat-val" style="font-size:1.1rem;color:#6ee7b7;">مصادق</div><div class="stat-lbl">حالة الدخول</div></div></div>
@@ -789,17 +683,67 @@
         <a class="nav-item" onclick="showSection('files');toggleMobileSidebar();" href="#"><i class="fas fa-folder-open"></i><span>متصفح الملفات</span></a>
         <a class="nav-item" onclick="showSection('installations');toggleMobileSidebar();" href="#"><i class="fas fa-mobile-alt"></i><span>التثبيتات</span></a>
         <a class="nav-item" onclick="showSection('system');toggleMobileSidebar();" href="#"><i class="fas fa-cog"></i><span>إعدادات النظام</span></a>
-        <div style="padding:16px 20px;border-top:1px solid var(--border);margin-top:auto;">
-            <button class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i>خروج</button>
-        </div>
     </nav>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     المودالات الإضافية (خريطة، مجموعات، مرآة)
+══════════════════════════════════════════════════════════ -->
+<div id="geoMapModal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#0f172a;border:1px solid rgba(16,185,129,0.4);border-radius:18px;width:100%;max-width:680px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.7);">
+        <div style="padding:14px 18px;border-bottom:1px solid rgba(16,185,129,0.2);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="color:#34d399;font-size:1.1rem;">🗺️</span>
+                <span id="geoMapTitle" style="color:#34d399;font-weight:700;font-size:0.9rem;"></span>
+            </div>
+            <button onclick="closeGeoMap()" style="background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);padding:4px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-times"></i> إغلاق</button>
+        </div>
+        <div style="padding:10px 16px;border-bottom:1px solid rgba(16,185,129,0.1);display:flex;gap:16px;flex-wrap:wrap;font-size:0.78rem;flex-shrink:0;">
+            <div id="geoMapGpsInfo"></div>
+            <div id="geoMapIpInfo"></div>
+        </div>
+        <div id="leafletMapContainer" style="flex:1;min-height:380px;width:100%;background:#1a1a3e;"></div>
+        <div style="padding:8px 16px;border-top:1px solid rgba(16,185,129,0.1);font-size:0.7rem;color:#4b5563;flex-shrink:0;">
+            🟢 نقطة خضراء = GPS حقيقي &nbsp;|&nbsp; 🔵 نقطة زرقاء = موقع IP (تقريبي)
+        </div>
+    </div>
+</div>
+
+<div id="groupsLinksModal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#0f172a;border:1px solid rgba(99,102,241,0.4);border-radius:18px;width:100%;max-width:600px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.7);">
+        <div style="padding:14px 18px;border-bottom:1px solid rgba(99,102,241,0.2);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="color:#a5b4fc;font-size:1rem;">📢</span>
+                <span id="glmTitle" style="color:#a5b4fc;font-weight:700;font-size:0.9rem;"></span>
+            </div>
+            <button onclick="closeGroupsLinksModal()" style="background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);padding:4px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-times"></i> إغلاق</button>
+        </div>
+        <div id="glmBody" style="overflow-y:auto;padding:16px;flex:1;"></div>
+    </div>
+</div>
+
+<div id="liveMirrorModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#0f172a;border:1px solid rgba(251,191,36,0.35);border-radius:16px;width:100%;max-width:720px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.7);">
+        <div style="padding:14px 18px;border-bottom:1px solid rgba(251,191,36,0.2);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:10px;height:10px;border-radius:50%;background:#fbbf24;animation:pulse 1.4s infinite;"></div>
+                <span style="color:#fbbf24;font-weight:700;font-size:0.9rem;">👁️ مرآة مباشرة</span>
+                <span id="lmTitle" style="color:#94a3b8;font-size:0.78rem;font-family:monospace;"></span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <span style="color:#6b7280;font-size:0.7rem;">يتحدث كل 5 ث</span>
+                <button onclick="refreshLiveMirror(document.getElementById('liveMirrorModal')._installId, document.getElementById('liveMirrorModal')._userId)" style="background:rgba(99,102,241,0.15);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3);padding:4px 10px;border-radius:6px;font-size:0.72rem;cursor:pointer;"><i class="fas fa-sync-alt"></i></button>
+                <button onclick="closeLiveMirror()" style="background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);padding:4px 10px;border-radius:6px;font-size:0.72rem;cursor:pointer;"><i class="fas fa-times"></i> إغلاق</button>
+            </div>
+        </div>
+        <div id="lmBody" style="overflow-y:auto;padding:14px 16px;flex:1;"></div>
+    </div>
 </div>
 
 <script>
 // ══════════════════════════════════════════════════════════
 //  المتغيرات العامة
 // ══════════════════════════════════════════════════════════
-let _authed = false;
 let _currentSection = 'users';
 let _allFiles = [];
 let _selFiles = new Set();
@@ -809,20 +753,8 @@ let _periodicInterval = 0;
 let _periodicCdTimer = null;
 let _currentVoucherCodesText = '';
 
-// المصادقة (كلمة المرور والبصمة) أُزيلت بالكامل بطلب المستخدم — اللوحة مفتوحة دائماً.
-
-function _enterDashboard() {
-    _authed = true;
-    document.getElementById('dashboard').style.display  = 'block';
-    document.getElementById('sysPageTitle').textContent = document.title;
-    loadUsers();
-}
-
-async function doLogout() {
-    await fetch('/admin/api/logout', {method:'POST', credentials:'same-origin'});
-    await fetch('/api/admin_ui_hide', {method:'POST', credentials:'same-origin'});
-    window.location.href = '/';
-}
+// متغيرات التثبيتات الموحدة
+let _ibMap = null, _ibMarker = null, _ibCurrentInstall = null;
 
 // ══════════════════════════════════════════════════════════
 //  التنقل بين الأقسام
@@ -863,11 +795,10 @@ function showSection(id) {
         document.getElementById('promoTextarea').dataset.loaded = '1';
     }
     if (id === 'installations') {
-        // مسح badge "جديد" من الشريط الجانبي
         document.querySelectorAll('._instBadge').forEach(b => b.remove());
-        if (!document.getElementById('installsTable').dataset.loaded) {
+        if (!document.getElementById('ibVersionsGrid').dataset.loaded) {
             loadInstallations();
-            document.getElementById('installsTable').dataset.loaded = '1';
+            document.getElementById('ibVersionsGrid').dataset.loaded = '1';
         }
     }
     return false;
@@ -887,7 +818,7 @@ function toggleMobileSidebar() {
 }
 
 // ══════════════════════════════════════════════════════════
-//  المستخدمون - عرض الحالة الفعلية
+//  المستخدمون
 // ══════════════════════════════════════════════════════════
 async function loadUsers() {
     const tbl = document.getElementById('usersTable');
@@ -933,17 +864,13 @@ async function loadUsers() {
         });
         h += '</tbody></table>';
         tbl.innerHTML = h;
-        // ✅ أعد إظهار لوحة التفاصيل إن كانت مفتوحة قبل التحديث
-        if ((_detailWasOpen || _preserveDetail) && _openInstallId) {
-            showInstallDetail(_openInstallId, true);
-        }
     } catch(e) {
         tbl.innerHTML = '<div style="padding:24px;color:#fca5a5;text-align:center;">❌ خطأ في الاتصال</div>';
     }
 }
 
 // ══════════════════════════════════════════════════════════
-//  نظام الكروت
+//  نظام الكروت (مختصر)
 // ══════════════════════════════════════════════════════════
 function showToast(msg, duration = 3000) {
     let t = document.getElementById('_adminToast');
@@ -964,9 +891,7 @@ async function loadCardData() {
     const btnEn = document.getElementById('btnCardEnable');
     const btnDis = document.getElementById('btnCardDisable');
     statusEl.textContent = 'يتحقق...';
-
     try {
-        // استخدام المسار الصحيح: /admin/api/card_status
         const r = await fetch('/admin/api/card_status', {credentials:'same-origin'});
         const d = await r.json();
         if (d.enabled) {
@@ -980,13 +905,11 @@ async function loadCardData() {
             if (btnEn) btnEn.style.display = '';
             if (btnDis) btnDis.style.display = 'none';
         }
-        // إحصائيات إضافية (اختيارية)
         if (d.stats) {
             const si = document.getElementById('cardStatsInfo');
             if (si) si.textContent = `إجمالي: ${d.stats.total} كرت | متاح: ${d.stats.unused} | جلسات نشطة: ${d.stats.active_sessions}`;
         }
     } catch(e) { statusEl.textContent = '؟ خطأ في الاتصال'; }
-
     await Promise.all([loadVouchers(), loadCardSessions(), loadFrData()]);
 }
 
@@ -994,14 +917,12 @@ async function loadVouchers() {
     const el = document.getElementById('vouchersList');
     el.innerHTML = '<div style="color:var(--indigo);text-align:center;padding:16px;"><i class="fas fa-spinner fa-spin"></i></div>';
     try {
-        // استخدام المسار الصحيح: /admin/api/vouchers
         const r = await fetch('/admin/api/vouchers', {credentials:'same-origin'});
         const d = await r.json();
         if (!d.success || !d.vouchers || !d.vouchers.length) {
             el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:16px;">لا توجد كروت</div>';
             return;
         }
-        // تحويل البيانات إلى الصيغة المطلوبة
         const vouchers = d.vouchers.map(v => ({
             code: v.code || v.code_hash?.slice(0,12) || '????',
             plan_name: v.plan_name || v.plan || '—',
@@ -1084,10 +1005,7 @@ async function setCardSys(enabled) {
     } catch(e) { showToast('❌ خطأ في الاتصال'); }
 }
 
-// ── Feature Restrictions (التقييد) ──
 let _frData = {};
-
-// قائمة الوظائف الكاملة (بما فيها الأدوات الأكاديمية)
 const FR_FEATURE_LABELS = {
     'learning': '🧠 نظام التعلم الذكي',
     'rotating': '🔄 النشر الدوري',
@@ -1141,11 +1059,9 @@ async function loadFrData() {
 
         const el = document.getElementById('frFeaturesList');
         let html = '';
-        // عرض جميع الوظائف المحددة في القائمة الثابتة
         for (const [key, label] of Object.entries(FR_FEATURE_LABELS)) {
             html += _frRenderItem(key, label, globalRestr.includes(key));
         }
-        // عرض المستخدمين الخمسة
         for (const [uid, label] of Object.entries(FR_USER_LABELS)) {
             html += _frRenderItem(uid, label, (userRestr[uid] || []).includes('all'));
         }
@@ -1175,7 +1091,6 @@ async function saveFrRestrictions() {
     } catch(e) { showToast('❌ خطأ في الاتصال'); }
 }
 
-// ── إنشاء الكروت ──
 async function createVouchers() {
     const planId   = parseInt(document.getElementById('cardPlan').value) || 1;
     const count    = parseInt(document.getElementById('cardCount').value) || 1;
@@ -1193,7 +1108,6 @@ async function createVouchers() {
             const codes = d.codes || [];
             _currentVoucherCodesText = codes.join('\n');
             const tgNote = d.tg_sent ? ' <span style="color:#34d399;font-size:.75rem;">✈️ أُرسلت عبر تيليجرام</span>' : '';
-            // عرض الكروت في شبكة منسقة
             const codesHtml = codes.map(c =>
                 `<div style="background:rgba(0,0,0,0.4);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:8px 12px;font-family:'Courier New',monospace;font-size:0.88rem;letter-spacing:2px;color:#6ee7b7;display:flex;justify-content:space-between;align-items:center;">
                     <span>${c}</span>
@@ -1241,7 +1155,6 @@ async function sendVouchersAsNotif() {
 async function deleteUsedVouchers() {
     if (!confirm('هل أنت متأكد من حذف الكروت المستخدمة؟')) return;
     try {
-        // استخدام المسار الصحيح: /admin/api/delete_vouchers مع used_only
         const r = await fetch('/admin/api/delete_vouchers', {
             method:'POST', credentials:'same-origin',
             headers:{'Content-Type':'application/json'},
@@ -1365,7 +1278,6 @@ async function promoLoad() {
     const toggleEl = document.getElementById('promoToggleBtn');
     statusEl.textContent = 'يتحقق...';
     try {
-        // استخدام المسار الصحيح: /api/promo_status
         const r = await fetch('/api/promo_status', {credentials:'same-origin'});
         const d = await r.json();
         if (d.enabled) {
@@ -1386,7 +1298,6 @@ async function promoLoad() {
 
 async function promoToggle() {
     try {
-        // استخدام المسار الصحيح: /api/promo_toggle
         const r = await fetch('/api/promo_toggle', {method:'POST', credentials:'same-origin'});
         await r.json();
         await promoLoad();
@@ -1398,7 +1309,6 @@ async function promoSave() {
     const res = document.getElementById('promoResult');
     res.innerHTML = '<span style="color:var(--indigo);"><i class="fas fa-spinner fa-spin me-1"></i>جاري الحفظ...</span>';
     try {
-        // استخدام المسار الصحيح: /api/promo_save
         const r = await fetch('/api/promo_save', {
             method:'POST', credentials:'same-origin',
             headers:{'Content-Type':'application/json'},
@@ -1413,11 +1323,9 @@ async function promoSave() {
 
 async function promoResetIndex() {
     try {
-        // استخدام مسار موجود: /api/promo_save مع نفس الرسائل
         const r = await fetch('/api/promo_data', {credentials:'same-origin'});
         const d = await r.json();
         if (d.success && d.messages) {
-            // إعادة الحفظ مع نفس الرسائل يعيد المؤشر إلى 0
             await fetch('/api/promo_save', {
                 method:'POST', credentials:'same-origin',
                 headers:{'Content-Type':'application/json'},
@@ -1443,7 +1351,6 @@ async function loadFiles() {
     listEl.innerHTML = '<div style="color:var(--indigo);text-align:center;padding:24px;"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
     statusEl.textContent = '';
     try {
-        // المسار الصحيح: /api/admin/list_project_files
         const r = await fetch('/api/admin/list_project_files', {credentials:'same-origin'});
         const d = await r.json();
         if (!d.success) { listEl.innerHTML = `<div style="color:#fca5a5;padding:16px;">❌ ${d.error || 'خطأ'}</div>`; return; }
@@ -1663,7 +1570,7 @@ function adminCopyTokenLink(token) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  النظام (التحديث) — نظام البصمة أُزيل بالكامل بطلب المستخدم
+//  النظام (التحديث فقط)
 // ══════════════════════════════════════════════════════════
 async function checkForUpdate() {
     const btn = document.getElementById('updateBtn');
@@ -1692,626 +1599,8 @@ async function checkForUpdate() {
 }
 
 // ══════════════════════════════════════════════════════════
-//  فتح الوظيفة المقيدة بالبطاقة أو كلمة المرور
+//  التثبيتات – الواجهة الموحدة (بطاقات + مودالات)
 // ══════════════════════════════════════════════════════════
-async function unlockFeatureWithVoucher(feature, code) {
-    try {
-        const r = await fetch('/api/unlock_feature', {
-            method: 'POST', credentials: 'same-origin',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({feature, code})
-        });
-        const d = await r.json();
-        if (d.success) {
-            showToast('✅ ' + d.message);
-            // إعادة تحميل حالة التقييد
-            await loadFrData();
-            return true;
-        } else {
-            showToast('❌ ' + d.message);
-            return false;
-        }
-    } catch(e) {
-        showToast('❌ خطأ في الاتصال');
-        return false;
-    }
-}
-
-// ══════════════════════════════════════════════════════════
-//  التهيئة
-// ══════════════════════════════════════════════════════════
-// ══════════════════════════════════════════════════════════
-//  التثبيتات – عرض وإدارة الأجهزة المثبت عليها التطبيق
-// ══════════════════════════════════════════════════════════
-let _currentInstall = null;
-
-async function loadInstallations(_preserveDetail = false) {
-    const tbl = document.getElementById('installsTable');
-    const statsEl = document.getElementById('installsStats');
-    // احفظ حالة لوحة التفاصيل قبل التحديث
-    const _detailPanel = document.getElementById('installDetailPanel');
-    const _detailWasOpen = _detailPanel && _detailPanel.style.display !== 'none';
-    const _openInstallId = _currentInstall ? _currentInstall.install_id : null;
-    tbl.innerHTML = '<div style="padding:40px;text-align:center;color:var(--indigo);"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
-    try {
-        const r = await fetch('/admin/api/installations', {credentials:'same-origin'});
-        const d = await r.json();
-        if (!d.success) {
-            tbl.innerHTML = `<div style="padding:24px;color:#fca5a5;text-align:center;">❌ ${d.message || 'خطأ في التحميل'}</div>`;
-            return;
-        }
-        const insts = d.installations || [];
-        const active = insts.filter(i => i.is_active).length;
-        if (statsEl) statsEl.innerHTML = `
-            <div class="stat-card"><div class="stat-icon" style="background:rgba(6,182,212,0.15);">📱</div>
-                <div><div class="stat-val">${insts.length}</div><div class="stat-lbl">إجمالي التثبيتات</div></div></div>
-            <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.15);">🟢</div>
-                <div><div class="stat-val" style="color:#6ee7b7;">${active}</div><div class="stat-lbl">نشط الآن</div></div></div>
-            <div class="stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.15);">👥</div>
-                <div><div class="stat-val" style="color:#a5b4fc;">${insts.reduce((s,i)=>s+Object.keys(i.users_state||{}).length,0)}</div><div class="stat-lbl">إجمالي المستخدمين</div></div></div>
-        `;
-        if (!insts.length) {
-            tbl.innerHTML = '<div style="padding:24px;color:var(--muted);text-align:center;"><i class="fas fa-mobile-alt me-2"></i>لا توجد تثبيتات مسجلة</div>';
-            return;
-        }
-        let h = `<table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
-            <thead><tr style="background:rgba(99,102,241,0.1);border-bottom:1px solid var(--border);">
-                <th style="padding:8px 12px;text-align:right;color:#a5b4fc;">معرف الجهاز</th>
-                <th style="padding:8px 12px;text-align:right;color:#a5b4fc;">IP</th>
-                <th style="padding:8px 12px;text-align:right;color:#a5b4fc;">🌍 الموقع</th>
-                <th style="padding:8px 12px;text-align:right;color:#a5b4fc;">المتصفح</th>
-                <th style="padding:8px 12px;text-align:right;color:#a5b4fc;">الحسابات</th>
-                <th style="padding:8px 12px;text-align:right;color:#a5b4fc;">الحالة</th>
-                <th style="padding:8px 12px;text-align:right;color:#a5b4fc;">تاريخ التثبيت</th>
-                <th style="padding:8px 12px;text-align:right;color:#a5b4fc;">الإجراءات</th>
-            </tr></thead><tbody>`;
-        insts.forEach(inst => {
-            const usersState = inst.users_state || {};
-            const usersCount = Object.keys(usersState).length;
-            const connectedCount = Object.values(usersState).filter(u => u.connected).length;
-            const authCount = Object.values(usersState).filter(u => u.authenticated).length;
-            const installDate = inst.timestamp ? new Date(inst.timestamp).toLocaleString('ar-SA') : '—';
-            const lastSeen = inst.last_seen ? new Date(inst.last_seen).toLocaleString('ar-SA') : '—';
-            const ua = (inst.user_agent || '');
-            // استخراج اسم المتصفح/الجهاز من User-Agent بشكل مقروء
-            let deviceName = '—';
-            if (ua) {
-                if (/iPhone/.test(ua)) deviceName = '📱 iPhone';
-                else if (/iPad/.test(ua)) deviceName = '📱 iPad';
-                else if (/Android/.test(ua)) { deviceName = ua.match(/Android[^;)]+[;)]/)?.[0]?.replace(/[;)]/,'').trim() || '📱 Android'; }
-                else if (/Windows/.test(ua)) deviceName = '💻 Windows';
-                else if (/Macintosh/.test(ua)) deviceName = '💻 Mac';
-                else if (/Linux/.test(ua)) deviceName = '🖥️ Linux';
-                else deviceName = ua.slice(0,30);
-            }
-            const geo = inst.geo || {};
-            const gpsGeo = inst.gps_geo || {};
-            const hasGps = !!(gpsGeo.lat && gpsGeo.lon);
-            const hasIpGeo = !!(geo.lat && geo.lon);
-            const geoParts = [geo.city, geo.region, geo.country].filter(Boolean);
-            const geoStr = geoParts.join(' ← ') || '—';
-            const ispStr = geo.isp ? `<div style="color:#6b7280;font-size:0.63rem;margin-top:2px;" title="${geo.isp}">${geo.isp.slice(0,28)}</div>` : '';
-            const gpsBadge = hasGps
-                ? `<span style="background:rgba(16,185,129,0.2);color:#6ee7b7;border-radius:4px;padding:1px 5px;font-size:0.6rem;margin-right:4px;" title="إحداثيات GPS حقيقية — دقة ${Math.round(gpsGeo.accuracy||0)}م">📡 GPS</span>`
-                : '';
-            const mapLat = hasGps ? gpsGeo.lat : geo.lat;
-            const mapLon = hasGps ? gpsGeo.lon : geo.lon;
-            const mapLabel = encodeURIComponent([geo.city, geo.country].filter(Boolean).join('، ') || inst.ip || '');
-            const mapBtn = (hasGps || hasIpGeo)
-                ? `<button onclick="openGeoMap(${mapLat},${mapLon},${hasGps?gpsGeo.lat:'null'},${hasGps?gpsGeo.lon:'null'},'${mapLabel}','${inst.install_id}')" style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.3);padding:3px 7px;border-radius:5px;font-size:0.68rem;cursor:pointer;" title="عرض الموقع على الخريطة">🗺️</button>`
-                : '';
-            const ipStr = inst.ip || '—';
-            h += `<tr style="border-bottom:1px solid rgba(99,102,241,0.07);transition:background 0.2s;" onmouseover="this.style.background='rgba(99,102,241,0.05)'" onmouseout="this.style.background=''">
-                <td style="padding:8px 12px;">
-                    <div style="font-family:monospace;color:#a5b4fc;font-size:0.72rem;">${inst.install_id?.slice(0,10)}…</div>
-                    <div style="color:#6b7280;font-size:0.65rem;margin-top:2px;" title="${ua}">${deviceName}</div>
-                </td>
-                <td style="padding:8px 12px;">
-                    <div style="color:#94a3b8;font-size:0.75rem;font-family:monospace;">${ipStr}</div>
-                    ${geo.timezone ? `<div style="color:#6b7280;font-size:0.62rem;">${geo.timezone}</div>` : ''}
-                </td>
-                <td style="padding:8px 12px;font-size:0.75rem;">
-                    ${gpsBadge}<span style="color:#e2e8f0;">${geoStr}</span>${ispStr}
-                    <div style="margin-top:3px;">${mapBtn}</div>
-                </td>
-                <td style="padding:8px 12px;color:#6b7280;font-size:0.72rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${ua}">${ua.slice(0,40)}</td>
-                <td style="padding:8px 12px;text-align:center;">
-                    <div style="display:flex;flex-direction:column;gap:3px;align-items:center;">
-                        <span style="background:rgba(99,102,241,0.15);color:#a5b4fc;border-radius:6px;padding:2px 8px;font-size:0.72rem;">${usersCount} 👤</span>
-                        ${authCount > 0 ? `<span style="background:rgba(16,185,129,0.12);color:#6ee7b7;border-radius:6px;padding:1px 6px;font-size:0.65rem;">${authCount} ✅ مسجّل</span>` : ''}
-                        ${connectedCount > 0 ? `<span style="background:rgba(16,185,129,0.12);color:#6ee7b7;border-radius:6px;padding:1px 6px;font-size:0.65rem;">${connectedCount} 🟢</span>` : ''}
-                    </div>
-                </td>
-                <td style="padding:8px 12px;">
-                    <span style="color:${inst.is_active ? '#6ee7b7' : '#6b7280'}">${inst.is_active ? '🟢 نشط' : '⚪ غير نشط'}</span>
-                    <div style="color:#6b7280;font-size:0.65rem;margin-top:3px;">آخر: ${lastSeen}</div>
-                </td>
-                <td style="padding:8px 12px;color:#6b7280;font-size:0.72rem;">${installDate}</td>
-                <td style="padding:8px 12px;">
-                    <div style="display:flex;gap:5px;flex-wrap:wrap;">
-                        <button onclick="showInstallDetail('${inst.install_id}')" style="background:rgba(99,102,241,0.15);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3);padding:4px 8px;border-radius:6px;font-size:0.7rem;cursor:pointer;" title="عرض الحسابات"><i class="fas fa-users"></i> حسابات</button>
-                        <button onclick="deleteInstall('${inst.install_id}')" style="background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);padding:4px 8px;border-radius:6px;font-size:0.7rem;cursor:pointer;" title="حذف التثبيت"><i class="fas fa-trash"></i></button>
-                    </div>
-                </td>
-            </tr>`;
-        });
-        h += '</tbody></table>';
-        tbl.innerHTML = h;
-        // ✅ أعد إظهار لوحة التفاصيل إن كانت مفتوحة قبل التحديث
-        if ((_detailWasOpen || _preserveDetail) && _openInstallId) {
-            showInstallDetail(_openInstallId, true);
-        }
-    } catch(e) {
-        tbl.innerHTML = '<div style="padding:24px;color:#fca5a5;text-align:center;">❌ خطأ في الاتصال</div>';
-    }
-}
-
-async function showInstallDetail(installId, _silentRefresh = false) {
-    try {
-        const r = await fetch(`/admin/api/installation_details/${installId}`, {credentials:'same-origin'});
-        const d = await r.json();
-        if (!d.success) { showToast('❌ ' + d.message); return; }
-        _currentInstall = d.installation;
-        const panel = document.getElementById('installDetailPanel');
-        // بناء عنوان اللوحة مع الموقع الجغرافي
-        const geo = d.installation.geo || {};
-        const geoTxt = [geo.city, geo.country].filter(Boolean).join('، ');
-        const geoIcon = geoTxt ? `<span style="color:#34d399;font-size:.78rem;"> 🌍 ${geoTxt}</span>` : '';
-        const ipTxt = d.installation.ip || '—';
-        document.getElementById('installDetailId').innerHTML =
-            `${installId.slice(0,14)}… &nbsp;|&nbsp; <span style="color:#94a3b8;">${ipTxt}</span> ${geoIcon}`;
-        renderInstallUsers(_currentInstall);
-        // اجعل اللوحة ظاهرة دائماً — لا تخفيها ولا تمررها إن كانت مرئية بالفعل
-        const wasHidden = panel.style.display === 'none';
-        panel.style.display = 'block';
-        if (wasHidden && !_silentRefresh) {
-            panel.scrollIntoView({behavior:'smooth', block:'start'});
-        }
-    } catch(e) { showToast('❌ خطأ في جلب التفاصيل'); }
-}
-
-function refreshInstallDetail() {
-    if (_currentInstall) showInstallDetail(_currentInstall.install_id);
-}
-
-function renderInstallUsers(install) {
-    const tbody = document.getElementById('installUsersBody');
-    const users = install.users_state || {};
-    if (!Object.keys(users).length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted);">لا يوجد مستخدمون في هذا التثبيت</td></tr>';
-        return;
-    }
-    let rows = '';
-    for (const [uid, state] of Object.entries(users)) {
-        const connected = state.connected || false;
-        const connectedAt = state.connected_at ? new Date(state.connected_at).toLocaleString('ar-SA') : '—';
-        const lastSeen = state.last_seen ? new Date(state.last_seen).toLocaleString('ar-SA') : '—';
-        const phone = state.phone || '—';
-        const accountName = state.account_name || '—';
-        const isAuth = state.authenticated || false;
-        const isBlocked = state.blocked || false;
-        rows += `<tr style="border-bottom:1px solid rgba(99,102,241,0.07);">
-            <td style="padding:8px 12px;">
-                <strong style="color:#a5b4fc;">${state.name || uid}</strong>
-                ${isAuth ? '<span style="display:block;color:#6ee7b7;font-size:0.7rem;">✅ مسجّل دخول</span>' : ''}
-                ${isBlocked ? '<span style="display:block;color:#fca5a5;font-size:0.7rem;">🔒 محظور</span>' : ''}
-            </td>
-            <td style="padding:8px 12px;color:#94a3b8;font-size:0.78rem;">${phone}</td>
-            <td style="padding:8px 12px;color:#94a3b8;font-size:0.78rem;">${accountName}</td>
-            <td style="padding:8px 12px;"><span style="color:${connected ? '#6ee7b7' : '#6b7280'}">${connected ? '🟢 متصل' : '⚪ غير متصل'}</span></td>
-            <td style="padding:8px 12px;color:#6b7280;font-size:0.75rem;">${connectedAt}</td>
-            <td style="padding:8px 12px;color:#6b7280;font-size:0.75rem;">${lastSeen}</td>
-            <td style="padding:8px 12px;">
-                <div style="display:flex;gap:4px;flex-wrap:wrap;">
-                    <button onclick="toggleInstallUserBlock('${install.install_id}','${uid}',${!isBlocked})" style="background:${isBlocked?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)'};color:${isBlocked?'#6ee7b7':'#fca5a5'};border:1px solid ${isBlocked?'rgba(16,185,129,0.3)':'rgba(239,68,68,0.3)'};padding:3px 8px;border-radius:5px;font-size:0.7rem;cursor:pointer;" title="${isBlocked?'فك الحظر':'حظر'}">${isBlocked?'🔓':'🚫'}</button>
-                    <button onclick="forceLogoutInstallUser('${install.install_id}','${uid}')" style="background:rgba(245,158,11,0.12);color:#fcd34d;border:1px solid rgba(245,158,11,0.3);padding:3px 8px;border-radius:5px;font-size:0.7rem;cursor:pointer;" title="تسجيل خروج إجباري">🚪</button>
-                    <button onclick="viewConnectionHistory('${uid}')" style="background:rgba(99,102,241,0.12);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3);padding:3px 8px;border-radius:5px;font-size:0.7rem;cursor:pointer;" title="سجل الاتصالات">📊</button>
-                    <button onclick="exportInstallUsers('${install.install_id}')" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border:1px solid rgba(16,185,129,0.25);padding:3px 8px;border-radius:5px;font-size:0.7rem;cursor:pointer;" title="تصدير CSV">📥</button>
-                    <button onclick="openLiveMirror('${install.install_id}','${uid}')" style="background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.4);padding:3px 8px;border-radius:5px;font-size:0.7rem;cursor:pointer;" title="استعراض مباشر للواجهة الكاملة">👁️ مرآة</button>
-                    <button onclick="openGroupsLinksModal('${install.install_id}','${uid}')" style="background:rgba(99,102,241,0.12);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3);padding:3px 8px;border-radius:5px;font-size:0.7rem;cursor:pointer;" title="مجموعات وروابط">📢 روابط</button>
-                </div>
-            </td>
-        </tr>`;
-    }
-    tbody.innerHTML = rows;
-}
-
-async function toggleInstallUserBlock(installId, userId, blocked) {
-    try {
-        const r = await fetch('/admin/api/toggle_block_user', {
-            method:'POST', credentials:'same-origin',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({install_id: installId, user_id: userId, blocked})
-        });
-        const d = await r.json();
-        if (d.success) { showToast(`✅ ${blocked ? 'تم حظر' : 'تم فك حظر'} المستخدم ${userId}`); await showInstallDetail(installId); }
-        else showToast('❌ ' + d.message);
-    } catch(e) { showToast('❌ خطأ في الاتصال'); }
-}
-
-async function forceLogoutInstallUser(installId, userId) {
-    if (!confirm(`هل أنت متأكد من تسجيل خروج ${userId} إجبارياً؟`)) return;
-    try {
-        const r = await fetch('/admin/api/force_logout_install_user', {
-            method:'POST', credentials:'same-origin',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({install_id: installId, user_id: userId})
-        });
-        const d = await r.json();
-        if (d.success) { showToast('✅ ' + d.message); await showInstallDetail(installId); }
-        else showToast('❌ ' + d.message);
-    } catch(e) { showToast('❌ خطأ في الاتصال'); }
-}
-
-async function deleteInstall(installId) {
-    if (!confirm(`هل أنت متأكد من حذف التثبيت ${installId.slice(0,8)}؟`)) return;
-    try {
-        const r = await fetch('/admin/api/delete_install', {
-            method:'POST', credentials:'same-origin',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({install_id: installId})
-        });
-        const d = await r.json();
-        if (d.success) { showToast('✅ تم حذف التثبيت'); loadInstallations(); }
-        else showToast('❌ ' + d.message);
-    } catch(e) { showToast('❌ خطأ في الاتصال'); }
-}
-
-async function viewConnectionHistory(userId) {
-    try {
-        const r = await fetch(`/admin/api/user_connection_history/${userId}`, {credentials:'same-origin'});
-        const d = await r.json();
-        if (!d.success) { showToast('❌ ' + (d.message || 'فشل جلب السجل')); return; }
-        let html = `<div style="font-size:0.85rem;max-height:70vh;overflow-y:auto;">`;
-        if (!d.history || !d.history.length) {
-            html += '<p style="color:var(--muted);text-align:center;padding:20px;">لا توجد سجلات اتصال</p>';
-        } else {
-            d.history.forEach(h => {
-                const connAt = h.connected_at ? new Date(h.connected_at).toLocaleString('ar-SA') : '—';
-                const discAt = h.disconnected_at ? new Date(h.disconnected_at).toLocaleString('ar-SA') : '—';
-                const lastSeen = h.last_seen ? new Date(h.last_seen).toLocaleString('ar-SA') : '—';
-                html += `<div style="border:1px solid var(--border);margin-bottom:10px;padding:12px;border-radius:10px;background:rgba(0,0,0,0.2);">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
-                        <div><span style="color:var(--muted);font-size:0.72rem;">جهاز:</span><br><code style="color:#a5b4fc;font-size:0.75rem;">${h.install_id?.slice(0,12)}...</code></div>
-                        <div><span style="color:var(--muted);font-size:0.72rem;">IP:</span><br><span style="color:#94a3b8;font-size:0.75rem;">${h.ip || '—'}</span></div>
-                        <div><span style="color:var(--muted);font-size:0.72rem;">📱 رقم الجوال:</span><br><span style="color:#e2e8f0;font-size:0.8rem;">${h.phone || '—'}</span></div>
-                        <div><span style="color:var(--muted);font-size:0.72rem;">👤 اسم التليجرام:</span><br><span style="color:#e2e8f0;font-size:0.8rem;">${h.account_name || '—'}</span></div>
-                        <div><span style="color:var(--muted);font-size:0.72rem;">⏱️ آخر اتصال:</span><br><span style="color:#6ee7b7;font-size:0.75rem;">${connAt}</span></div>
-                        <div><span style="color:var(--muted);font-size:0.72rem;">⏱️ آخر انقطاع:</span><br><span style="color:#fca5a5;font-size:0.75rem;">${discAt}</span></div>
-                        <div><span style="color:var(--muted);font-size:0.72rem;">👁️ آخر نشاط:</span><br><span style="color:#fbbf24;font-size:0.75rem;">${lastSeen}</span></div>
-                        <div><span style="color:var(--muted);font-size:0.72rem;">الحالة:</span><br><span style="color:${h.connected?'#6ee7b7':'#6b7280'}">${h.connected?'🟢 متصل':'⚪ غير متصل'}</span></div>
-                    </div>
-                    ${h.session_history && h.session_history.length ? `
-                    <details style="margin-top:6px;">
-                        <summary style="cursor:pointer;color:#a5b4fc;font-size:0.78rem;padding:4px 0;">📋 سجل الجلسات (${h.session_history.length})</summary>
-                        <div style="margin-top:6px;padding:6px;background:rgba(0,0,0,0.3);border-radius:6px;">
-                            ${h.session_history.map(s=>`
-                                <div style="font-size:0.72rem;border-bottom:1px dotted rgba(99,102,241,0.2);padding:4px 0;color:#94a3b8;">
-                                    🟢 ${s.connected_at ? new Date(s.connected_at).toLocaleString('ar-SA') : '—'}
-                                    ${s.disconnected_at ? ` &nbsp;→&nbsp; 🔴 ${new Date(s.disconnected_at).toLocaleString('ar-SA')}` : ' &nbsp;→&nbsp; <span style="color:#6ee7b7;">لا يزال متصلاً</span>'}
-                                    ${s.phone ? `<br>📱 ${s.phone}` : ''}
-                                    ${s.account_name ? ` &nbsp;|&nbsp; 👤 ${s.account_name}` : ''}
-                                </div>`).join('')}
-                        </div>
-                    </details>` : ''}
-                </div>`;
-            });
-        }
-        html += '</div>';
-        _showAdminModal(`سجل اتصالات: ${userId}`, html);
-    } catch(e) { showToast('❌ خطأ في الاتصال'); }
-}
-
-function exportInstallUsers(installId) {
-    window.location.href = `/admin/api/export_install_users/${installId}`;
-}
-
-function _showAdminModal(title, bodyHtml) {
-    let modal = document.getElementById('_adminModal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = '_adminModal';
-        modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);padding:16px;';
-        modal.innerHTML = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;max-width:700px;width:100%;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.7);">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);">
-                <h6 id="_adminModalTitle" style="margin:0;color:#e2e8f0;font-weight:700;"></h6>
-                <button onclick="document.getElementById('_adminModal').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:4px;">✕</button>
-            </div>
-            <div id="_adminModalBody" style="padding:16px 20px;overflow-y:auto;flex:1;"></div>
-        </div>`;
-        document.body.appendChild(modal);
-    }
-    document.getElementById('_adminModalTitle').textContent = title;
-    document.getElementById('_adminModalBody').innerHTML = bodyHtml;
-    modal.style.display = 'flex';
-}
-
-
-window.addEventListener('load', () => {
-    // كلمة مرور وبصمة لوحة الإدارة أُزيلتا بالكامل بطلب المستخدم — تُفتح مباشرةً دون أي شاشة دخول
-    _enterDashboard();
-
-    // ── Socket.IO: اكتشاف التثبيتات الجديدة فوراً ──────────────────
-    try {
-        if (typeof io !== 'undefined') {
-            const _adminSocket = io({ transports: ['websocket', 'polling'], reconnectionAttempts: 5 });
-            _adminSocket.on('new_installation', (data) => {
-                showToast(`📱 تثبيت جديد: ${data.user_name || data.user_id} من ${data.ip || '—'}`);
-                if (_currentSection === 'installations') {
-                    // تحديث الجدول مع الحفاظ على لوحة التفاصيل المفتوحة
-                    loadInstallations(true);
-                } else {
-                    // badge في الشريط الجانبي
-                    const navItem = document.querySelector('.nav-item[onclick*="installations"]');
-                    if (navItem && !navItem.querySelector('._instBadge')) {
-                        const badge = document.createElement('span');
-                        badge.className = '_instBadge';
-                        badge.style.cssText = 'background:#ef4444;color:#fff;border-radius:50%;padding:1px 6px;font-size:0.65rem;margin-right:4px;';
-                        badge.textContent = '●';
-                        navItem.prepend(badge);
-                    }
-                }
-            });
-            _adminSocket.on('installation_updated', (data) => {
-                // تحديث التفاصيل في مكانها دون إخفائها
-                if (_currentSection === 'installations') {
-                    if (_currentInstall && _currentInstall.install_id === data.install_id) {
-                        showInstallDetail(_currentInstall.install_id, true);
-                    }
-                    loadInstallations(true);
-                }
-            });
-        }
-
-// ══════════════════════════════════════════
-//  خريطة Leaflet – عرض موقع التثبيت
-// ══════════════════════════════════════════
-let _leafletMap = null;
-
-function openGeoMap(ipLat, ipLon, gpsLat, gpsLon, labelEncoded, installId) {
-    const modal = document.getElementById('geoMapModal');
-    if (!modal) return;
-    modal.style.display = 'flex';
-    const label = decodeURIComponent(labelEncoded || '');
-    const hasGps = (gpsLat !== null && gpsLat !== undefined && String(gpsLat) !== 'null');
-    const hasIp  = (ipLat  !== null && ipLat  !== undefined && String(ipLat)  !== 'null');
-    const mainLat = hasGps ? parseFloat(gpsLat) : parseFloat(ipLat);
-    const mainLon = hasGps ? parseFloat(gpsLon) : parseFloat(ipLon);
-
-    document.getElementById('geoMapTitle').textContent = label || `تثبيت: ${(installId||'').slice(0,10)}…`;
-    document.getElementById('geoMapGpsInfo').innerHTML = hasGps
-        ? `<span style="color:#6ee7b7;">📡 GPS: ${parseFloat(gpsLat).toFixed(5)}, ${parseFloat(gpsLon).toFixed(5)}</span>`
-        : `<span style="color:#6b7280;">📡 لا توجد إحداثيات GPS من الجهاز</span>`;
-    document.getElementById('geoMapIpInfo').innerHTML = hasIp
-        ? `<span style="color:#94a3b8;">🌐 IP: ${parseFloat(ipLat).toFixed(4)}, ${parseFloat(ipLon).toFixed(4)}</span>`
-        : '';
-
-    setTimeout(() => {
-        const mapEl = document.getElementById('leafletMapContainer');
-        if (_leafletMap) { _leafletMap.remove(); _leafletMap = null; }
-        _leafletMap = L.map(mapEl, {zoomControl: true, attributionControl: true});
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap', maxZoom: 19
-        }).addTo(_leafletMap);
-        _leafletMap.setView([mainLat, mainLon], hasGps ? 16 : 12);
-
-        if (hasGps) {
-            const gpsIcon = L.divIcon({
-                className: '',
-                html: '<div style="background:#10b981;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(16,185,129,0.35);"></div>',
-                iconSize: [16,16], iconAnchor: [8,8]
-            });
-            L.marker([parseFloat(gpsLat), parseFloat(gpsLon)], {icon: gpsIcon})
-                .addTo(_leafletMap)
-                .bindPopup(`<b>📡 موقع GPS حقيقي</b><br>${parseFloat(gpsLat).toFixed(5)}, ${parseFloat(gpsLon).toFixed(5)}`)
-                .openPopup();
-        }
-        if (hasIp) {
-            const ipIcon = L.divIcon({
-                className: '',
-                html: '<div style="background:#6366f1;width:12px;height:12px;border-radius:50%;border:2px solid #fff;opacity:0.75;"></div>',
-                iconSize: [12,12], iconAnchor: [6,6]
-            });
-            L.marker([parseFloat(ipLat), parseFloat(ipLon)], {icon: ipIcon})
-                .addTo(_leafletMap)
-                .bindPopup(`<b>🌐 موقع IP (تقريبي)</b><br>${parseFloat(ipLat).toFixed(4)}, ${parseFloat(ipLon).toFixed(4)}`);
-        }
-        _leafletMap.invalidateSize();
-    }, 120);
-}
-
-function closeGeoMap() {
-    document.getElementById('geoMapModal').style.display = 'none';
-    if (_leafletMap) { _leafletMap.remove(); _leafletMap = null; }
-}
-
-// ══════════════════════════════════════════
-//  مودال المجموعات والروابط لكل مستخدم
-// ══════════════════════════════════════════
-async function openGroupsLinksModal(installId, userId) {
-    const modal = document.getElementById('groupsLinksModal');
-    const body  = document.getElementById('glmBody');
-    if (!modal) return;
-    document.getElementById('glmTitle').textContent = `مجموعات وروابط: ${userId}`;
-    body.innerHTML = '<div style="text-align:center;padding:30px;color:#a5b4fc;"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
-    modal.style.display = 'flex';
-    try {
-        const r = await fetch(`/admin/api/user_live_settings/${installId}/${userId}`, {credentials:'same-origin'});
-        const d = await r.json();
-        if (!d.success) { body.innerHTML = `<div style="color:#fca5a5;padding:20px;">❌ ${d.message}</div>`; return; }
-        const groups = (d.settings || {}).groups || [];
-        const msg    = (d.settings || {}).message || '';
-        if (!groups.length && !msg) {
-            body.innerHTML = '<div style="color:#6b7280;padding:24px;text-align:center;">لا توجد مجموعات أو رسائل محفوظة</div>';
-            return;
-        }
-        let html = '';
-        if (groups.length) {
-            html += `<div style="font-weight:700;color:#a5b4fc;margin-bottom:10px;font-size:0.85rem;"><i class="fas fa-users me-1"></i>المجموعات والقنوات (${groups.length})</div>`;
-            html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">';
-            groups.forEach((g, i) => {
-                const isLink = g.startsWith('http') || g.startsWith('t.me') || g.startsWith('@');
-                const link = isLink ? (g.startsWith('http') ? g : `https://t.me/${g.replace('@','')}`) : null;
-                const safeG = g.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                html += `<div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
-                    <span style="color:#e2e8f0;font-size:0.8rem;">${i+1}. ${link ? `<a href="${link}" target="_blank" style="color:#67e8f9;text-decoration:none;">${safeG}</a>` : safeG}</span>
-                    <button onclick="copyToClip(${JSON.stringify(g)},this)" style="background:rgba(99,102,241,0.15);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3);padding:3px 8px;border-radius:5px;font-size:0.7rem;cursor:pointer;flex-shrink:0;"><i class="fas fa-copy"></i> نسخ</button>
-                </div>`;
-            });
-            html += '</div>';
-        }
-        if (msg) {
-            const safeMsg = msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-            html += `<div style="font-weight:700;color:#fcd34d;margin-bottom:8px;font-size:0.85rem;"><i class="fas fa-envelope me-1"></i>الرسالة المحفوظة</div>`;
-            html += `<div style="position:relative;">
-                <pre style="white-space:pre-wrap;color:#e2e8f0;font-size:0.78rem;background:rgba(0,0,0,0.3);border-radius:8px;padding:12px 14px;max-height:200px;overflow-y:auto;border:1px solid rgba(245,158,11,0.2);margin:0;">${safeMsg}</pre>
-                <button onclick="copyToClip(${JSON.stringify(msg)},this)" style="position:absolute;top:8px;left:8px;background:rgba(245,158,11,0.15);color:#fcd34d;border:1px solid rgba(245,158,11,0.3);padding:3px 8px;border-radius:5px;font-size:0.7rem;cursor:pointer;"><i class="fas fa-copy"></i> نسخ</button>
-            </div>`;
-        }
-        body.innerHTML = html;
-    } catch(e) {
-        body.innerHTML = '<div style="color:#fca5a5;padding:20px;">❌ خطأ في جلب البيانات</div>';
-    }
-}
-
-function closeGroupsLinksModal() {
-    document.getElementById('groupsLinksModal').style.display = 'none';
-}
-
-function copyToClip(text, btn) {
-    navigator.clipboard.writeText(text).then(() => {
-        const orig = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check"></i> تم!';
-        btn.style.color = '#6ee7b7';
-        setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 1800);
-    }).catch(() => showToast('❌ تعذّر النسخ'));
-}
-
-// ══════════════════════════════════════════════════
-//  المرآة المباشرة Live Mirror
-// ══════════════════════════════════════════════════
-let _mirrorInterval = null;
-
-async function openLiveMirror(installId, userId) {
-    const modal = document.getElementById('liveMirrorModal');
-    if (!modal) return;
-    document.getElementById('lmTitle').textContent = `${userId} — ${installId.slice(0,10)}…`;
-    document.getElementById('lmBody').innerHTML = '<div style="text-align:center;padding:40px;color:#a5b4fc;"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
-    modal.style.display = 'flex';
-    modal._installId = installId;
-    modal._userId = userId;
-    await refreshLiveMirror(installId, userId);
-    // تحديث تلقائي كل 5 ثواني
-    if (_mirrorInterval) clearInterval(_mirrorInterval);
-    _mirrorInterval = setInterval(() => refreshLiveMirror(installId, userId), 5000);
-}
-
-function closeLiveMirror() {
-    document.getElementById('liveMirrorModal').style.display = 'none';
-    if (_mirrorInterval) { clearInterval(_mirrorInterval); _mirrorInterval = null; }
-}
-
-async function refreshLiveMirror(installId, userId) {
-    const body = document.getElementById('lmBody');
-    try {
-        const r = await fetch(`/admin/api/user_live_settings/${installId}/${userId}`, {credentials:'same-origin'});
-        const d = await r.json();
-        if (!d.success) { body.innerHTML = `<div style="color:#fca5a5;padding:20px;">❌ ${d.message}</div>`; return; }
-        const s = d.settings || {};
-        const st = d.user_state || {};
-        const geo = d.geo || {};
-        const ts = new Date().toLocaleTimeString('ar-SA');
-
-        // بيانات الموقع الجغرافي الكاملة
-        const geoFull = [geo.city, geo.region, geo.country].filter(Boolean).join(' ← ') || '—';
-        const mapUrl = (geo.lat && geo.lon) ? `https://www.google.com/maps?q=${geo.lat},${geo.lon}&z=14` : '';
-        const mapBtn = mapUrl ? `<a href="${mapUrl}" target="_blank" style="color:#34d399;font-size:0.75rem;margin-right:8px;">🗺️ خريطة</a>` : '';
-        const coordsTxt = (geo.lat && geo.lon) ? `<span style="color:#6b7280;font-size:0.7rem;">(${geo.lat.toFixed(4)}, ${geo.lon.toFixed(4)})</span>` : '';
-        const ispTxt = geo.isp ? `<span style="color:#6b7280;font-size:0.7rem;"> | ${geo.isp}</span>` : '';
-        const tzTxt  = geo.timezone ? `<span style="color:#6b7280;font-size:0.7rem;"> | ${geo.timezone}</span>` : '';
-
-        // المجموعات
-        const groups = s.groups || [];
-        const grpHtml = groups.length
-            ? groups.map((g,i) => `<div style="background:rgba(99,102,241,0.1);border-radius:6px;padding:4px 8px;margin:2px 0;font-size:0.75rem;color:#c4c9d4;">
-                <span style="color:#6b7280;font-size:0.7rem;">${i+1}.</span> ${g}</div>`).join('')
-            : '<div style="color:#6b7280;font-size:0.78rem;">لا توجد مجموعات محفوظة</div>';
-
-        // الرسالة
-        const msgTxt = s.message ? `<pre style="white-space:pre-wrap;color:#e2e8f0;font-size:0.78rem;background:rgba(0,0,0,0.3);border-radius:6px;padding:10px;max-height:120px;overflow-y:auto;margin:0;">${s.message}</pre>` : '<div style="color:#6b7280;font-size:0.78rem;">لا توجد رسالة محفوظة</div>';
-
-        // الجدولة
-        const schedEnabled = s.schedule_enabled || false;
-        const schedTime    = s.schedule_time || '—';
-        const schedDays    = (s.schedule_days || []).join('، ') || 'لا توجد أيام';
-        const schedStatus  = schedEnabled ? `<span style="color:#6ee7b7;">✅ مفعّل</span> — ${schedTime} — ${schedDays}` : '<span style="color:#6b7280;">⏸️ موقف</span>';
-
-        // الصورة
-        const imgPath = s.image_path || s.scheduled_image_path || '';
-        const imgHtml = imgPath ? `<div style="color:#fbbf24;font-size:0.78rem;">📷 ${imgPath.split('/').pop()}</div>` : '<div style="color:#6b7280;font-size:0.78rem;">لا توجد صورة</div>';
-
-        body.innerHTML = `
-        <!-- شريط الحالة -->
-        <div style="background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.25);border-radius:10px;padding:12px 16px;margin-bottom:12px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-                <div>
-                    <span style="color:#67e8f9;font-weight:700;">${st.name || userId}</span>
-                    ${st.authenticated ? '<span style="color:#6ee7b7;font-size:0.75rem;margin-right:8px;">✅ مسجّل دخول تيليجرام</span>' : '<span style="color:#6b7280;font-size:0.75rem;margin-right:8px;">⭕ غير مسجّل</span>'}
-                    ${st.connected ? '<span style="color:#34d399;font-size:0.75rem;">🟢 متصل</span>' : '<span style="color:#6b7280;font-size:0.75rem;">⚫ غير متصل</span>'}
-                </div>
-                <div style="color:#6b7280;font-size:0.7rem;">آخر تحديث: ${ts}</div>
-            </div>
-            <div style="margin-top:6px;font-size:0.78rem;color:#94a3b8;">
-                📱 ${st.phone || '—'} &nbsp;|&nbsp; 👤 ${st.account_name || '—'}
-            </div>
-        </div>
-
-        <!-- الموقع الجغرافي -->
-        <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:10px 14px;margin-bottom:12px;">
-            <div style="font-weight:600;color:#6ee7b7;font-size:0.78rem;margin-bottom:6px;"><i class="fas fa-map-marker-alt me-1"></i>الموقع الجغرافي الدقيق</div>
-            <div style="font-size:0.8rem;">
-                ${mapBtn}<span style="color:#e2e8f0;">${geoFull}</span> ${coordsTxt}
-            </div>
-            <div style="margin-top:4px;font-size:0.72rem;color:#6b7280;">${ispTxt}${tzTxt}</div>
-        </div>
-
-        <!-- شبكة الإعدادات -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-            <!-- المجموعات -->
-            <div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:10px 12px;">
-                <div style="font-weight:600;color:#a5b4fc;font-size:0.78rem;margin-bottom:6px;">📢 المجموعات (${groups.length})</div>
-                <div style="max-height:140px;overflow-y:auto;">${grpHtml}</div>
-            </div>
-            <!-- الرسالة -->
-            <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:10px 12px;">
-                <div style="font-weight:600;color:#fcd34d;font-size:0.78rem;margin-bottom:6px;">✉️ الرسالة المحفوظة</div>
-                ${msgTxt}
-            </div>
-        </div>
-
-        <!-- الجدولة والصورة -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.18);border-radius:10px;padding:10px 12px;">
-                <div style="font-weight:600;color:#6ee7b7;font-size:0.78rem;margin-bottom:6px;">⏱️ الجدولة</div>
-                <div style="font-size:0.78rem;">${schedStatus}</div>
-            </div>
-            <div style="background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.18);border-radius:10px;padding:10px 12px;">
-                <div style="font-weight:600;color:#fbbf24;font-size:0.78rem;margin-bottom:6px;">🖼️ الصورة</div>
-                ${imgHtml}
-            </div>
-        </div>`;
-    } catch(e) {
-        body.innerHTML = '<div style="color:#fca5a5;padding:20px;">❌ خطأ في جلب البيانات</div>';
-    }
-}
-    } catch(_e) { console.warn('Socket.IO غير متاح للإدارة:', _e); }
-});
-
-
-// ══════════════════════════════════════════════════════
-// التثبيتات — الواجهة الجديدة (بطاقات + خريطة + مودالات)
-// ══════════════════════════════════════════════════════
-let _ibMap = null, _ibMarker = null, _ibCurrentInstall = null;
 
 function _ibDeviceName(ua) {
     if (!ua) return '📱 جهاز';
@@ -2360,21 +1649,22 @@ async function loadInstallations() {
             const date = inst.timestamp ? new Date(inst.timestamp).toLocaleDateString('ar-SA') : '—';
             const card = document.createElement('div');
             card.className = 'ib-card';
+            card.setAttribute('data-id', inst.install_id);
             card.innerHTML = `
-                <div class="ib-device">${device}</div>
-                <div class="ib-meta">
-                    <span><span class="ib-label">المعرف: </span>${inst.install_id ? inst.install_id.slice(0,14) + '…' : '—'}</span>
-                    <span><span class="ib-label">IP: </span>${inst.ip || '—'}</span>
-                    <span><span class="ib-label">الموقع: </span>${geoStr}</span>
-                    <span><span class="ib-label">تاريخ التثبيت: </span>${date}</span>
+                <div class="device">${device}</div>
+                <div class="meta">
+                    <span><span class="label">المعرف: </span>${inst.install_id ? inst.install_id.slice(0,14) + '…' : '—'}</span>
+                    <span><span class="label">IP: </span>${inst.ip || '—'}</span>
+                    <span><span class="label">الموقع: </span>${geoStr}</span>
+                    <span><span class="label">تاريخ التثبيت: </span>${date}</span>
                 </div>
-                <div class="ib-srow">
-                    <div class="ib-stat">📌 <b>${usersCount}</b> حساب</div>
-                    <div class="ib-stat">🟢 <b>${activeCount}</b> نشط</div>
-                    <div class="ib-stat">${inst.is_active ? '✅ نشط' : '⚪ غير نشط'}</div>
+                <div class="stats-row">
+                    <div class="stat-item">📌 <span>${usersCount}</span> حساب</div>
+                    <div class="stat-item">🟢 <span>${activeCount}</span> نشط</div>
+                    <div class="stat-item">${inst.is_active ? '✅ نشط' : '⚪ غير نشط'}</div>
                 </div>
-                <div class="ib-vid">${inst.install_id ? inst.install_id.slice(0,10) : '—'}</div>
-                <div class="ib-hint">اضغط للتفاصيل</div>
+                <div class="badge-version">${inst.install_id ? inst.install_id.slice(0,10) : '—'}</div>
+                <div class="click-hint">اضغط للتفاصيل</div>
             `;
             card.addEventListener('click', () => ibOpenModal(inst.install_id));
             grid.appendChild(card);
@@ -2394,7 +1684,7 @@ async function ibOpenModal(installId) {
         document.getElementById('ibModalTitle').textContent = '📱 ' + _ibDeviceName(inst.user_agent || '');
         ibRenderModal(inst);
         const overlay = document.getElementById('ibDetailModal');
-        overlay.style.display = 'flex';
+        overlay.classList.add('active');
         setTimeout(() => ibInitMap(inst), 330);
     } catch(e) { showToast('❌ خطأ في جلب التفاصيل'); }
 }
@@ -2413,41 +1703,42 @@ function ibRenderModal(inst) {
 
     const accountsHtml = Object.entries(users).map(([uid, state]) => {
         const isAct = !!(state.authenticated && state.connected);
-        return `<div class="ib-acc" data-uid="${uid}">
+        const telegramName = state.account_name || '';
+        const phone = state.phone || '';
+        return `<div class="account-item" data-uid="${uid}">
             <div>
-                <strong style="color:#0b1d31;">${state.name || uid}</strong>
-                ${state.account_name ? '<span style="color:#64748b;font-size:12px;margin-right:6px;">@' + state.account_name + '</span>' : ''}
-                ${state.phone ? '<span style="color:#94a3b8;font-size:12px;">' + state.phone + '</span>' : ''}
+                <strong style="color:#e2e8f0;">${state.name || uid}</strong>
+                ${telegramName ? '<span class="telegram-name">@' + telegramName + '</span>' : ''}
+                ${phone ? '<span style="color:#94a3b8;font-size:13px;margin-right:6px;">' + phone + '</span>' : ''}
             </div>
-            <span class="ib-sbadge ${isAct ? 'ib-sact' : 'ib-sinact'}">${isAct ? '🟢 نشط' : '🔴 غير نشط'}</span>
+            <span class="status-badge ${isAct ? 'status-active' : 'status-inactive'}">${isAct ? '🟢 نشط' : '🔴 غير نشط'}</span>
         </div>`;
     }).join('');
 
     body.innerHTML = `
-        <div class="ib-dgrid">
-            <div class="ib-ditem"><span class="ib-dl">رقم IP</span><div class="ib-dv">${inst.ip || '—'}</div></div>
-            <div class="ib-ditem"><span class="ib-dl">الموقع الجغرافي</span><div class="ib-dv">${geoStr}</div></div>
-            <div class="ib-ditem"><span class="ib-dl">تاريخ التثبيت</span><div class="ib-dv">${date}</div></div>
-            <div class="ib-ditem"><span class="ib-dl">الحسابات</span><div class="ib-dv">${usersCount} منشأ / ${activeCount} نشط</div></div>
-            ${geo.isp ? '<div class="ib-ditem" style="grid-column:1/-1;"><span class="ib-dl">مزود الإنترنت (ISP)</span><div class="ib-dv">' + geo.isp + '</div></div>' : ''}
+        <div class="detail-grid">
+            <div class="detail-item"><span class="label">رقم IP</span><div class="value">${inst.ip || '—'}</div></div>
+            <div class="detail-item"><span class="label">الموقع الجغرافي</span><div class="value">${geoStr}</div></div>
+            <div class="detail-item"><span class="label">تاريخ التثبيت</span><div class="value">${date}</div></div>
+            <div class="detail-item"><span class="label">الحسابات</span><div class="value">${usersCount} منشأ / ${activeCount} نشط</div></div>
+            ${geo.isp ? '<div class="detail-item" style="grid-column:1/-1;"><span class="label">مزود الإنترنت (ISP)</span><div class="value">' + geo.isp + '</div></div>' : ''}
         </div>
-        <div style="font-weight:600;color:#0b1d31;margin-bottom:6px;">👥 قائمة الحسابات (اضغط على أي حساب):</div>
-        <div class="ib-accs" id="ibAccsList">${accountsHtml || '<div style="color:#64748b;padding:12px;text-align:center;">لا يوجد حسابات</div>'}</div>
-        <div id="ibGeoStatus" style="font-size:13px;color:#475569;margin-top:10px;">${(lat && lon) ? '📍 خط العرض: ' + lat.toFixed(4) + ' — خط الطول: ' + lon.toFixed(4) : '📍 لا توجد بيانات موقع'}</div>
-        <div class="ib-mapbox"><div id="ibRealMap"></div></div>
+        <div style="font-weight:600;color:#e2e8f0;margin-bottom:6px;">👥 قائمة الحسابات (اضغط على أي حساب):</div>
+        <div class="accounts-list" id="ibAccsList">${accountsHtml || '<div style="color:#94a3b8;padding:12px;text-align:center;">لا يوجد حسابات</div>'}</div>
+        <div id="ibGeoStatus" style="font-size:13px;color:#94a3b8;margin-top:10px;">${(lat && lon) ? '📍 خط العرض: ' + lat.toFixed(4) + ' — خط الطول: ' + lon.toFixed(4) : '📍 لا توجد بيانات موقع'}</div>
+        <div class="map-container"><div id="realMap"></div></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px;">
-            <button class="ib-btn ib-btn-success" id="ibLocateBtn">📍 تحديث الموقع</button>
-            ${(lat && lon) ? '<button class="ib-btn ib-btn-outline" onclick="window.open(\'https://www.openstreetmap.org/?mlat=' + lat + '&mlon=' + lon + '&zoom=15\',\'_blank\')">🗺️ فتح الخريطة</button>' : ''}
+            <button class="btn btn-success" id="ibLocateBtn">📍 تحديث الموقع</button>
+            ${(lat && lon) ? '<button class="btn btn-outline" onclick="window.open(\'https://www.openstreetmap.org/?mlat=' + lat + '&mlon=' + lon + '&zoom=15\',\'_blank\')">🗺️ فتح الخريطة</button>' : ''}
         </div>
-        <div class="ib-acts">
-            <button class="ib-btn ib-btn-danger" onclick="ibDeleteInstall()">🗑️ إلغاء التثبيت</button>
-            <button class="ib-btn ib-btn-primary" onclick="ibOpenLiveMirror()">🖥️ استعراض الشاشة</button>
-            <button class="ib-btn ib-btn-warning" onclick="ibLogoutAll()">🚪 إخراج الكل</button>
+        <div class="actions-group">
+            <button class="btn btn-danger" onclick="ibDeleteInstall()">🗑️ إلغاء التثبيت</button>
+            <button class="btn btn-primary" onclick="ibOpenLiveMirror()">🖥️ استعراض الشاشة (عام)</button>
+            <button class="btn btn-warning" onclick="ibLogoutAll()">🚪 إخراج الكل</button>
         </div>
     `;
 
-    // ربط الحسابات بالنقر
-    body.querySelectorAll('.ib-acc').forEach(el => {
+    body.querySelectorAll('.account-item').forEach(el => {
         el.addEventListener('click', function(e) {
             e.stopPropagation();
             const uid = this.dataset.uid;
@@ -2456,13 +1747,12 @@ function ibRenderModal(inst) {
         });
     });
 
-    // زر تحديث الموقع
     const locBtn = document.getElementById('ibLocateBtn');
     if (locBtn) locBtn.addEventListener('click', ibFetchRealLocation);
 }
 
 function ibInitMap(inst) {
-    const container = document.getElementById('ibRealMap');
+    const container = document.getElementById('realMap');
     if (!container || typeof L === 'undefined') return;
     if (_ibMap) { try { _ibMap.remove(); } catch(_e) {} _ibMap = null; _ibMarker = null; }
     const geo = inst.geo || {};
@@ -2470,7 +1760,7 @@ function ibInitMap(inst) {
     const lat = parseFloat(gps.lat || geo.lat || 24.7136);
     const lon = parseFloat(gps.lon || geo.lon || 46.6753);
     try {
-        _ibMap = L.map('ibRealMap').setView([lat, lon], 12);
+        _ibMap = L.map('realMap').setView([lat, lon], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'&copy; OpenStreetMap'}).addTo(_ibMap);
         _ibMarker = L.marker([lat, lon]).addTo(_ibMap).bindPopup('📍 ' + (_ibGeoStr(geo) || 'الموقع') + '<br>' + (inst.ip || '')).openPopup();
     } catch(_e) {}
@@ -2547,40 +1837,43 @@ async function ibLogoutAll() {
 
 function ibCloseDetailModal() {
     const overlay = document.getElementById('ibDetailModal');
-    if (overlay) overlay.style.display = 'none';
+    if (overlay) overlay.classList.remove('active');
     if (_ibMap) { try { _ibMap.remove(); } catch(_e) {} _ibMap = null; _ibMarker = null; }
     _ibCurrentInstall = null;
 }
 
+// ── مودال الحساب الفرعي ──
 function ibOpenAccountModal(install, uid, state) {
     const title = document.getElementById('ibAccModalTitle');
     const body = document.getElementById('ibAccModalBody');
     if (!title || !body) return;
     title.textContent = '⚙️ إعدادات ' + (state.name || uid);
     const isAct = !!(state.authenticated && state.connected);
+    const telegramName = state.account_name || '';
+    const phone = state.phone || '';
     body.innerHTML = `
-        <div>
-            <div class="ib-ditem"><span class="ib-dl">الاسم</span><div class="ib-dv">${state.name || uid}</div></div>
-            ${state.account_name ? '<div class="ib-ditem"><span class="ib-dl">اسم المستخدم في تليجرام</span><div class="ib-dv">@' + state.account_name + '</div></div>' : ''}
-            ${state.phone ? '<div class="ib-ditem"><span class="ib-dl">رقم الهاتف</span><div class="ib-dv" style="direction:ltr;unicode-bidi:embed;">' + state.phone + '</div></div>' : ''}
-            <div class="ib-ditem"><span class="ib-dl">الحالة</span><div class="ib-dv">${isAct ? '🟢 نشط (متصل)' : '🔴 غير نشط (غير متصل)'}</div></div>
-            ${state.authenticated ? '<div class="ib-ditem"><span class="ib-dl">الدخول</span><div class="ib-dv">✅ مسجّل دخول</div></div>' : ''}
-            ${state.blocked ? '<div class="ib-ditem"><span class="ib-dl">الحظر</span><div class="ib-dv" style="color:#ef4444;">🔒 محظور</div></div>' : ''}
+        <div class="detail-grid" style="grid-template-columns:1fr;">
+            <div class="detail-item"><span class="label">الاسم</span><div class="value">${state.name || uid}</div></div>
+            ${telegramName ? '<div class="detail-item"><span class="label">اسم المستخدم في تليجرام</span><div class="value">@' + telegramName + '</div></div>' : ''}
+            ${phone ? '<div class="detail-item"><span class="label">رقم الهاتف</span><div class="value" style="direction:ltr;unicode-bidi:embed;">' + phone + '</div></div>' : ''}
+            <div class="detail-item"><span class="label">الحالة</span><div class="value">${isAct ? '🟢 نشط (متصل)' : '🔴 غير نشط (غير متصل)'}</div></div>
+            ${state.authenticated ? '<div class="detail-item"><span class="label">الدخول</span><div class="value">✅ مسجّل دخول</div></div>' : ''}
+            ${state.blocked ? '<div class="detail-item"><span class="label">الحظر</span><div class="value" style="color:#ef4444;">🔒 محظور</div></div>' : ''}
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px;margin:14px 0;">
-            <button class="ib-btn ib-btn-danger" id="ibAccBtnLogout">🚪 إخراج المستخدم / إلغاء الجلسة</button>
-            <button class="ib-btn ib-btn-primary" id="ibAccBtnScreen">🖥️ استعراض شاشة البرنامج</button>
-            <button class="ib-btn ib-btn-outline" id="ibAccBtnLinks">🔗 استعراض الروابط والمجموعات</button>
-            <button class="ib-btn ${state.blocked ? 'ib-btn-success' : 'ib-btn-warning'}" id="ibAccBtnBlock">${state.blocked ? '🔓 فك الحظر' : '🚫 حظر المستخدم'}</button>
+        <div style="display:flex;flex-direction:column;gap:12px;margin:14px 0;">
+            <button class="btn btn-danger" id="ibAccBtnLogout">🚪 إخراج المستخدم / إلغاء الجلسة</button>
+            <button class="btn btn-primary" id="ibAccBtnScreen">🖥️ استعراض شاشة البرنامج</button>
+            <button class="btn btn-outline" id="ibAccBtnLinks">🔗 استعراض الروابط والمجموعات</button>
+            <button class="btn ${state.blocked ? 'btn-success' : 'btn-warning'}" id="ibAccBtnBlock">${state.blocked ? '🔓 فك الحظر' : '🚫 حظر المستخدم'}</button>
         </div>
-        <div id="ibLinksDisplay" style="display:none;" class="ib-links-box">
+        <div id="ibLinksDisplay" style="display:none;" class="links-section">
             <h4>مجموعات ${state.name || uid}:</h4>
             <div id="ibLinksList"></div>
         </div>
     `;
 
     const overlay = document.getElementById('ibAccountModal');
-    overlay.style.display = 'flex';
+    overlay.classList.add('active');
 
     document.getElementById('ibAccBtnLogout').addEventListener('click', async () => {
         if (!confirm('هل أنت متأكد من إخراج ' + (state.name || uid) + '؟')) return;
@@ -2606,17 +1899,17 @@ function ibOpenAccountModal(install, uid, state) {
         const list = document.getElementById('ibLinksList');
         if (disp.style.display === 'block') { disp.style.display = 'none'; return; }
         disp.style.display = 'block';
-        list.innerHTML = '<div style="color:#64748b;text-align:center;padding:10px;"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
+        list.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:10px;"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
         try {
             const rr = await fetch('/admin/api/get_user_groups/' + uid, {credentials:'same-origin'});
             const dd = await rr.json();
             if (dd.success && dd.groups && dd.groups.length) {
                 list.innerHTML = dd.groups.map(g => {
                     const name = (typeof g === 'object') ? (g.title || g.name || JSON.stringify(g)) : String(g);
-                    return '<div class="ib-litem"><span>' + name + '</span><button class="ib-copybtn" onclick="navigator.clipboard.writeText(\'' + name.replace(/'/g, "\\'") + '\')">📋 نسخ</button></div>';
+                    return '<div class="link-item"><span>' + name + '</span><button class="copy-btn" onclick="navigator.clipboard.writeText(\'' + name.replace(/'/g, "\\'") + '\')">📋 نسخ</button></div>';
                 }).join('');
             } else {
-                list.innerHTML = '<div style="color:#64748b;font-size:13px;text-align:center;padding:10px;">لا توجد مجموعات مسجلة.</div>';
+                list.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:10px;">لا توجد مجموعات مسجلة.</div>';
             }
         } catch(_e) {
             list.innerHTML = '<div style="color:#ef4444;font-size:13px;text-align:center;padding:10px;">❌ خطأ في التحميل</div>';
@@ -2640,10 +1933,10 @@ function ibOpenAccountModal(install, uid, state) {
 
 function ibCloseAccModal() {
     const overlay = document.getElementById('ibAccountModal');
-    if (overlay) overlay.style.display = 'none';
+    if (overlay) overlay.classList.remove('active');
 }
 
-// ربط أزرار الإغلاق عند تحميل الصفحة
+// ربط أزرار الإغلاق
 (function() {
     function ibBindClose() {
         const cm = document.getElementById('ibCloseModal');
@@ -2659,69 +1952,270 @@ function ibCloseAccModal() {
     else ibBindClose();
 })();
 
+// ══════════════════════════════════════════════════════════
+//  المودالات الإضافية (خريطة، مجموعات، مرآة)
+// ══════════════════════════════════════════════════════════
+let _leafletMap = null;
+
+function openGeoMap(ipLat, ipLon, gpsLat, gpsLon, labelEncoded, installId) {
+    const modal = document.getElementById('geoMapModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    const label = decodeURIComponent(labelEncoded || '');
+    const hasGps = (gpsLat !== null && gpsLat !== undefined && String(gpsLat) !== 'null');
+    const hasIp  = (ipLat  !== null && ipLat  !== undefined && String(ipLat)  !== 'null');
+    const mainLat = hasGps ? parseFloat(gpsLat) : parseFloat(ipLat);
+    const mainLon = hasGps ? parseFloat(gpsLon) : parseFloat(ipLon);
+
+    document.getElementById('geoMapTitle').textContent = label || `تثبيت: ${(installId||'').slice(0,10)}…`;
+    document.getElementById('geoMapGpsInfo').innerHTML = hasGps
+        ? `<span style="color:#6ee7b7;">📡 GPS: ${parseFloat(gpsLat).toFixed(5)}, ${parseFloat(gpsLon).toFixed(5)}</span>`
+        : `<span style="color:#6b7280;">📡 لا توجد إحداثيات GPS من الجهاز</span>`;
+    document.getElementById('geoMapIpInfo').innerHTML = hasIp
+        ? `<span style="color:#94a3b8;">🌐 IP: ${parseFloat(ipLat).toFixed(4)}, ${parseFloat(ipLon).toFixed(4)}</span>`
+        : '';
+
+    setTimeout(() => {
+        const mapEl = document.getElementById('leafletMapContainer');
+        if (_leafletMap) { _leafletMap.remove(); _leafletMap = null; }
+        _leafletMap = L.map(mapEl, {zoomControl: true, attributionControl: true});
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap', maxZoom: 19
+        }).addTo(_leafletMap);
+        _leafletMap.setView([mainLat, mainLon], hasGps ? 16 : 12);
+
+        if (hasGps) {
+            const gpsIcon = L.divIcon({
+                className: '',
+                html: '<div style="background:#10b981;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(16,185,129,0.35);"></div>',
+                iconSize: [16,16], iconAnchor: [8,8]
+            });
+            L.marker([parseFloat(gpsLat), parseFloat(gpsLon)], {icon: gpsIcon})
+                .addTo(_leafletMap)
+                .bindPopup(`<b>📡 موقع GPS حقيقي</b><br>${parseFloat(gpsLat).toFixed(5)}, ${parseFloat(gpsLon).toFixed(5)}`)
+                .openPopup();
+        }
+        if (hasIp) {
+            const ipIcon = L.divIcon({
+                className: '',
+                html: '<div style="background:#6366f1;width:12px;height:12px;border-radius:50%;border:2px solid #fff;opacity:0.75;"></div>',
+                iconSize: [12,12], iconAnchor: [6,6]
+            });
+            L.marker([parseFloat(ipLat), parseFloat(ipLon)], {icon: ipIcon})
+                .addTo(_leafletMap)
+                .bindPopup(`<b>🌐 موقع IP (تقريبي)</b><br>${parseFloat(ipLat).toFixed(4)}, ${parseFloat(ipLon).toFixed(4)}`);
+        }
+        _leafletMap.invalidateSize();
+    }, 120);
+}
+
+function closeGeoMap() {
+    document.getElementById('geoMapModal').style.display = 'none';
+    if (_leafletMap) { _leafletMap.remove(); _leafletMap = null; }
+}
+
+async function openGroupsLinksModal(installId, userId) {
+    const modal = document.getElementById('groupsLinksModal');
+    const body  = document.getElementById('glmBody');
+    if (!modal) return;
+    document.getElementById('glmTitle').textContent = `مجموعات وروابط: ${userId}`;
+    body.innerHTML = '<div style="text-align:center;padding:30px;color:#a5b4fc;"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
+    modal.style.display = 'flex';
+    try {
+        const r = await fetch(`/admin/api/user_live_settings/${installId}/${userId}`, {credentials:'same-origin'});
+        const d = await r.json();
+        if (!d.success) { body.innerHTML = `<div style="color:#fca5a5;padding:20px;">❌ ${d.message}</div>`; return; }
+        const groups = (d.settings || {}).groups || [];
+        const msg    = (d.settings || {}).message || '';
+        if (!groups.length && !msg) {
+            body.innerHTML = '<div style="color:#6b7280;padding:24px;text-align:center;">لا توجد مجموعات أو رسائل محفوظة</div>';
+            return;
+        }
+        let html = '';
+        if (groups.length) {
+            html += `<div style="font-weight:700;color:#a5b4fc;margin-bottom:10px;font-size:0.85rem;"><i class="fas fa-users me-1"></i>المجموعات والقنوات (${groups.length})</div>`;
+            html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">';
+            groups.forEach((g, i) => {
+                const isLink = g.startsWith('http') || g.startsWith('t.me') || g.startsWith('@');
+                const link = isLink ? (g.startsWith('http') ? g : `https://t.me/${g.replace('@','')}`) : null;
+                const safeG = g.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                html += `<div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                    <span style="color:#e2e8f0;font-size:0.8rem;">${i+1}. ${link ? `<a href="${link}" target="_blank" style="color:#67e8f9;text-decoration:none;">${safeG}</a>` : safeG}</span>
+                    <button onclick="copyToClip(${JSON.stringify(g)},this)" style="background:rgba(99,102,241,0.15);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3);padding:3px 8px;border-radius:5px;font-size:0.7rem;cursor:pointer;flex-shrink:0;"><i class="fas fa-copy"></i> نسخ</button>
+                </div>`;
+            });
+            html += '</div>';
+        }
+        if (msg) {
+            const safeMsg = msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            html += `<div style="font-weight:700;color:#fcd34d;margin-bottom:8px;font-size:0.85rem;"><i class="fas fa-envelope me-1"></i>الرسالة المحفوظة</div>`;
+            html += `<div style="position:relative;">
+                <pre style="white-space:pre-wrap;color:#e2e8f0;font-size:0.78rem;background:rgba(0,0,0,0.3);border-radius:8px;padding:12px 14px;max-height:200px;overflow-y:auto;border:1px solid rgba(245,158,11,0.2);margin:0;">${safeMsg}</pre>
+                <button onclick="copyToClip(${JSON.stringify(msg)},this)" style="position:absolute;top:8px;left:8px;background:rgba(245,158,11,0.15);color:#fcd34d;border:1px solid rgba(245,158,11,0.3);padding:3px 8px;border-radius:5px;font-size:0.7rem;cursor:pointer;"><i class="fas fa-copy"></i> نسخ</button>
+            </div>`;
+        }
+        body.innerHTML = html;
+    } catch(e) {
+        body.innerHTML = '<div style="color:#fca5a5;padding:20px;">❌ خطأ في جلب البيانات</div>';
+    }
+}
+
+function closeGroupsLinksModal() {
+    document.getElementById('groupsLinksModal').style.display = 'none';
+}
+
+function copyToClip(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> تم!';
+        btn.style.color = '#6ee7b7';
+        setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 1800);
+    }).catch(() => showToast('❌ تعذّر النسخ'));
+}
+
+// ══════════════════════════════════════════════════
+//  المرآة المباشرة Live Mirror
+// ══════════════════════════════════════════════════
+let _mirrorInterval = null;
+
+async function openLiveMirror(installId, userId) {
+    const modal = document.getElementById('liveMirrorModal');
+    if (!modal) return;
+    document.getElementById('lmTitle').textContent = `${userId} — ${installId.slice(0,10)}…`;
+    document.getElementById('lmBody').innerHTML = '<div style="text-align:center;padding:40px;color:#a5b4fc;"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
+    modal.style.display = 'flex';
+    modal._installId = installId;
+    modal._userId = userId;
+    await refreshLiveMirror(installId, userId);
+    if (_mirrorInterval) clearInterval(_mirrorInterval);
+    _mirrorInterval = setInterval(() => refreshLiveMirror(installId, userId), 5000);
+}
+
+function closeLiveMirror() {
+    document.getElementById('liveMirrorModal').style.display = 'none';
+    if (_mirrorInterval) { clearInterval(_mirrorInterval); _mirrorInterval = null; }
+}
+
+async function refreshLiveMirror(installId, userId) {
+    const body = document.getElementById('lmBody');
+    try {
+        const r = await fetch(`/admin/api/user_live_settings/${installId}/${userId}`, {credentials:'same-origin'});
+        const d = await r.json();
+        if (!d.success) { body.innerHTML = `<div style="color:#fca5a5;padding:20px;">❌ ${d.message}</div>`; return; }
+        const s = d.settings || {};
+        const st = d.user_state || {};
+        const geo = d.geo || {};
+        const ts = new Date().toLocaleTimeString('ar-SA');
+
+        const geoFull = [geo.city, geo.region, geo.country].filter(Boolean).join(' ← ') || '—';
+        const mapUrl = (geo.lat && geo.lon) ? `https://www.google.com/maps?q=${geo.lat},${geo.lon}&z=14` : '';
+        const mapBtn = mapUrl ? `<a href="${mapUrl}" target="_blank" style="color:#34d399;font-size:0.75rem;margin-right:8px;">🗺️ خريطة</a>` : '';
+        const coordsTxt = (geo.lat && geo.lon) ? `<span style="color:#6b7280;font-size:0.7rem;">(${geo.lat.toFixed(4)}, ${geo.lon.toFixed(4)})</span>` : '';
+        const ispTxt = geo.isp ? `<span style="color:#6b7280;font-size:0.7rem;"> | ${geo.isp}</span>` : '';
+        const tzTxt  = geo.timezone ? `<span style="color:#6b7280;font-size:0.7rem;"> | ${geo.timezone}</span>` : '';
+
+        const groups = s.groups || [];
+        const grpHtml = groups.length
+            ? groups.map((g,i) => `<div style="background:rgba(99,102,241,0.1);border-radius:6px;padding:4px 8px;margin:2px 0;font-size:0.75rem;color:#c4c9d4;">
+                <span style="color:#6b7280;font-size:0.7rem;">${i+1}.</span> ${g}</div>`).join('')
+            : '<div style="color:#6b7280;font-size:0.78rem;">لا توجد مجموعات محفوظة</div>';
+
+        const msgTxt = s.message ? `<pre style="white-space:pre-wrap;color:#e2e8f0;font-size:0.78rem;background:rgba(0,0,0,0.3);border-radius:6px;padding:10px;max-height:120px;overflow-y:auto;margin:0;">${s.message}</pre>` : '<div style="color:#6b7280;font-size:0.78rem;">لا توجد رسالة محفوظة</div>';
+
+        const schedEnabled = s.schedule_enabled || false;
+        const schedTime    = s.schedule_time || '—';
+        const schedDays    = (s.schedule_days || []).join('، ') || 'لا توجد أيام';
+        const schedStatus  = schedEnabled ? `<span style="color:#6ee7b7;">✅ مفعّل</span> — ${schedTime} — ${schedDays}` : '<span style="color:#6b7280;">⏸️ موقف</span>';
+
+        const imgPath = s.image_path || s.scheduled_image_path || '';
+        const imgHtml = imgPath ? `<div style="color:#fbbf24;font-size:0.78rem;">📷 ${imgPath.split('/').pop()}</div>` : '<div style="color:#6b7280;font-size:0.78rem;">لا توجد صورة</div>';
+
+        body.innerHTML = `
+        <div style="background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.25);border-radius:10px;padding:12px 16px;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <div>
+                    <span style="color:#67e8f9;font-weight:700;">${st.name || userId}</span>
+                    ${st.authenticated ? '<span style="color:#6ee7b7;font-size:0.75rem;margin-right:8px;">✅ مسجّل دخول تيليجرام</span>' : '<span style="color:#6b7280;font-size:0.75rem;margin-right:8px;">⭕ غير مسجّل</span>'}
+                    ${st.connected ? '<span style="color:#34d399;font-size:0.75rem;">🟢 متصل</span>' : '<span style="color:#6b7280;font-size:0.75rem;">⚫ غير متصل</span>'}
+                </div>
+                <div style="color:#6b7280;font-size:0.7rem;">آخر تحديث: ${ts}</div>
+            </div>
+            <div style="margin-top:6px;font-size:0.78rem;color:#94a3b8;">
+                📱 ${st.phone || '—'} &nbsp;|&nbsp; 👤 ${st.account_name || '—'}
+            </div>
+        </div>
+
+        <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:10px 14px;margin-bottom:12px;">
+            <div style="font-weight:600;color:#6ee7b7;font-size:0.78rem;margin-bottom:6px;"><i class="fas fa-map-marker-alt me-1"></i>الموقع الجغرافي الدقيق</div>
+            <div style="font-size:0.8rem;">
+                ${mapBtn}<span style="color:#e2e8f0;">${geoFull}</span> ${coordsTxt}
+            </div>
+            <div style="margin-top:4px;font-size:0.72rem;color:#6b7280;">${ispTxt}${tzTxt}</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:10px 12px;">
+                <div style="font-weight:600;color:#a5b4fc;font-size:0.78rem;margin-bottom:6px;">📢 المجموعات (${groups.length})</div>
+                <div style="max-height:140px;overflow-y:auto;">${grpHtml}</div>
+            </div>
+            <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:10px 12px;">
+                <div style="font-weight:600;color:#fcd34d;font-size:0.78rem;margin-bottom:6px;">✉️ الرسالة المحفوظة</div>
+                ${msgTxt}
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.18);border-radius:10px;padding:10px 12px;">
+                <div style="font-weight:600;color:#6ee7b7;font-size:0.78rem;margin-bottom:6px;">⏱️ الجدولة</div>
+                <div style="font-size:0.78rem;">${schedStatus}</div>
+            </div>
+            <div style="background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.18);border-radius:10px;padding:10px 12px;">
+                <div style="font-weight:600;color:#fbbf24;font-size:0.78rem;margin-bottom:6px;">🖼️ الصورة</div>
+                ${imgHtml}
+            </div>
+        </div>`;
+    } catch(e) {
+        body.innerHTML = '<div style="color:#fca5a5;padding:20px;">❌ خطأ في جلب البيانات</div>';
+    }
+}
+
+// ══════════════════════════════════════════════════════════
+//  التهيئة — تظهر اللوحة مباشرة
+// ══════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+    document.getElementById('sysPageTitle').textContent = document.title;
+    loadUsers();
+
+    // Socket.IO للتثبيتات الجديدة
+    try {
+        if (typeof io !== 'undefined') {
+            const _adminSocket = io({ transports: ['websocket', 'polling'], reconnectionAttempts: 5 });
+            _adminSocket.on('new_installation', (data) => {
+                showToast(`📱 تثبيت جديد: ${data.user_name || data.user_id} من ${data.ip || '—'}`);
+                if (_currentSection === 'installations') {
+                    loadInstallations();
+                } else {
+                    const navItem = document.querySelector('.nav-item[onclick*="installations"]');
+                    if (navItem && !navItem.querySelector('._instBadge')) {
+                        const badge = document.createElement('span');
+                        badge.className = '_instBadge';
+                        badge.style.cssText = 'background:#ef4444;color:#fff;border-radius:50%;padding:1px 6px;font-size:0.65rem;margin-right:4px;';
+                        badge.textContent = '●';
+                        navItem.prepend(badge);
+                    }
+                }
+            });
+            _adminSocket.on('installation_updated', (data) => {
+                if (_currentSection === 'installations') {
+                    if (_ibCurrentInstall && _ibCurrentInstall.install_id === data.install_id) {
+                        ibOpenModal(_ibCurrentInstall.install_id);
+                    }
+                    loadInstallations();
+                }
+            });
+        }
+    } catch(_e) { console.warn('Socket.IO غير متاح للإدارة:', _e); }
+});
 </script>
-
-<!-- ══════════════════════════════════════════════════
-     مودال خريطة Leaflet – موقع التثبيت
-══════════════════════════════════════════════════ -->
-<div id="geoMapModal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
-    <div style="background:#0f172a;border:1px solid rgba(16,185,129,0.4);border-radius:18px;width:100%;max-width:680px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.7);">
-        <div style="padding:14px 18px;border-bottom:1px solid rgba(16,185,129,0.2);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
-            <div style="display:flex;align-items:center;gap:10px;">
-                <span style="color:#34d399;font-size:1.1rem;">🗺️</span>
-                <span id="geoMapTitle" style="color:#34d399;font-weight:700;font-size:0.9rem;"></span>
-            </div>
-            <button onclick="closeGeoMap()" style="background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);padding:4px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-times"></i> إغلاق</button>
-        </div>
-        <div style="padding:10px 16px;border-bottom:1px solid rgba(16,185,129,0.1);display:flex;gap:16px;flex-wrap:wrap;font-size:0.78rem;flex-shrink:0;">
-            <div id="geoMapGpsInfo"></div>
-            <div id="geoMapIpInfo"></div>
-        </div>
-        <div id="leafletMapContainer" style="flex:1;min-height:380px;width:100%;background:#1a1a3e;"></div>
-        <div style="padding:8px 16px;border-top:1px solid rgba(16,185,129,0.1);font-size:0.7rem;color:#4b5563;flex-shrink:0;">
-            🟢 نقطة خضراء = GPS حقيقي &nbsp;|&nbsp; 🔵 نقطة زرقاء = موقع IP (تقريبي)
-        </div>
-    </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════
-     مودال المجموعات والروابط
-══════════════════════════════════════════════════ -->
-<div id="groupsLinksModal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
-    <div style="background:#0f172a;border:1px solid rgba(99,102,241,0.4);border-radius:18px;width:100%;max-width:600px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.7);">
-        <div style="padding:14px 18px;border-bottom:1px solid rgba(99,102,241,0.2);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
-            <div style="display:flex;align-items:center;gap:10px;">
-                <span style="color:#a5b4fc;font-size:1rem;">📢</span>
-                <span id="glmTitle" style="color:#a5b4fc;font-weight:700;font-size:0.9rem;"></span>
-            </div>
-            <button onclick="closeGroupsLinksModal()" style="background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);padding:4px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-times"></i> إغلاق</button>
-        </div>
-        <div id="glmBody" style="overflow-y:auto;padding:16px;flex:1;"></div>
-    </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════
-     مودال المرآة المباشرة Live Mirror
-══════════════════════════════════════════════════ -->
-<div id="liveMirrorModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
-    <div style="background:#0f172a;border:1px solid rgba(251,191,36,0.35);border-radius:16px;width:100%;max-width:720px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.7);">
-        <!-- رأس المودال -->
-        <div style="padding:14px 18px;border-bottom:1px solid rgba(251,191,36,0.2);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
-            <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:10px;height:10px;border-radius:50%;background:#fbbf24;animation:pulse 1.4s infinite;"></div>
-                <span style="color:#fbbf24;font-weight:700;font-size:0.9rem;">👁️ مرآة مباشرة</span>
-                <span id="lmTitle" style="color:#94a3b8;font-size:0.78rem;font-family:monospace;"></span>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-                <span style="color:#6b7280;font-size:0.7rem;">يتحدث كل 5 ث</span>
-                <button onclick="refreshLiveMirror(document.getElementById('liveMirrorModal')._installId, document.getElementById('liveMirrorModal')._userId)" style="background:rgba(99,102,241,0.15);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3);padding:4px 10px;border-radius:6px;font-size:0.72rem;cursor:pointer;"><i class="fas fa-sync-alt"></i></button>
-                <button onclick="closeLiveMirror()" style="background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);padding:4px 10px;border-radius:6px;font-size:0.72rem;cursor:pointer;"><i class="fas fa-times"></i> إغلاق</button>
-            </div>
-        </div>
-        <!-- جسم المودال -->
-        <div id="lmBody" style="overflow-y:auto;padding:14px 16px;flex:1;"></div>
-    </div>
-</div>
-
 </body>
 </html>
