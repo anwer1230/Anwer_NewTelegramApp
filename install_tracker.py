@@ -59,7 +59,20 @@ def _geo_lookup(ip):
         pass
     return {}
 
+try:
+    import github_db as _ghdb_it
+    _GH_SESSIONS_PATH = "data/user_sessions.json"
+except ImportError:
+    _ghdb_it = None
+    _GH_SESSIONS_PATH = None
+
+
 def load_user_sessions():
+    """تحميل بيانات التثبيتات — GitHub أولاً ثم المحلي"""
+    if _ghdb_it:
+        data = _ghdb_it.gh_load(_GH_SESSIONS_PATH, USER_SESSIONS_FILE, None)
+        if data is not None:
+            return data
     with _SESSIONS_LOCK:
         try:
             if os.path.exists(USER_SESSIONS_FILE):
@@ -70,13 +83,75 @@ def load_user_sessions():
         return {"installations": []}
 
 
+def _sanitize_sessions_for_github(data: dict) -> dict:
+    """
+    ينظّف بيانات التثبيتات قبل رفعها إلى GitHub.
+    يحذف الحقول الحساسة (IP دقيق، GPS، UA كامل، session cookies)
+    ويحتفظ بالبيانات الإدارية المفيدة فقط (install_id، حالة الحسابات، المنطقة الجغرافية العامة).
+    """
+    import copy
+    safe = copy.deepcopy(data)
+    for inst in safe.get("installations", []):
+        # احذف IP العنوان الدقيق (استبدله بأول 3 أجزاء فقط)
+        raw_ip = inst.get("ip", "")
+        if raw_ip and "." in raw_ip:
+            parts = raw_ip.split(".")
+            inst["ip"] = ".".join(parts[:3]) + ".x"
+        elif raw_ip:
+            inst["ip"] = raw_ip[:8] + "…"
+
+        # احذف إحداثيات GPS الدقيقة (احتفظ بالمنطقة الجغرافية العامة فقط)
+        inst.pop("gps_geo", None)
+
+        # احذف user_agent الكامل (حساس)
+        ua = inst.get("user_agent", "")
+        if ua and len(ua) > 30:
+            inst["user_agent"] = ua[:30] + "…"
+
+        # في users_state — احذف أي بيانات جلسة حساسة
+        for uid, state in inst.get("users_state", {}).items():
+            state.pop("session_string", None)
+            state.pop("string_session", None)
+            state.pop("cookie", None)
+            state.pop("token", None)
+
+        # الموقع الجغرافي: احتفظ بالبلد والمنطقة فقط (لا lat/lon دقيق)
+        geo = inst.get("geo", {})
+        if geo:
+            inst["geo"] = {
+                "country":  geo.get("country", ""),
+                "region":   geo.get("region", ""),
+                "city":     geo.get("city", ""),
+                "timezone": geo.get("timezone", ""),
+                "isp":      geo.get("isp", ""),
+                # lat/lon مقرّب (درجتان عشريتان ≈ ±1.1 كم)
+                "lat": round(float(geo["lat"]), 2) if geo.get("lat") else None,
+                "lon": round(float(geo["lon"]), 2) if geo.get("lon") else None,
+            }
+    return safe
+
+
 def save_user_sessions(data):
+    """
+    حفظ بيانات التثبيتات:
+    - محلياً: البيانات الكاملة (للإدارة الداخلية)
+    - GitHub: نسخة مُنظَّفة من البيانات الحساسة
+    """
+    # حفظ محلي أولاً بالبيانات الكاملة
     with _SESSIONS_LOCK:
         try:
             with open(USER_SESSIONS_FILE, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            logger.error(f"فشل حفظ user_sessions.json: {e}")
+            logger.error(f"فشل حفظ user_sessions.json محلياً: {e}")
+
+    # رفع نسخة منظَّفة إلى GitHub
+    if _ghdb_it:
+        safe_data = _sanitize_sessions_for_github(data)
+        _ghdb_it.gh_save(
+            _GH_SESSIONS_PATH, None,  # local_path=None: لا تكتب محلياً مرة أخرى
+            safe_data, "تحديث بيانات التثبيتات (آمن)"
+        )
 
 
 def _build_users_state(predefined_users, users_dict, users_lock, load_settings_func):

@@ -27,33 +27,61 @@ _CARDS_LOCK = threading.Lock()
 #  دوال البيانات الأساسية
 # ══════════════════════════════════════════════════════════
 
+try:
+    import github_db as _ghdb
+    _GH_CARDS_PATH = "data/cards.json"
+except ImportError:
+    _ghdb = None
+    _GH_CARDS_PATH = None
+
+_CARDS_DEFAULT = {
+    "card_system_enabled": False,
+    "plans": [
+        {"id": 1, "name": "يومية",   "time_limit": 86400,   "data_limit": 5368709120,  "profile_name": "daily"},
+        {"id": 2, "name": "أسبوعية", "time_limit": 604800,  "data_limit": 10737418240, "profile_name": "weekly"},
+        {"id": 3, "name": "شهرية",   "time_limit": 2592000, "data_limit": 32212254720, "profile_name": "monthly"},
+        {"id": 4, "name": "دائمة",   "time_limit": 0,       "data_limit": 0,           "profile_name": "unlimited"}
+    ],
+    "vouchers": [],
+    "active_card_sessions": []
+}
+
 def load_cards_data():
-    """تحميل بيانات البطاقات من الملف المحلي"""
+    """تحميل بيانات البطاقات — GitHub أولاً ثم المحلي ثم الافتراضي"""
+    if _ghdb:
+        data = _ghdb.gh_load(_GH_CARDS_PATH, CARDS_FILE, None)
+        if data is not None:
+            # تأكد من وجود المفاتيح الأساسية
+            for k, v in _CARDS_DEFAULT.items():
+                if k not in data:
+                    data[k] = v
+            return data
+    # سقط محلي كلاسيكي
     with _CARDS_LOCK:
         try:
             if os.path.exists(CARDS_FILE):
                 with open(CARDS_FILE, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    d = json.load(f)
+                for k, v in _CARDS_DEFAULT.items():
+                    if k not in d:
+                        d[k] = v
+                return d
         except Exception:
             pass
-        default = {
-            "card_system_enabled": False,
-            "plans": [
-                {"id": 1, "name": "يومية",   "time_limit": 86400,   "data_limit": 5368709120,  "profile_name": "daily"},
-                {"id": 2, "name": "أسبوعية", "time_limit": 604800,  "data_limit": 10737418240, "profile_name": "weekly"},
-                {"id": 3, "name": "شهرية",   "time_limit": 2592000, "data_limit": 32212254720, "profile_name": "monthly"},
-                {"id": 4, "name": "دائمة",   "time_limit": 0,       "data_limit": 0,           "profile_name": "unlimited"}
-            ],
-            "vouchers": [],
-            "active_card_sessions": []
-        }
-        with open(CARDS_FILE, 'w', encoding='utf-8') as f:
-            json.dump(default, f, ensure_ascii=False, indent=2)
+        default = dict(_CARDS_DEFAULT)
+        try:
+            with open(CARDS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(default, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
         return default
 
 
 def save_cards_data(data):
-    """حفظ بيانات البطاقات محلياً"""
+    """حفظ بيانات البطاقات محلياً + رفع إلى GitHub"""
+    if _ghdb:
+        _ghdb.gh_save(_GH_CARDS_PATH, CARDS_FILE, data, "تحديث بيانات البطاقات")
+        return
     with _CARDS_LOCK:
         try:
             with open(CARDS_FILE, 'w', encoding='utf-8') as f:

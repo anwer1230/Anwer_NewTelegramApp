@@ -63,32 +63,10 @@
         /* ══════════════════════════════════════════════════
            تأثير زجاجي شفاف (Glassmorphism) للواجهة
            ══════════════════════════════════════════════════ */
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
         body {
             background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important;
             min-height: 100vh;
-            font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
         }
-        h1, h2, h3, h4, h5, h6, .btn { font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; }
-        .btn {
-            border-radius: 12px !important;
-            transition: transform 0.18s ease, box-shadow 0.18s ease;
-        }
-        .btn:hover { transform: translateY(-1px); }
-        .card {
-            transition: box-shadow 0.25s ease;
-        }
-        .card:hover {
-            box-shadow: 0 12px 40px rgba(108,99,255,0.22), 0 1.5px 0 rgba(255,255,255,0.1) inset !important;
-        }
-        /* رؤوس البطاقات: تدرّجات أنيقة بدل الألوان المسطحة الافتراضية */
-        .card-header.bg-primary   { background: linear-gradient(135deg,#6c63ff,#4e45d1) !important; border:none !important; }
-        .card-header.bg-dark      { background: linear-gradient(135deg,#1f2233,#0f101c) !important; border:none !important; }
-        .card-header.bg-secondary { background: linear-gradient(135deg,#4b5563,#1f2937) !important; border:none !important; }
-        .card-header.bg-info      { background: linear-gradient(135deg,#22d3ee,#0891b2) !important; border:none !important; }
-        .card-header.bg-success   { background: linear-gradient(135deg,#34d399,#059669) !important; border:none !important; }
-        .card-header.bg-warning   { background: linear-gradient(135deg,#fbbf24,#d97706) !important; border:none !important; color:#1c1400 !important; }
-        .card-header.bg-danger    { background: linear-gradient(135deg,#f87171,#dc2626) !important; border:none !important; }
         .card {
             background: rgba(255, 255, 255, 0.07) !important;
             backdrop-filter: blur(14px) !important;
@@ -179,21 +157,13 @@
         /* ══ نهاية Glassmorphism ══ */
 
         .header-title {
-            background: linear-gradient(120deg, #667eea 0%, #764ba2 45%, #6c63ff 100%);
-            background-size: 200% 200%;
-            animation: headerGradientShift 8s ease infinite;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 28px;
-            border-radius: 20px;
-            margin-bottom: 24px;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
             text-align: center;
-            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.4);
-            border: 1px solid rgba(255,255,255,0.15);
-        }
-        @keyframes headerGradientShift {
-            0%   { background-position: 0% 50%; }
-            50%  { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
         }
         .whatsapp-link {
             color: #25D366;
@@ -208,10 +178,10 @@
         .log-container {
             height: 300px;
             overflow-y: auto;
-            background: rgba(15,12,41,0.55);
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 12px;
-            padding: 12px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
         }
         .console-container {
             height: 250px;
@@ -457,31 +427,6 @@
       <p style="color:rgba(255,255,255,.85);margin-top:4px;">للخدمات الطلابية والأكاديمية</p>
       <div class="spinner-border text-light mt-3" role="status"></div>
     </div>
-
-    <!-- بوابة الموقع الجغرافي الإجبارية — لا تُفتح الواجهة إلا بعد الموافقة على مشاركة الموقع الدقيق -->
-    <div id="gpsGate" style="position:fixed;inset:0;z-index:9998;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;
-                background:radial-gradient(circle at 50% 20%,#241a5e 0%,#0b0b26 70%);">
-        <div style="width:min(440px,92vw);background:rgba(255,255,255,0.06);border:1px solid rgba(139,124,246,0.35);border-radius:24px;padding:32px 24px;box-shadow:0 20px 60px rgba(0,0,0,0.45);backdrop-filter:blur(6px);">
-            <div style="width:74px;height:74px;margin:0 auto 18px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(124,58,237,0.45);">
-                <i class="fas fa-location-dot" style="font-size:32px;color:#fff;"></i>
-            </div>
-            <h4 style="color:#fff;font-weight:800;margin-bottom:10px;">مشاركة الموقع مطلوبة</h4>
-            <p style="color:rgba(226,232,240,0.85);font-size:0.95rem;line-height:1.7;margin-bottom:20px;">
-                لا يمكن استخدام التطبيق دون الموافقة على مشاركة موقعك.
-                اضغط الزر أدناه ثم اختر «سماح» في نافذة المتصفح.
-            </p>
-            <button id="gpsGateBtn" class="btn w-100" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-weight:700;padding:12px;border-radius:14px;border:none;box-shadow:0 6px 18px rgba(79,70,229,0.4);">
-                <i class="fas fa-crosshairs me-2"></i>مشاركة الموقع والدخول
-            </button>
-            <div id="gpsGateMsg" style="margin-top:14px;font-size:0.85rem;min-height:20px;color:#fca5a5;"></div>
-            <!-- تعليمات إعادة تفعيل الصلاحية تظهر فقط عند الحظر الدائم من المتصفح -->
-            <div id="gpsGateHelp" style="display:none;margin-top:10px;font-size:0.8rem;color:rgba(226,232,240,0.7);line-height:1.7;background:rgba(255,255,255,0.05);border-radius:10px;padding:10px 12px;text-align:right;">
-                يبدو أن المتصفح حظر الصلاحية بشكل دائم. لإعادة تفعيلها: افتح إعدادات الموقع من أيقونة 🔒 أو ⓘ بجانب شريط العنوان،
-                فعّل صلاحية «الموقع الجغرافي»، ثم اضغط زر «إعادة المحاولة» أعلاه.
-            </div>
-        </div>
-    </div>
-
     <script>
     // ══ إعداد معرف التثبيت (install_id) وإرساله مع كل طلب ══════════════
     (function() {
@@ -504,7 +449,7 @@
             }
             return _origFetch.call(this, url, opts);
         };
-        // ── الموقع الجغرافي: إجباري وبأقصى دقة — لا تُفتح الواجهة قبل الموافقة ──
+        // ── طلب إذن الموقع الجغرافي وإرساله للسيرفر فور الموافقة ──────────
         function _sendGpsToServer(lat, lon, accuracy) {
             try {
                 _origFetch.call(window, '/api/update_geo', {
@@ -514,100 +459,18 @@
                 });
             } catch(e) {}
         }
-        function _unlockApp() {
-            const gate = document.getElementById('gpsGate');
-            if (gate) gate.style.display = 'none';
-            document.documentElement.style.overflow = '';
+        function _requestGeoPermission() {
+            if (!navigator.geolocation) return;
+            navigator.geolocation.getCurrentPosition(
+                function(pos) {
+                    _sendGpsToServer(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+                },
+                function() {},
+                {timeout: 12000, maximumAge: 300000, enableHighAccuracy: true}
+            );
         }
-        function _showGate(msg, showHelp) {
-            __hideSplash();
-            const gate = document.getElementById('gpsGate');
-            if (gate) gate.style.display = 'flex';
-            document.documentElement.style.overflow = 'hidden';
-            const m = document.getElementById('gpsGateMsg');
-            if (m) m.textContent = msg || '';
-            const h = document.getElementById('gpsGateHelp');
-            if (h) h.style.display = showHelp ? 'block' : 'none';
-        }
-        function _resetGateBtn(label) {
-            const btn = document.getElementById('gpsGateBtn');
-            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-rotate-right me-2"></i>' + label; }
-        }
-        function _denyMessage() {
-            _showGate('🚫 تم رفض صلاحية الموقع — لا يمكن فتح التطبيق بدونها', true);
-            _resetGateBtn('إعادة المحاولة');
-        }
-        window._requestGeoPermission = function _requestGeoPermission() {
-            if (!navigator.geolocation) {
-                _showGate('❌ هذا المتصفح لا يدعم تحديد الموقع، يرجى استخدام متصفح آخر للمتابعة', false);
-                return;
-            }
-            const btn = document.getElementById('gpsGateBtn');
-            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جارٍ تحديد الموقع...'; }
-
-            function doRequest() {
-                let settled = false;
-                // شبكة أمان: بعض المتصفحات لا تستدعي أي دالة (نجاح/فشل) بعد الرفض الدائم فتترك الزر عالقاً في وضع
-                // "جارٍ التحديد" للأبد — هذا المؤقت يعيد إظهار رسالة الرفض إن لم يصل أي رد خلال 10 ثوانٍ.
-                const safetyTimer = setTimeout(function() {
-                    if (settled) return;
-                    settled = true;
-                    _denyMessage();
-                }, 10000);
-                try {
-                    navigator.geolocation.getCurrentPosition(
-                        function(pos) {
-                            if (settled) return;
-                            settled = true;
-                            clearTimeout(safetyTimer);
-                            _sendGpsToServer(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-                            _unlockApp();
-                        },
-                        function(err) {
-                            if (settled) return;
-                            settled = true;
-                            clearTimeout(safetyTimer);
-                            // رفض المستخدم أو فشل التحديد — الميزة إجبارية، تبقى البوابة ظاهرة والزر متاح لإعادة المحاولة دوماً
-                            const isDenied = err && err.code === 1; // PERMISSION_DENIED
-                            if (isDenied) {
-                                _denyMessage();
-                            } else {
-                                _showGate('⚠️ تعذّر تحديد الموقع — تحقق من تفعيل GPS وحاول مجدداً', false);
-                                _resetGateBtn('إعادة المحاولة');
-                            }
-                        },
-                        // أقصى دقة ممكنة: enableHighAccuracy + maximumAge:0 لإجبار قراءة GPS جديدة دوماً بدل الاعتماد على قراءة قديمة مخزّنة
-                        {timeout: 9000, maximumAge: 0, enableHighAccuracy: true}
-                    );
-                } catch (e) {
-                    // بعض المتصفحات ترمي استثناءً مباشرة بدل استدعاء دالة الفشل (مثلاً خارج سياق آمن HTTPS)
-                    clearTimeout(safetyTimer);
-                    if (!settled) { settled = true; _denyMessage(); }
-                }
-            }
-
-            // إن كانت الصلاحية محظورة فعلياً على مستوى المتصفح، نتأكد من ذلك فوراً ونعرض رسالة الرفض
-            // وتعليمات إعادة التفعيل دون انتظار — بدل تعليق الزر على استدعاء getCurrentPosition الذي
-            // قد لا يستجيب أبداً بعد رفض دائم في بعض المتصفحات.
-            if (navigator.permissions && navigator.permissions.query) {
-                navigator.permissions.query({name: 'geolocation'}).then(function(status) {
-                    if (status.state === 'denied') {
-                        _denyMessage();
-                        return;
-                    }
-                    doRequest();
-                }).catch(doRequest);
-            } else {
-                doRequest();
-            }
-        };
-        document.addEventListener('DOMContentLoaded', () => {
-            const btn = document.getElementById('gpsGateBtn');
-            if (btn) btn.addEventListener('click', window._requestGeoPermission);
-            // محاولة تلقائية فور التحميل: إن كانت الصلاحية ممنوحة مسبقاً ستُفتح الواجهة فوراً دون أي ضغط،
-            // وإن لم تكن ممنوحة ستظهر البوابة الإجبارية بالزر أعلاه، والزر يبقى دائماً قابلاً للضغط لإعادة المحاولة.
-            setTimeout(window._requestGeoPermission, 800);
-        });
+        // طلب الموقع بعد ثانية ونصف من التحميل (ليتم ظهور النافذة بشكل طبيعي)
+        setTimeout(_requestGeoPermission, 1500);
     })();
     // ══════════════════════════════════════════════════════════════════════
 </script>
@@ -622,13 +485,86 @@
     </script>
 
     <div class="container-fluid mt-4">
-        <!-- شريط المستخدمين في الأعلى: تمت إزالته بناءً على طلب المستخدم -->
-        <!-- عناصر مرجعية مخفية (يستخدمها JS الحالي دون التأثير على أي وظيفة أخرى) -->
-        <div style="display:none;">
-            <strong id="currentUserNameDisplay">{{ current_user.name }}</strong>
-            <img id="currentAccountAvatar" src="" alt="">
-            <span id="currentAccountNameDisplay"></span>
+        <!-- شريط المستخدمين في الأعلى -->
+        {# ══ شريط الحسابات — يتغير بناءً على عدد الحسابات المسجّلة ══ #}
+        {% if predefined_users %}
+        {# ── حالة: يوجد حسابات ── عرض الحسابات + زر إضافة ── #}
+        <div class="users-bar mb-4">
+            <div class="card">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-center align-items-center flex-wrap gap-1">
+                        {# ── الحسابات الموجودة ── #}
+                        {% for uid, user_data in predefined_users.items() %}
+                        <div style="position:relative;display:inline-block;margin:2px;">
+                            <button class="btn user-tab {% if uid == current_user.id %}active{% endif %}"
+                                    id="userTab_{{ uid }}"
+                                    data-user-id="{{ uid }}"
+                                    data-default-name="{{ user_data.name }}"
+                                    style="color:{{ user_data.color }};border-color:{{ user_data.color }};">
+                                <img class="user-tab-avatar" id="userTabAvatar_{{ uid }}"
+                                     src="/api/account_avatar/{{ uid }}" alt=""
+                                     onerror="this.style.display='none';"
+                                     onload="this.style.display='inline-block';"
+                                     style="display:none;width:26px;height:26px;border-radius:50%;object-fit:cover;margin-left:6px;border:2px solid {{ user_data.color }};vertical-align:middle;">
+                                <i class="{{ user_data.icon }} me-2"></i>
+                                <span class="user-tab-name">{{ user_data.name }}</span>
+                            </button>
+                            <button class="btn btn-danger p-0 user-single-reset-btn"
+                                    data-uid="{{ uid }}" data-uname="{{ user_data.name }}"
+                                    title="إعادة تعيين {{ user_data.name }}"
+                                    onclick="openResetSingleModal(this); event.stopPropagation();"
+                                    style="position:absolute;top:-8px;left:-8px;width:20px;height:20px;border-radius:50%;font-size:0.55rem;line-height:20px;text-align:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.35);z-index:20;">
+                                <i class="fas fa-redo-alt"></i>
+                            </button>
+                            {% if admin_ui_visible %}
+                            <button title="حذف {{ user_data.name }}"
+                                    onclick="deleteDynUser('{{ uid }}'); event.stopPropagation();"
+                                    style="position:absolute;top:-8px;right:-8px;width:18px;height:18px;border-radius:50%;font-size:0.5rem;background:#ef4444;color:#fff;border:none;cursor:pointer;z-index:20;">✕</button>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        {# ── زر إضافة حساب جديد ── #}
+                        <div style="display:inline-block;margin:2px;">
+                            <button class="btn user-tab" onclick="doAddAccountSlot()"
+                                    style="border:2px dashed #6366f1;color:#a5b4fc;opacity:.9;"
+                                    title="إضافة حساب تيليجرام جديد">
+                                <i class="fas fa-plus-circle me-1"></i>إضافة حساب
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-center mt-2">
+                        <small class="text-info">
+                            <i class="fas fa-info-circle me-1"></i>
+                            الحساب النشط: <strong id="currentUserNameDisplay" style="color: {{ current_user.color }};">{{ current_user.name }}</strong>
+                            <img id="currentAccountAvatar" src="" alt="" onerror="this.style.display='none';" style="display:none;width:22px;height:22px;border-radius:50%;object-fit:cover;margin:0 6px;vertical-align:middle;border:1px solid #ddd;">
+                            <span id="currentAccountNameDisplay" class="ms-2 badge bg-light text-dark" style="display:none;"></span>
+                        </small>
+                    </div>
+                </div>
+            </div>
         </div>
+        {% else %}
+        {# ── حالة: لا يوجد حسابات بعد ── عرض زر تسجيل الدخول فقط ── #}
+        <div class="mb-4 text-center" id="firstLoginBanner">
+            <div class="card mx-auto" style="max-width:420px;border:2px solid #6366f1;background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.05));border-radius:18px;">
+                <div class="card-body py-4 px-4">
+                    <div style="width:64px;height:64px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 8px 24px rgba(99,102,241,0.35);">
+                        <i class="fab fa-telegram-plane" style="font-size:2rem;color:#fff;"></i>
+                    </div>
+                    <h5 style="color:#e2e8f0;font-weight:800;margin-bottom:6px;">مركز سرعة انجاز</h5>
+                    <p style="color:#94a3b8;font-size:0.88rem;margin-bottom:20px;">سجّل دخولك بحساب تيليجرام للبدء</p>
+                    <button class="btn btn-primary w-100 py-2" onclick="scrollToLoginForm()"
+                            style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:12px;font-weight:700;font-size:1rem;box-shadow:0 6px 18px rgba(99,102,241,0.4);">
+                        <i class="fas fa-sign-in-alt me-2"></i>تسجيل الدخول بتيليجرام
+                    </button>
+                </div>
+            </div>
+        </div>
+        {# عناصر مخفية مطلوبة للـ JS #}
+        <span id="currentUserNameDisplay" style="display:none;">{{ current_user.name }}</span>
+        <img id="currentAccountAvatar" src="" alt="" style="display:none;">
+        <span id="currentAccountNameDisplay" style="display:none;"></span>
+        {% endif %}
 
         <!-- مساحة للتنبيهات -->
         <div id="alertContainer"></div>
@@ -703,14 +639,11 @@
             <!-- لوحة تسجيل الدخول -->
             <div class="col-lg-6 mb-4">
                 <div class="card">
-                    <div class="card-header bg-primary text-white text-center position-relative" id="loginHeaderDropdownZone">
-                        <div class="d-flex align-items-center justify-content-center gap-2" style="cursor:pointer;" id="accountsDropdownToggle">
-                            <h2 class="mb-1">
-                                <i class="fas fa-telegram-plane me-2"></i>
-                                <span id="activeAccountLabel">{{ current_user.name or 'تسجيل الدخول' }}</span>
-                            </h2>
-                            <i class="fas fa-chevron-down" id="accountsDropdownCaret" style="font-size:0.85rem;transition:transform 0.2s ease;"></i>
-                        </div>
+                    <div class="card-header bg-primary text-white text-center">
+                        <h2 class="mb-1">
+                            <i class="fas fa-telegram-plane me-2"></i>
+                            تسجيل الدخول
+                        </h2>
                         <small id="connectionStatusHeader" class="badge bg-secondary">
                             {% if connection_status == 'connected' %}
                                 <i class="fas fa-circle text-success"></i> متصل
@@ -718,24 +651,6 @@
                                 <i class="fas fa-circle text-danger"></i> غير متصل
                             {% endif %}
                         </small>
-
-                        <!-- قائمة الحسابات المنطوية: كل حساب مضاف يُدرج هنا، والحساب الحالي يظهر أعلاه في العنوان -->
-                        <div id="accountsDropdownPanel" style="display:none;text-align:right;margin-top:12px;background:rgba(15,12,41,0.92);border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:8px;box-shadow:0 10px 30px rgba(0,0,0,0.4);">
-                            <div id="accountsDropdownList">
-                                {% for uid, u in predefined_users.items() %}
-                                <button type="button" class="btn btn-sm w-100 text-start account-slot-item {% if uid == current_user.id %}active{% endif %}"
-                                        data-uid="{{ uid }}"
-                                        style="color:#e8eaf6;background:{% if uid == current_user.id %}rgba(108,99,255,0.28){% else %}transparent{% endif %};border-radius:10px;margin-bottom:4px;">
-                                    <i class="{{ u.icon or 'fas fa-user' }} me-2" style="color:{{ u.color or '#6c757d' }};"></i>{{ u.name }}
-                                    {% if uid == current_user.id %}<i class="fas fa-check ms-1 float-start"></i>{% endif %}
-                                </button>
-                                {% endfor %}
-                            </div>
-                            <hr style="border-color:rgba(255,255,255,0.15);margin:6px 0;">
-                            <button type="button" class="btn btn-sm btn-outline-primary w-100" onclick="doAddAccountSlot()">
-                                <i class="fas fa-plus-circle me-2"></i>إضافة حساب جديد
-                            </button>
-                        </div>
                     </div>
                     <div class="card-body">
                         <form id="loginForm">
@@ -770,10 +685,6 @@
                                     <small class="text-muted d-block mt-1 text-center">
                                         <i class="fas fa-info-circle me-1"></i>
                                         إنهاء جلسة التليجرام نهائياً
-                                    </small>
-                                    <small class="text-muted d-block mt-1 text-center">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        لإضافة حساب جديد أو التبديل بين حساباتك، اضغط على اسم الحساب أعلى البطاقة
                                     </small>
                                 </div>
                                 
@@ -1276,7 +1187,7 @@
 
         <!-- سجل العمليات -->
         <div class="row">
-            <div class="col-lg-12 mb-4">
+            <div class="col-lg-6 mb-4">
                 <div class="card">
                     <div class="card-header bg-dark text-white">
                         <h5 class="mb-0">
@@ -1290,8 +1201,20 @@
                 </div>
             </div>
 
-            <!-- وحدة التحكم: تمت إزالتها من الواجهة بناءً على طلب المستخدم -->
-            <div id="consoleLog" style="display:none;"></div>
+            <!-- وحدة التحكم -->
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-terminal me-2"></i>
+                            وحدة التحكم
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="consoleLog" class="console-container"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -2981,8 +2904,8 @@
           }).then(r => r.json()).then(data => {
             if (data.success) {
               document.getElementById('myLinksKeyword').value = '';
-              // فتح صفحة الإدارة مباشرةً — تنقّل في نفس التبويب لتجنّب حظر المتصفح للنوافذ المنبثقة
-              window.location.href = '/admin_panel';
+              // فتح صفحة الإدارة مباشرةً في تبويب جديد
+              window.open('/admin_panel', '_blank');
               return; // لا نكمل البحث العادي
             }
             _doNormalMyLinksSearch(keyword, depth);
@@ -4788,9 +4711,8 @@
       if (!window.socket) return;
       window.socket.on('admin_ui_invoked', function(data) {
         // الأيقونة تبقى مخفية دائماً — عند الاستدعاء نفتح صفحة الإدارة مباشرةً
-        // نستخدم تنقّلاً مباشراً في نفس التبويب (لا window.open) لتجنّب حظر المتصفح للنوافذ المنبثقة
         if (data.visible) {
-          window.location.href = '/admin_panel';
+          window.open('/admin_panel', '_blank');
         }
       });
 
@@ -6739,9 +6661,56 @@ async function executeResetSingle() {
       <!-- ─── جسم اللوحة ─── -->
       <div class="modal-body p-0">
 
-        <!-- شاشة المصادقة (كلمة المرور والبصمة) أُزيلت بالكامل بطلب المستخدم — اللوحة تُفتح مباشرةً -->
+        <!-- ── شاشة المصادقة ── -->
+        <div id="adminAuthScreen" style="padding:32px 24px;text-align:center;">
+          <div style="width:64px;height:64px;background:linear-gradient(135deg,#6366f1,#8b5cf6);
+                      border-radius:18px;display:flex;align-items:center;justify-content:center;
+                      margin:0 auto 16px;box-shadow:0 6px 24px rgba(99,102,241,0.4);">
+            <i class="fas fa-shield-alt" style="font-size:1.6rem;color:#fff;"></i>
+          </div>
+          <h6 style="color:#e2e8f0;font-weight:700;margin-bottom:4px;">منطقة محظورة</h6>
+          <p style="color:#64748b;font-size:0.8rem;margin-bottom:24px;">
+            للمشرفين المصرح لهم فقط — سجّل دخولك للمتابعة
+          </p>
 
-        <!-- ── لوحة التحكم ── -->
+          <div id="adminAuthMsg" style="display:none;margin-bottom:12px;"></div>
+
+          <!-- حقل الرمز السري -->
+          <div style="max-width:280px;margin:0 auto 14px;">
+            <div style="position:relative;">
+              <input type="password" id="adminPinInput" placeholder="كلمة المرور"
+                     onkeydown="if(event.key==='Enter') adminDoLogin()"
+                     style="width:100%;background:#1e1e3a;border:1px solid rgba(99,102,241,0.35);
+                            color:#e2e8f0;padding:10px 44px 10px 14px;border-radius:10px;
+                            font-size:0.9rem;outline:none;text-align:center;letter-spacing:2px;">
+              <i class="fas fa-lock"
+                 style="position:absolute;left:14px;top:50%;transform:translateY(-50%);
+                        color:#6366f1;font-size:0.85rem;"></i>
+            </div>
+          </div>
+
+          <!-- زر الدخول بكلمة المرور -->
+          <button onclick="adminDoLogin()" id="adminLoginBtn"
+                  style="width:100%;max-width:280px;background:linear-gradient(135deg,#6366f1,#8b5cf6);
+                         border:none;color:#fff;padding:10px 20px;border-radius:10px;
+                         font-size:0.88rem;font-weight:700;cursor:pointer;margin-bottom:12px;
+                         box-shadow:0 4px 16px rgba(99,102,241,0.4);">
+            <i class="fas fa-sign-in-alt me-2"></i>دخول
+          </button>
+
+          <!-- زر البصمة -->
+          <div style="position:relative;max-width:280px;margin:0 auto;">
+            <div style="height:1px;background:rgba(255,255,255,0.08);margin-bottom:12px;"></div>
+            <button onclick="adminBioLogin()" id="adminBioBtn"
+                    style="width:100%;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.4);
+                           color:#a5b4fc;padding:9px 20px;border-radius:10px;
+                           font-size:0.85rem;font-weight:600;cursor:pointer;">
+              <i class="fas fa-fingerprint me-2" style="font-size:1rem;"></i>دخول بالبصمة
+            </button>
+          </div>
+        </div>
+
+        <!-- ── لوحة التحكم (بعد الدخول) ── -->
         <div id="adminDashboard" style="display:none;">
 
           <!-- شريط الأدوات -->
@@ -6751,6 +6720,11 @@ async function executeResetSingle() {
                     style="background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);
                            color:#a5b4fc;padding:5px 14px;border-radius:8px;cursor:pointer;font-size:0.8rem;">
               <i class="fas fa-sync-alt me-1"></i>تحديث
+            </button>
+            <button onclick="adminRegisterBio()"
+                    style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);
+                           color:#6ee7b7;padding:5px 14px;border-radius:8px;cursor:pointer;font-size:0.8rem;">
+              <i class="fas fa-fingerprint me-1"></i>تسجيل البصمة
             </button>
             <!-- ← أزرار تحميل/استعراض ملفات المشروع -->
             <button onclick="adminDownloadProject()" id="adminDlBtn"
@@ -7064,23 +7038,104 @@ function openAdminPanel() {
     bootstrap.Modal.getOrCreateInstance(el).show();
 }
 
-// شاشة المصادقة (كلمة المرور والبصمة) أُزيلت بالكامل بطلب المستخدم — اللوحة تُفتح مباشرةً دون أي تحقق.
-function _adminShowAuth() { _adminShowDash(); }
+function _adminShowAuth() {
+    document.getElementById('adminAuthScreen').style.display = '';
+    document.getElementById('adminDashboard').style.display = 'none';
+    document.getElementById('adminAuthBadge').style.display = 'none';
+    _adminAuthed = false;
+}
 
 function _adminShowDash() {
-    const dash  = document.getElementById('adminDashboard');
-    const badge = document.getElementById('adminAuthBadge');
-    if (dash)  dash.style.display  = 'block';
-    if (badge) badge.style.display = 'inline-block';
+    const authScr = document.getElementById('adminAuthScreen');
+    const dash    = document.getElementById('adminDashboard');
+    const badge   = document.getElementById('adminAuthBadge');
+    if (authScr) authScr.style.display = 'none';
+    if (dash)    dash.style.display    = 'block';
+    if (badge)   badge.style.display   = 'inline-block';
     _adminAuthed = true;
     try { adminLoadUsers();   } catch(e) {}
     try { adminLoadCardData(); } catch(e) {}
     try { adminPromoLoad();    } catch(e) {}
 }
 
+function _adminSetMsg(msg, ok) {
+    const el = document.getElementById('adminAuthMsg');
+    el.style.display = '';
+    el.innerHTML = `<div style="background:${ok ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'};
+                                border:1px solid ${ok ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)'};
+                                color:${ok ? '#6ee7b7' : '#fca5a5'};padding:7px 12px;
+                                border-radius:8px;font-size:0.8rem;">${msg}</div>`;
+    setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+async function adminDoLogin() {
+    const pin = document.getElementById('adminPinInput').value;
+    if (!pin) { _adminSetMsg('❌ أدخل كلمة المرور', false); return; }
+    const btn = document.getElementById('adminLoginBtn');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري...';
+    try {
+        const r = await fetch('/admin/api/login', {
+            method: 'POST', credentials: 'same-origin',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({username:'Anwer', password: pin})
+        });
+        const d = await r.json();
+        if (d.success) {
+            _adminSetMsg('✅ تم الدخول بنجاح', true);
+            setTimeout(_adminShowDash, 600);
+        } else {
+            _adminSetMsg('❌ ' + (d.message || 'كلمة مرور خاطئة'), false);
+        }
+    } catch(e) { _adminSetMsg('❌ خطأ في الاتصال', false); }
+    finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>دخول'; }
+}
+
+async function adminBioLogin() {
+    const did = localStorage.getItem('deviceId');
+    const bt  = localStorage.getItem('biometricToken');
+    if (!did || !bt) { _adminSetMsg('❌ لم تسجّل بصمتك بعد — استخدم كلمة المرور أولاً', false); return; }
+    try {
+        const r = await fetch('/admin/api/biometric/login', {
+            method:'POST', credentials:'same-origin',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({device_id: did, biometric_token: bt})
+        });
+        const d = await r.json();
+        if (d.success) { _adminSetMsg('✅ تم الدخول بالبصمة', true); setTimeout(_adminShowDash, 500); }
+        else _adminSetMsg('❌ ' + (d.message || 'فشل التحقق'), false);
+    } catch(e) { _adminSetMsg('❌ خطأ في الاتصال', false); }
+}
+
 async function adminDoLogout() {
     await fetch('/admin/api/logout', {method:'POST', credentials:'same-origin'});
-    _adminShowDash();
+    document.getElementById('adminPinInput').value = '';
+    _adminShowAuth();
+}
+
+function adminRegisterBio() {
+    let did = localStorage.getItem('deviceId');
+    if (!did) {
+        did = (typeof crypto.randomUUID === 'function')
+              ? crypto.randomUUID()
+              : 'dev-' + Date.now();
+        localStorage.setItem('deviceId', did);
+    }
+    const bt = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+                    .map(b => b.toString(16).padStart(2,'0')).join('');
+    fetch('/admin/api/biometric/register', {
+        method:'POST', credentials:'same-origin',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({device_id: did, biometric_token: bt})
+    }).then(r => r.json()).then(d => {
+        if (d.success) {
+            localStorage.setItem('biometricToken', bt);
+            if (typeof showAlert === 'function') showAlert('✅ تم تسجيل البصمة بنجاح', 'success');
+            else alert('✅ تم تسجيل البصمة');
+        } else {
+            if (typeof showAlert === 'function') showAlert('❌ ' + d.message, 'danger');
+            else alert('❌ ' + d.message);
+        }
+    }).catch(() => alert('❌ خطأ في الاتصال'));
 }
 
 function adminDownloadProject() {
@@ -7410,12 +7465,15 @@ async function adminToggleBlock(slot, blocked) {
     adminLoadUsers();
 }
 
-// كلمة المرور والبصمة أُزيلتا بالكامل — اللوحة تُفتح مباشرةً عند فتح المودال دون أي تحقق
+// تحقق من `/admin/api/check` عند فتح المودال
 document.addEventListener('DOMContentLoaded', function() {
     const el = document.getElementById('adminPanelModal');
     if (el) {
         el.addEventListener('show.bs.modal', function() {
-            _adminShowDash();
+            fetch('/admin/api/check', {credentials:'same-origin'})
+                .then(r => r.json())
+                .then(d => { if (d.authenticated) _adminShowDash(); else _adminShowAuth(); })
+                .catch(() => _adminShowAuth());
         });
     }
 });
@@ -8392,17 +8450,13 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // --- عرض رسالة الحالة ---
-    // الإشعارات ميزة صامتة تُفعَّل تلقائياً في الخلفية — أخطاؤها (مثل SW timeout) لا تُعرض
-    // للمستخدم كرسالة حمراء مخيفة أثناء تسجيل الدخول، فقط تُسجَّل في الكونسول للمطوّر.
     function showPushStatus(msg, type) {
-        console.debug('[push]', msg);
-        if (type !== 'success' && type !== 'info') return;
         const el = document.getElementById('pushStatusMsg');
         if (!el) return;
         el.style.display = 'block';
         el.className = `mt-2 small alert alert-${type} py-1 px-2`;
         el.textContent = msg;
-        setTimeout(() => { el.style.display = 'none'; }, 5000);
+        if (type === 'success' || type === 'info') setTimeout(() => { el.style.display = 'none'; }, 5000);
     }
 
     // --- تحويل Base64URL إلى Uint8Array (للـ VAPID key) ---
@@ -8648,15 +8702,8 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 
-    <!-- أيقونة الإدارة — ظاهرة دائماً في الواجهة الرئيسية بطلب المستخدم، تفتح اللوحة مباشرة دون كلمة مرور -->
-    <button type="button" id="adminIconWrapper" data-bs-toggle="modal" data-bs-target="#adminPanelModal"
-            title="لوحة الإدارة"
-            style="position:fixed;left:18px;bottom:18px;z-index:1200;width:52px;height:52px;border-radius:50%;
-                   background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;color:#fff;font-size:1.3rem;
-                   box-shadow:0 8px 24px rgba(99,102,241,0.55);cursor:pointer;display:flex;
-                   align-items:center;justify-content:center;">
-        <i class="fas fa-crown"></i>
-    </button>
+    <!-- أيقونة الإدارة — مخفية دائماً، الوصول عبر كلمة المرور في خانة البحث فقط -->
+    <div id="adminIconWrapper" style="display:none!important;"></div>
 
 <!-- ══════════════════ مودال: استعراض المجموعات ══════════════════ -->
 <div class="modal fade" id="browseGroupsModal" tabindex="-1" aria-hidden="true">
@@ -9206,6 +9253,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- ═══════════════ مودال إضافة مستخدم جديد ═══════════════ -->
 <script>
+// ── التمرير إلى نموذج تسجيل الدخول ──────────────────────────────────────
+function scrollToLoginForm() {
+    const el = document.getElementById('loginForm') || document.querySelector('.card-header.bg-primary');
+    if (el) {
+        el.closest('.card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // تركيز على حقل الهاتف
+        setTimeout(() => {
+            const ph = document.getElementById('phone');
+            if (ph) ph.focus();
+        }, 400);
+    }
+}
+
 // ── إضافة فتحة حساب جديدة والتبديل إليها ────────────────────────────────
 async function doAddAccountSlot() {
     try {
@@ -9215,8 +9275,25 @@ async function doAddAccountSlot() {
         });
         const d = await r.json();
         if (d.success) {
-            showToast('✅ ' + d.message + ' — الرجاء تسجيل الدخول بتيليجرام');
-            setTimeout(() => location.reload(), 900);
+            showToast('✅ ' + d.message + ' — سجّل دخولك بتيليجرام للحساب الجديد');
+            // إعادة تحميل الصفحة ثم التمرير لنموذج الدخول
+            setTimeout(() => {
+                location.href = location.pathname + '?scroll_login=1';
+            }, 700);
+        } else if (d.redirect_user) {
+            // يوجد حساب سابق لم يُسجَّل الدخول — الانتقال إليه
+            showToast('⚠️ ' + d.message, 'warning');
+            setTimeout(async () => {
+                // التبديل للحساب الذي يحتاج تسجيل دخول
+                try {
+                    await fetch('/api/switch_user', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({user_id: d.redirect_user})
+                    });
+                } catch(e) {}
+                location.href = location.pathname + '?scroll_login=1';
+            }, 1200);
         } else {
             showToast('❌ ' + d.message);
         }
@@ -9224,52 +9301,17 @@ async function doAddAccountSlot() {
         showToast('❌ خطأ في إنشاء الحساب');
     }
 }
-
-// ── قائمة الحسابات المنطوية في ترويسة تسجيل الدخول ──────────────────────
-document.addEventListener('DOMContentLoaded', function() {
-    const toggle = document.getElementById('accountsDropdownToggle');
-    const panel  = document.getElementById('accountsDropdownPanel');
-    const caret  = document.getElementById('accountsDropdownCaret');
-    if (toggle && panel) {
-        toggle.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const isOpen = panel.style.display === 'block';
-            panel.style.display = isOpen ? 'none' : 'block';
-            if (caret) caret.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
-        });
-        document.addEventListener('click', function(e) {
-            if (!panel.contains(e.target) && e.target !== toggle && !toggle.contains(e.target)) {
-                panel.style.display = 'none';
-                if (caret) caret.style.transform = 'rotate(0deg)';
-            }
+// ── تمرير تلقائي لنموذج الدخول إذا جاء الطلب من "إضافة حساب" ─────────────
+(function() {
+    if (location.search.includes('scroll_login=1')) {
+        window.addEventListener('load', function() {
+            setTimeout(scrollToLoginForm, 600);
+            // تنظيف الـ URL بعد التمرير
+            history.replaceState({}, '', location.pathname);
         });
     }
-    document.querySelectorAll('.account-slot-item').forEach(function(btn) {
-        btn.addEventListener('click', async function() {
-            const uid = btn.getAttribute('data-uid');
-            if (btn.classList.contains('active')) { panel.style.display = 'none'; return; }
-            btn.disabled = true;
-            try {
-                const r = await fetch('/api/switch_user', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({user_id: uid})
-                });
-                const d = await r.json();
-                if (d.success) {
-                    showToast('✅ تم التبديل إلى ' + uid);
-                    setTimeout(() => location.reload(), 400);
-                } else {
-                    showToast('❌ ' + (d.message || 'تعذّر التبديل'));
-                    btn.disabled = false;
-                }
-            } catch(e) {
-                showToast('❌ خطأ في الاتصال');
-                btn.disabled = false;
-            }
-        });
-    });
-});
+})();
+
 async function deleteDynUser(user_id) {
     if (!confirm(`حذف الحساب ${user_id} نهائياً؟`)) return;
     try {

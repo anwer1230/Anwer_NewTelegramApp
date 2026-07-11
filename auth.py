@@ -442,9 +442,29 @@ _DEFAULT_PREDEFINED_USERS = {}
 
 _DYN_USERS_LOCK = __import__('threading').Lock()
 
-def load_dynamic_users():
-    """تحميل قائمة المستخدمين من GitHub أو الملف المحلي أو الافتراضي"""
+# ── ذاكرة مؤقتة للمستخدمين (TTL 30 ثانية) لتقليل طلبات GitHub ──────────────
+_DYN_USERS_CACHE      = None   # القاموس المخزّن مؤقتاً
+_DYN_USERS_CACHE_TS   = 0.0    # وقت آخر تحميل (time.time())
+_DYN_USERS_CACHE_TTL  = 30     # ثواني قبل إعادة التحميل
+
+def invalidate_dynamic_users_cache():
+    """إبطال الذاكرة المؤقتة فوراً — يستخدم بعد الحفظ مباشرةً"""
+    global _DYN_USERS_CACHE, _DYN_USERS_CACHE_TS
+    import time as _time
     with _DYN_USERS_LOCK:
+        _DYN_USERS_CACHE    = None
+        _DYN_USERS_CACHE_TS = 0.0
+
+def load_dynamic_users():
+    """تحميل قائمة المستخدمين — مع ذاكرة مؤقتة TTL=30s لتقليل طلبات GitHub"""
+    global _DYN_USERS_CACHE, _DYN_USERS_CACHE_TS
+    import time as _time
+    with _DYN_USERS_LOCK:
+        now = _time.time()
+        # إعادة استخدام الذاكرة المؤقتة إذا لم تنتهِ صلاحيتها
+        if _DYN_USERS_CACHE and (now - _DYN_USERS_CACHE_TS) < _DYN_USERS_CACHE_TTL:
+            return dict(_DYN_USERS_CACHE)
+
         token, repo, branch = _dyn_github_params()
         content = _dyn_download_github("data/dyn_users.json", token, repo, branch)
         if content:
@@ -457,24 +477,33 @@ def load_dynamic_users():
                             _json.dump({"users": users}, f, ensure_ascii=False, indent=2)
                     except Exception:
                         pass
+                    _DYN_USERS_CACHE    = dict(users)
+                    _DYN_USERS_CACHE_TS = now
                     return users
             except Exception:
                 pass
-        # محاولة القراءة من الملف المحلي
+        # محاولة القراءة من الملف المحلي (أسرع وأضمن بعد الحفظ المباشر)
         if os.path.exists(_DYNAMIC_USERS_FILE):
             try:
                 with open(_DYNAMIC_USERS_FILE, 'r', encoding='utf-8') as f:
                     data = _json.load(f)
                     users = data.get("users", {})
                     if users:
+                        _DYN_USERS_CACHE    = dict(users)
+                        _DYN_USERS_CACHE_TS = now
                         return users
             except Exception:
                 pass
         # الرجوع إلى المستخدمين الثابتين
-        return dict(_DEFAULT_PREDEFINED_USERS)
+        result = dict(_DEFAULT_PREDEFINED_USERS)
+        _DYN_USERS_CACHE    = dict(result)
+        _DYN_USERS_CACHE_TS = now
+        return result
 
 def save_dynamic_users(users_dict):
     """حفظ قائمة المستخدمين إلى الملف المحلي + GitHub"""
+    global _DYN_USERS_CACHE, _DYN_USERS_CACHE_TS
+    import time as _time
     with _DYN_USERS_LOCK:
         content = _json.dumps({"users": users_dict}, ensure_ascii=False, indent=2).encode('utf-8')
         try:
@@ -482,6 +511,9 @@ def save_dynamic_users(users_dict):
                 f.write(content.decode('utf-8'))
         except Exception:
             pass
+        # تحديث الذاكرة المؤقتة فوراً بعد الحفظ المحلي لتعكس التغيير في نفس العملية
+        _DYN_USERS_CACHE    = dict(users_dict)
+        _DYN_USERS_CACHE_TS = _time.time()
         token, repo, branch = _dyn_github_params()
         _dyn_upload_github("data/dyn_users.json", content, token, repo, branch, "تحديث قائمة المستخدمين")
 

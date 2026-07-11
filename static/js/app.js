@@ -181,13 +181,9 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
             verifyForm.style.display = 'none';
             updateLoggedInUI();
-            const activeTab = document.querySelector('.user-tab.active');
-            const def = (activeTab && activeTab.dataset.defaultName) || '';
-            const color = activeTab ? activeTab.style.color : '';
-            updateCurrentUserDisplay(def, r.account_name, color);
-            // تحديث الأفاتار فوراً بعد التحقق
-            _forceReloadAvatars();
-            setTimeout(() => refreshAccountInfo(), 600);
+            // إعادة تحميل الصفحة لإظهار شريط الحسابات مع زر "إضافة حساب"
+            showAlert((r.message || '✅ تم تسجيل الدخول') + ' — جارِ تحديث الصفحة...', 'success');
+            setTimeout(() => location.reload(), 1600);
           }
         }
       } catch (err) {
@@ -210,12 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
         showAlert(r.message || '', r.success ? 'success' : 'danger');
         if (r.success) {
           passwordForm.style.display = 'none';
-          updateLoggedInUI();
-          const activeTab = document.querySelector('.user-tab.active');
-          const def = (activeTab && activeTab.dataset.defaultName) || '';
-          const color = activeTab ? activeTab.style.color : '';
-          updateCurrentUserDisplay(def, r.account_name, color);
-          refreshAccountInfo();
+          showAlert((r.message || '✅ تم تسجيل الدخول') + ' — جارِ تحديث الصفحة...', 'success');
+          // إعادة تحميل الصفحة لإظهار شريط الحسابات مع زر "إضافة حساب"
+          setTimeout(() => location.reload(), 1600);
         }
       } catch (err) {
         showAlert('خطأ: ' + err.message, 'danger');
@@ -718,11 +711,9 @@ function initSocket() {
         if (vc) vc.focus();
       }
     } else if (d.status === 'success') {
-      showAlert(d.message || '✅ تم تسجيل الدخول', 'success');
-      updateLoggedInUI(true);
-      // تحديث الأفاتار فوراً
-      _forceReloadAvatars();
-      setTimeout(() => { refreshAccountInfo(); fetchLoginStatus(); }, 800);
+      showAlert((d.message || '✅ تم تسجيل الدخول') + ' — جارِ تحديث الصفحة...', 'success');
+      // إعادة تحميل الصفحة لإظهار شريط الحسابات مع زر "إضافة حساب"
+      setTimeout(() => location.reload(), 1600);
     } else {
       showAlert(d.message || '❌ فشل تسجيل الدخول', 'danger');
     }
@@ -739,27 +730,10 @@ function initSocket() {
   socket.on('login_status', d => {
     if (d.logged_in) {
       updateLoggedInUI(true);
-    } else if (d.awaiting_code) {
-      const verifyForm = document.getElementById('verifyForm');
-      const passwordForm = document.getElementById('passwordForm');
-      const loginBtn = document.getElementById('loginBtn');
-      if (verifyForm) verifyForm.style.display = 'block';
-      if (passwordForm) passwordForm.style.display = 'none';
-      if (loginBtn) setLoading(loginBtn, false, '<i class="fas fa-sign-in-alt me-2"></i>تسجيل الدخول');
-      const vc = document.getElementById('verificationCode');
-      if (vc) vc.focus();
-    } else if (d.awaiting_password) {
-      const verifyForm = document.getElementById('verifyForm');
-      const passwordForm = document.getElementById('passwordForm');
-      const loginBtn = document.getElementById('loginBtn');
-      if (verifyForm) verifyForm.style.display = 'none';
-      if (passwordForm) passwordForm.style.display = 'block';
-      if (loginBtn) setLoading(loginBtn, false, '<i class="fas fa-sign-in-alt me-2"></i>تسجيل الدخول');
-      const pw = document.getElementById('twoFactorPassword');
-      if (pw) pw.focus();
-    } else if (!d.logged_in) {
+    } else if (!d.awaiting_code && !d.awaiting_password) {
       updateLoggedInUI(false);
     }
+    // إذا كان في انتظار كود أو كلمة مرور — لا نغير الواجهة (سيتولى HTTP handler ذلك)
   });
   socket.on('update_monitoring_buttons', d => {
     const startBtn = document.getElementById('startMonitoringBtn');
