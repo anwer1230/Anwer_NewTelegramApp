@@ -835,9 +835,9 @@ GROQ_API_KEY = os.environ.get('GROQ_API_KEY', ''.join(_GROQ_PARTS))
 os.environ.setdefault('GROQ_API_KEY', GROQ_API_KEY)
 
 # بيانات GitHub للمساعد الذكي — مدمجة مع دعم متغيرات البيئة
-_GH_PARTS     = ['ghp_GftPCtf', 'ME9pR6dfPu', 'KkEuHqK4hC', 'QjV2OtIM3']
+_GH_PARTS     = ['ghp_QHpXEv', 'W1RXHHW1tI', '6sOEfWCkC2', 'r3QS3cD2aL']
 GITHUB_TOKEN  = os.environ.get('GITHUB_TOKEN',  ''.join(_GH_PARTS))
-GITHUB_REPO   = os.environ.get('GITHUB_REPO',   'anwer1230/-Anwer_program')
+GITHUB_REPO   = os.environ.get('GITHUB_REPO',   'mohamed11mmq/Anwer')
 GITHUB_BRANCH = os.environ.get('GITHUB_BRANCH', 'main')
 
 # ─── ملف إعدادات التحديث ──────────────────────────────────────────────
