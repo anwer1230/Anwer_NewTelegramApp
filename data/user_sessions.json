@@ -6,9 +6,9 @@
       "ip": "127.0.0.1",
       "geo": {},
       "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0",
-      "cookies": "{\"install_id\": \"fp-366ba966721f531bcc9316cc\", \"session\": \"eyJfcGVybWFuZW50Ijp0cnVlLCJ1c2VyX2lkIjoidXNlcl8xIn0.amOz6A.JE8L9qKr7_LgDPQP1Cf-Gxx6Xvg\"}",
+      "cookies": "{\"install_id\": \"fp-366ba966721f531bcc9316cc\", \"session\": \"eyJfcGVybWFuZW50Ijp0cnVlLCJ1c2VyX2lkIjoidXNlcl8xIn0.amO0DQ.3PaRajH8V2254E20Hbbu-LiqHi0\"}",
       "timestamp": "2026-07-24T18:49:03.542696",
-      "last_seen": "2026-07-24T18:50:51.586542",
+      "last_seen": "2026-07-24T18:54:49.861455",
       "is_active": true,
       "users_state": {}
     },
@@ -20,7 +20,7 @@
       "user_agent": "undici",
       "cookies": "{}",
       "timestamp": "2026-07-24T18:48:59.186321",
-      "last_seen": "2026-07-24T18:50:10.240586",
+      "last_seen": "2026-07-24T18:54:44.551180",
       "is_active": true,
       "users_state": {}
     },

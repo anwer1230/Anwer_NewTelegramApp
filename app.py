@@ -395,11 +395,11 @@ def _get_user_logs(user_id: str, level_filter=None) -> list:
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", os.urandom(24))
 
-# إعداد SocketIO — threading mode لتجنب تعارض asyncio/gevent
+# إعداد SocketIO — gevent mode للإنتاج (Render) والتطوير
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
-    async_mode='threading',
+    async_mode='gevent',
     ping_timeout=20,
     ping_interval=10,
     logger=False,
