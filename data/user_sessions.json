@@ -1,9 +1,33 @@
 {
   "installations": [
     {
-      "install_id": "fp-7eb6505f69e869f4155f159c",
+      "install_id": "fp-366ba966721f531bcc9316cc",
       "user_id": "user_1",
       "ip": "127.0.0.1",
+      "geo": {},
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0",
+      "cookies": "{\"install_id\": \"fp-366ba966721f531bcc9316cc\", \"session\": \"eyJfcGVybWFuZW50Ijp0cnVlLCJ1c2VyX2lkIjoidXNlcl8xIn0.amOz6A.JE8L9qKr7_LgDPQP1Cf-Gxx6Xvg\"}",
+      "timestamp": "2026-07-24T18:49:03.542696",
+      "last_seen": "2026-07-24T18:50:51.586542",
+      "is_active": true,
+      "users_state": {}
+    },
+    {
+      "install_id": "fp-1df9eaa2807eece2503a636c",
+      "user_id": "user_1",
+      "ip": "127.0.0.x",
+      "geo": {},
+      "user_agent": "undici",
+      "cookies": "{}",
+      "timestamp": "2026-07-24T18:48:59.186321",
+      "last_seen": "2026-07-24T18:50:10.240586",
+      "is_active": true,
+      "users_state": {}
+    },
+    {
+      "install_id": "fp-7eb6505f69e869f4155f159c",
+      "user_id": "user_1",
+      "ip": "127.0.0.x",
       "geo": {},
       "user_agent": "curl/8.14.1",
       "cookies": "{}",
