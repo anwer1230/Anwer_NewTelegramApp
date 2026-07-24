@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>محادثاتي - تليجرام</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif!important}
+        body{background:#0a0a0a;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:0}
+        .tg-app{width:420px;height:100vh;max-height:850px;background:#17212b;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 60px rgba(0,0,0,.9);border-radius:0 0 0 0}
+        @media(min-width:500px){.tg-app{border-radius:28px;max-height:820px;}}
+
+        /* ── Status Bar ── */
+        .status-bar{padding:8px 20px 4px;display:flex;justify-content:space-between;color:rgba(255,255,255,.5);font-size:12px;background:#17212b;flex-shrink:0}
+
+        /* ── Views ── */
+        #viewList,#viewChat{display:flex;flex-direction:column;flex:1;overflow:hidden}
+        #viewChat{display:none}
+
+        /* ── List Header ── */
+        .list-header{padding:6px 16px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.05);flex-shrink:0}
+        .list-header .title{color:#fff;font-size:18px;font-weight:700}
+        .list-header .icons{display:flex;gap:14px;color:#8e9aa7;font-size:18px}
+        .list-header .icons span{cursor:pointer;transition:color .2s}
+        .list-header .icons span:hover{color:#6bc1ff}
+
+        /* ── Search ── */
+        .search-bar{padding:8px 12px;flex-shrink:0}
+        .search-bar input{width:100%;padding:8px 14px 8px 36px;border-radius:20px;border:none;background:#242f3a;color:#e3e9ef;font-size:14px;outline:none}
+        .search-bar{position:relative}
+        .search-bar .s-icon{position:absolute;right:24px;top:50%;transform:translateY(-50%);color:#6d7a88;font-size:14px;pointer-events:none}
+
+        /* ── Dialog list ── */
+        .dialogs-list{flex:1;overflow-y:auto;padding:0}
+        .dialogs-list::-webkit-scrollbar{width:3px}
+        .dialogs-list::-webkit-scrollbar-thumb{background:#384954;border-radius:3px}
+        .dialog-item{display:flex;align-items:center;gap:12px;padding:10px 16px;cursor:pointer;transition:background .15s;border-bottom:1px solid rgba(255,255,255,.03)}
+        .dialog-item:hover,.dialog-item.active{background:#242f3a}
+        .dialog-avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#fff;flex-shrink:0;position:relative}
+        .dialog-avatar .online-dot{position:absolute;bottom:1px;left:1px;width:11px;height:11px;border-radius:50%;background:#4bcb7b;border:2px solid #17212b}
+        .dialog-info{flex:1;min-width:0}
+        .dialog-name-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px}
+        .dialog-name{color:#e3e9ef;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+        .dialog-time{color:#8e9aa7;font-size:12px;white-space:nowrap}
+        .dialog-msg-row{display:flex;justify-content:space-between;align-items:center}
+        .dialog-msg{color:#8e9aa7;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+        .dialog-badge{background:#2a92e7;color:#fff;font-size:11px;font-weight:700;border-radius:10px;padding:1px 6px;min-width:18px;text-align:center;flex-shrink:0}
+        .dialog-verified{color:#2a92e7;font-size:13px;margin-right:3px}
+        .dialog-type-icon{color:#6d7a88;font-size:11px;margin-right:4px}
+
+        /* Loading & empty */
+        .loading-spinner{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;color:#8e9aa7;font-size:14px}
+        .spinner{width:32px;height:32px;border:3px solid #384954;border-top-color:#2a92e7;border-radius:50%;animation:spin .8s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:8px;color:#6d7a88;font-size:14px}
+
+        /* ── Chat Header ── */
+        .chat-header{padding:6px 12px 8px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.05);flex-shrink:0}
+        .chat-header .back-btn{color:#2a92e7;font-size:24px;cursor:pointer;padding:2px 6px}
+        .chat-header .ch-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;flex-shrink:0}
+        .chat-header .ch-info{flex:1}
+        .chat-header .ch-name{color:#fff;font-size:16px;font-weight:600}
+        .chat-header .ch-status{color:#8e9aa7;font-size:12px}
+        .chat-header .ch-icons{display:flex;gap:14px;color:#8e9aa7;font-size:18px}
+        .chat-header .ch-icons span{cursor:pointer;transition:color .2s}
+        .chat-header .ch-icons span:hover{color:#6bc1ff}
+
+        /* ── Messages area ── */
+        .messages-area{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:4px;background:#0e1621}
+        .messages-area::-webkit-scrollbar{width:3px}
+        .messages-area::-webkit-scrollbar-thumb{background:#384954;border-radius:3px}
+
+        .msg-bubble{max-width:78%;padding:7px 10px;border-radius:12px;font-size:14px;line-height:1.5;position:relative;word-break:break-word}
+        .msg-wrap{display:flex;align-items:flex-end;gap:6px;margin-bottom:2px}
+        .msg-wrap.out{justify-content:flex-start}
+        .msg-wrap.in{justify-content:flex-end}
+        .msg-bubble.out{background:#2b5278;border-bottom-right-radius:4px;color:#e3e9ef}
+        .msg-bubble.in{background:#182533;border-bottom-left-radius:4px;color:#e3e9ef}
+        .msg-meta{font-size:11px;color:rgba(255,255,255,.4);margin-top:3px;display:flex;align-items:center;gap:4px;justify-content:flex-end}
+        .msg-meta .ticks{color:#4bcb7b}
+        .msg-sender{font-size:12px;font-weight:600;color:#6bc1ff;margin-bottom:2px}
+        .msg-media-placeholder{background:#1e2d3d;border-radius:8px;padding:20px;text-align:center;color:#6d7a88;font-size:13px;margin-bottom:4px}
+        .msg-date-divider{text-align:center;margin:8px 0;color:#8e9aa7;font-size:12px}
+        .msg-date-divider span{background:#17212b;padding:4px 10px;border-radius:10px}
+
+        /* ── Reply preview ── */
+        #replyPreview{display:none;padding:8px 12px;background:#1e2d3d;border-right:3px solid #2a92e7;margin:0 12px 4px;border-radius:6px;font-size:13px;color:#8e9aa7;flex-shrink:0}
+        #replyPreview .rp-name{color:#2a92e7;font-weight:600;font-size:12px}
+        #replyPreview .rp-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px}
+        #replyPreview .rp-close{float:left;cursor:pointer;color:#6d7a88;font-size:16px;margin-top:-2px}
+
+        /* ── Input bar ── */
+        .input-bar{padding:8px 12px;display:flex;align-items:flex-end;gap:8px;border-top:1px solid rgba(255,255,255,.05);background:#17212b;flex-shrink:0}
+        .input-bar .attach-btn,.input-bar .emoji-btn{color:#8e9aa7;font-size:20px;cursor:pointer;padding:6px;flex-shrink:0;transition:color .2s}
+        .input-bar .attach-btn:hover,.input-bar .emoji-btn:hover{color:#6bc1ff}
+        .input-bar textarea{flex:1;background:#242f3a;border:none;border-radius:18px;padding:8px 14px;color:#e3e9ef;font-size:14px;resize:none;outline:none;max-height:120px;min-height:38px;overflow-y:auto;line-height:1.4}
+        .input-bar textarea::placeholder{color:#6d7a88}
+        .send-btn{width:40px;height:40px;border-radius:50%;border:none;background:#2a92e7;color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+        .send-btn:hover{background:#3da2f7;transform:scale(1.05)}
+        .send-btn:active{transform:scale(.95)}
+        .send-btn:disabled{background:#384954;cursor:not-allowed;transform:none}
+
+        /* ── Footer (list view) ── */
+        .bottom-nav{padding:6px 8px;display:flex;justify-content:space-around;border-top:1px solid rgba(255,255,255,.05);flex-shrink:0;background:#17212b}
+        .bottom-nav .nav-icon{display:flex;flex-direction:column;align-items:center;gap:2px;color:#8e9aa7;font-size:20px;cursor:pointer;padding:4px 12px;border-radius:10px;transition:color .2s;font-size:14px}
+        .bottom-nav .nav-icon i{font-size:20px}
+        .bottom-nav .nav-icon span{font-size:10px}
+        .bottom-nav .nav-icon:hover,.bottom-nav .nav-icon.active{color:#2a92e7}
+
+        /* Typing indicator */
+        .typing-indicator{display:none;padding:4px 16px;color:#8e9aa7;font-size:12px;font-style:italic}
+        .typing-indicator.show{display:block}
+    </style>
+</head>
+<body>
+<div class="tg-app">
+    <div class="status-bar">
+        <span id="statusTime">09:41</span>
+        <span>📶 🔋</span>
+    </div>
+
+    <!-- ═══════════════════ قائمة المحادثات ═══════════════════ -->
+    <div id="viewList">
+        <div class="list-header">
+            <span class="title">محادثاتي</span>
+            <div class="icons">
+                <span onclick="loadConversations()" title="تحديث"><i class="fas fa-sync-alt" id="refreshIcon"></i></span>
+                <span onclick="location.href='/send_monitor'" title="الإرسال والمراقبة"><i class="fas fa-paper-plane"></i></span>
+                <span onclick="location.href='/'"><i class="fas fa-home"></i></span>
+            </div>
+        </div>
+        <div class="search-bar">
+            <i class="fas fa-search s-icon"></i>
+            <input type="text" id="searchInput" placeholder="ابحث في المحادثات..." oninput="filterDialogs()">
+        </div>
+        <div class="dialogs-list" id="dialogsList">
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner"></div>
+                <span>جاري تحميل المحادثات...</span>
+            </div>
+        </div>
+        <div class="bottom-nav">
+            <div class="nav-icon active" onclick="location.href='/conversations'"><i class="fas fa-comments"></i><span>محادثات</span></div>
+            <div class="nav-icon" onclick="location.href='/send_monitor'"><i class="fas fa-paper-plane"></i><span>إرسال</span></div>
+            <div class="nav-icon" onclick="location.href='/'"><i class="fas fa-home"></i><span>الرئيسية</span></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ نافذة المحادثة ═══════════════════ -->
+    <div id="viewChat">
+        <div class="chat-header">
+            <span class="back-btn" onclick="closeChat()">‹</span>
+            <div class="ch-avatar" id="chatAvatar" style="background:#2a92e7">أ</div>
+            <div class="ch-info">
+                <div class="ch-name" id="chatName">—</div>
+                <div class="ch-status" id="chatStatus">بدون اتصال</div>
+            </div>
+            <div class="ch-icons">
+                <span onclick="loadMessages(currentChatId,true)"><i class="fas fa-sync-alt"></i></span>
+                <span><i class="fas fa-phone"></i></span>
+                <span><i class="fas fa-ellipsis-v"></i></span>
+            </div>
+        </div>
+
+        <div class="messages-area" id="messagesArea">
+            <div class="loading-spinner" id="msgSpinner"><div class="spinner"></div><span>جاري التحميل...</span></div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">● يكتب...</div>
+        <div id="replyPreview">
+            <span class="rp-close" onclick="cancelReply()">✕</span>
+            <div class="rp-name" id="rpName"></div>
+            <div class="rp-text" id="rpText"></div>
+        </div>
+        <div class="input-bar">
+            <span class="emoji-btn"><i class="fas fa-smile"></i></span>
+            <textarea id="msgInput" placeholder="اكتب رسالة..." rows="1" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let allDialogs = [];
+let currentChatId = null;
+let currentChatName = '';
+let replyToId = null;
+let replyToText = '';
+
+const AVATAR_COLORS = ['#e74c3c','#e67e22','#f1c40f','#2ecc71','#1abc9c','#3498db','#9b59b6','#e91e63','#00bcd4','#ff5722'];
+
+// ═══════════════════════════════════════════════════════
+//  SOCKET.IO — استقبال الرسائل الفورية
+// ═══════════════════════════════════════════════════════
+const socket = io();
+
+socket.on('new_incoming_message', data => {
+    const chatId = String(data.chat_id);
+
+    // تحديث آخر رسالة في قائمة المحادثات
+    const idx = allDialogs.findIndex(d => String(d.id) === chatId);
+    if (idx !== -1) {
+        allDialogs[idx].last_message = data.text || '[وسائط]';
+        allDialogs[idx].last_time = formatTime(data.date);
+        if (String(chatId) !== String(currentChatId)) {
+            allDialogs[idx].unread = (allDialogs[idx].unread || 0) + 1;
+        }
+        // رفع المحادثة للأعلى
+        const [d] = allDialogs.splice(idx, 1);
+        allDialogs.unshift(d);
+        renderDialogs(allDialogs);
+    }
+
+    // إضافة الرسالة مباشرة إن كانت المحادثة مفتوحة
+    if (String(chatId) === String(currentChatId)) {
+        appendMessage({
+            id: data.msg_id || Date.now(),
+            text: data.text || '',
+            date: data.date || new Date().toISOString(),
+            is_out: false,
+            sender_name: data.sender_name || '',
+            has_media: false
+        }, true);
+    }
+});
+
+socket.on('message_sent_confirm', data => {
+    const chatId = String(data.chat_id);
+    if (String(chatId) === String(currentChatId)) {
+        appendMessage({
+            id: data.msg_id || Date.now(),
+            text: data.text || '',
+            date: new Date().toISOString(),
+            is_out: true,
+            sender_name: '',
+            has_media: false
+        }, true);
+    }
+});
+
+// ═══════════════════════════════════════════════════════
+//  LOAD CONVERSATIONS
+// ═══════════════════════════════════════════════════════
+async function loadConversations() {
+    const icon = document.getElementById('refreshIcon');
+    icon.style.animation = 'spin 0.8s linear infinite';
+    document.getElementById('dialogsList').innerHTML = `
+        <div class="loading-spinner"><div class="spinner"></div><span>جاري تحميل المحادثات...</span></div>`;
+    try {
+        const r = await fetch('/api/get_conversations');
+        const d = await r.json();
+        if (d.success) {
+            allDialogs = d.conversations;
+            renderDialogs(allDialogs);
+        } else {
+            showError(d.message || 'تعذّر تحميل المحادثات');
+        }
+    } catch(e) {
+        showError('خطأ في الاتصال: ' + e.message);
+    } finally {
+        icon.style.animation = '';
+    }
+}
+
+function renderDialogs(dialogs) {
+    const q = document.getElementById('searchInput').value.trim().toLowerCase();
+    const filtered = q ? dialogs.filter(d => d.name.toLowerCase().includes(q) || d.last_message.toLowerCase().includes(q)) : dialogs;
+    const container = document.getElementById('dialogsList');
+    if (!filtered.length) {
+        container.innerHTML = `<div class="empty-state"><i class="fas fa-comment-slash" style="font-size:40px"></i><span>${q ? 'لا توجد نتائج' : 'لا توجد محادثات'}</span></div>`;
+        return;
+    }
+    container.innerHTML = filtered.map(d => {
+        const color = avatarColor(d.name);
+        const initials = getInitials(d.name);
+        const typeIcon = d.type === 'channel' ? '<i class="fas fa-bullhorn dialog-type-icon"></i>' : d.type === 'group' ? '<i class="fas fa-users dialog-type-icon"></i>' : '';
+        const verified = d.is_verified ? '<i class="fas fa-check-circle dialog-verified"></i>' : '';
+        const badge = d.unread > 0 ? `<span class="dialog-badge">${d.unread}</span>` : '';
+        const msgPreview = escHtml(d.last_message || '');
+        return `
+        <div class="dialog-item" onclick="openChat('${escAttr(String(d.id))}','${escAttr(d.name)}','${d.type}')">
+            <div class="dialog-avatar" style="background:${color}">${initials}</div>
+            <div class="dialog-info">
+                <div class="dialog-name-row">
+                    <span class="dialog-name">${typeIcon}${verified}${escHtml(d.name)}</span>
+                    <span class="dialog-time">${d.last_time || ''}</span>
+                </div>
+                <div class="dialog-msg-row">
+                    <span class="dialog-msg">${msgPreview}</span>
+                    ${badge}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function filterDialogs() { renderDialogs(allDialogs); }
+
+function showError(msg) {
+    document.getElementById('dialogsList').innerHTML = `
+        <div class="empty-state" style="gap:16px;padding:24px">
+            <i class="fas fa-exclamation-circle" style="font-size:36px;color:#e74c3c"></i>
+            <span style="color:#e3e9ef;text-align:center">${msg}</span>
+            <button onclick="loadConversations()" style="background:#2a92e7;color:#fff;border:none;border-radius:8px;padding:8px 20px;cursor:pointer">إعادة المحاولة</button>
+        </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  OPEN / CLOSE CHAT
+// ═══════════════════════════════════════════════════════
+function openChat(chatId, chatName, chatType) {
+    currentChatId = chatId;
+    currentChatName = chatName;
+    replyToId = null;
+
+    // تحديث الرأس
+    const color = avatarColor(chatName);
+    document.getElementById('chatAvatar').style.background = color;
+    document.getElementById('chatAvatar').textContent = getInitials(chatName);
+    document.getElementById('chatName').textContent = chatName;
+    const typeLabel = chatType === 'channel' ? 'قناة' : chatType === 'group' ? 'مجموعة' : 'خاص';
+    document.getElementById('chatStatus').textContent = typeLabel;
+
+    // إعادة ضبط عدد غير المقروء
+    const idx = allDialogs.findIndex(d => String(d.id) === String(chatId));
+    if (idx !== -1) { allDialogs[idx].unread = 0; }
+
+    // إظهار نافذة المحادثة
+    document.getElementById('viewList').style.display = 'none';
+    document.getElementById('viewChat').style.display = 'flex';
+    document.getElementById('msgInput').focus();
+
+    loadMessages(chatId);
+}
+
+function closeChat() {
+    currentChatId = null;
+    document.getElementById('viewChat').style.display = 'none';
+    document.getElementById('viewList').style.display = 'flex';
+    renderDialogs(allDialogs);
+}
+
+// ═══════════════════════════════════════════════════════
+//  LOAD MESSAGES
+// ═══════════════════════════════════════════════════════
+async function loadMessages(chatId, refresh=false) {
+    const area = document.getElementById('messagesArea');
+    if (!refresh) {
+        area.innerHTML = `<div class="loading-spinner" id="msgSpinner"><div class="spinner"></div><span>جاري التحميل...</span></div>`;
+    }
+    try {
+        const r = await fetch(`/api/get_messages?chat_id=${encodeURIComponent(chatId)}&limit=50`);
+        const d = await r.json();
+        if (d.success) {
+            renderMessages(d.messages);
+        } else {
+            area.innerHTML = `<div class="empty-state"><span style="color:#e74c3c">${d.message}</span></div>`;
+        }
+    } catch(e) {
+        area.innerHTML = `<div class="empty-state"><span style="color:#e74c3c">خطأ: ${e.message}</span></div>`;
+    }
+}
+
+function renderMessages(msgs) {
+    const area = document.getElementById('messagesArea');
+    if (!msgs.length) {
+        area.innerHTML = `<div class="empty-state"><i class="fas fa-comment" style="font-size:36px"></i><span>لا توجد رسائل بعد</span></div>`;
+        return;
+    }
+    area.innerHTML = '';
+    let lastDate = '';
+    msgs.forEach(m => {
+        const d = m.date ? m.date.split('T')[0] : '';
+        if (d && d !== lastDate) {
+            lastDate = d;
+            const div = document.createElement('div');
+            div.className = 'msg-date-divider';
+            div.innerHTML = `<span>${formatDate(d)}</span>`;
+            area.appendChild(div);
+        }
+        appendMessage(m, false);
+    });
+    area.scrollTop = area.scrollHeight;
+}
+
+function appendMessage(m, scroll=false) {
+    const area = document.getElementById('messagesArea');
+    const dir = m.is_out ? 'out' : 'in';
+    const time = m.date ? formatTimeFromISO(m.date) : '';
+
+    const wrap = document.createElement('div');
+    wrap.className = `msg-wrap ${dir}`;
+    wrap.dataset.msgId = m.id;
+
+    let inner = '';
+    if (!m.is_out && m.sender_name) {
+        inner += `<div class="msg-sender">${escHtml(m.sender_name)}</div>`;
+    }
+    if (m.has_media) {
+        inner += `<div class="msg-media-placeholder"><i class="fas fa-image"></i> وسائط</div>`;
+    }
+    if (m.text) {
+        inner += escHtml(m.text).replace(/\n/g, '<br>');
+    }
+    inner += `<div class="msg-meta"><span>${time}</span>${m.is_out ? '<span class="ticks">✓✓</span>' : ''}</div>`;
+
+    wrap.innerHTML = `<div class="msg-bubble ${dir}" ondblclick="setReply(${m.id},'${escAttr(m.text||'')}','${escAttr(m.sender_name||'')}',${m.is_out})">${inner}</div>`;
+    area.appendChild(wrap);
+    if (scroll) area.scrollTop = area.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════
+//  SEND MESSAGE
+// ═══════════════════════════════════════════════════════
+async function sendMessage() {
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+    if (!text || !currentChatId) return;
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+    input.value = ''; autoResize(input);
+
+    // عرض الرسالة فوراً في الواجهة
+    appendMessage({id: 'pending_'+Date.now(), text, date: new Date().toISOString(), is_out: true, sender_name: '', has_media: false}, true);
+
+    try {
+        const r = await fetch('/api/send_chat_message', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({chat_id: currentChatId, message: text, reply_to: replyToId})
+        });
+        const d = await r.json();
+        if (!d.success) {
+            showToast('❌ ' + (d.message || 'فشل الإرسال'), 'error');
+        } else {
+            // تحديث قائمة المحادثات
+            const idx = allDialogs.findIndex(d2 => String(d2.id) === String(currentChatId));
+            if (idx !== -1) {
+                allDialogs[idx].last_message = text;
+                allDialogs[idx].last_time = formatTime(new Date().toISOString());
+                const [dItem] = allDialogs.splice(idx, 1);
+                allDialogs.unshift(dItem);
+            }
+        }
+    } catch(e) {
+        showToast('❌ خطأ: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        cancelReply();
+    }
+}
+
+function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ═══════════════════════════════════════════════════════
+//  REPLY
+// ═══════════════════════════════════════════════════════
+function setReply(id, text, senderName, isOut) {
+    replyToId = id;
+    replyToText = text;
+    const name = isOut ? 'أنت' : (senderName || 'Unknown');
+    document.getElementById('rpName').textContent = name;
+    document.getElementById('rpText').textContent = text.substring(0, 80) || '[وسائط]';
+    document.getElementById('replyPreview').style.display = 'block';
+    document.getElementById('msgInput').focus();
+}
+function cancelReply() {
+    replyToId = null; replyToText = '';
+    document.getElementById('replyPreview').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════
+function avatarColor(name) { let h=0; for(let c of name) h=(h*31+c.charCodeAt(0))%AVATAR_COLORS.length; return AVATAR_COLORS[h]; }
+function getInitials(name) { const w=name.trim().split(/\s+/); return w.length>=2?w[0][0]+w[1][0]:name.substring(0,2).toUpperCase(); }
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s){ return String(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;').replace(/\n/g,' '); }
+function formatTime(iso){ try{const d=new Date(iso);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}catch{return '';} }
+function formatTimeFromISO(iso){ return formatTime(iso); }
+function formatDate(iso) {
+    try {
+        const d = new Date(iso); const t = new Date();
+        if(d.toDateString()===t.toDateString()) return 'اليوم';
+        const y=new Date(t); y.setDate(t.getDate()-1);
+        if(d.toDateString()===y.toDateString()) return 'أمس';
+        return d.toLocaleDateString('ar-EG',{day:'numeric',month:'long'});
+    } catch { return iso; }
+}
+function showToast(msg, type='info') {
+    const t = document.createElement('div');
+    t.style.cssText = `position:fixed;bottom:80px;right:50%;transform:translateX(50%);background:${type==='error'?'#e74c3c':'#2a92e7'};color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;z-index:9999;`;
+    t.textContent = msg; document.body.appendChild(t);
+    setTimeout(()=>t.remove(), 3000);
+}
+function updateTime(){const n=new Date();document.getElementById('statusTime').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
+setInterval(updateTime, 30000); updateTime();
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => { loadConversations(); });
+</script>
+</body>
+</html>

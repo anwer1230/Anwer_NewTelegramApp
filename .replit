@@ -1,11 +1,5 @@
 modules = ["nodejs-24", "python-3.11"]
 
-[[artifacts]]
-id = "artifacts/api-server"
-
-[[artifacts]]
-id = "artifacts/mockup-sandbox"
-
 [deployment]
 router = "application"
 deploymentTarget = "autoscale"
@@ -24,15 +18,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Flask App"
+args = "Start application"
 
 [[workflows.workflow]]
-name = "Flask App"
+name = "Start application"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd /home/runner/workspace && python main.py"
+args = "python3 app.py"
 waitForPort = 5000
 
 [workflows.workflow.metadata]
@@ -45,3 +39,7 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[nix]
+channel = "stable-25_05"
+packages = ["cairo", "cargo", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "gobject-introspection", "gtk3", "gumbo", "harfbuzz", "jbig2dec", "lcms2", "libev", "libiconv", "libimagequant", "libjpeg", "libjpeg_turbo", "libtiff", "libwebp", "libxcrypt", "mupdf", "openjpeg", "openssl", "pkg-config", "qhull", "rustc", "swig", "tcl", "tk", "xcbuild", "xcodebuild", "xsimd", "zlib"]

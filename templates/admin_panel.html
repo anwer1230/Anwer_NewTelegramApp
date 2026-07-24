@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
     <style>
         :root {
             --indigo: #6366f1;
@@ -347,6 +348,11 @@
         <a class="nav-item" onclick="showSection('files')" href="#"><i class="fas fa-folder-open"></i><span>متصفح الملفات</span></a>
         <a class="nav-item" onclick="showSection('installations')" href="#"><i class="fas fa-mobile-alt"></i><span>التثبيتات</span></a>
         <a class="nav-item" onclick="showSection('system')" href="#"><i class="fas fa-cog"></i><span>إعدادات النظام</span></a>
+        <div style="margin-top:auto;padding:16px 12px;border-top:1px solid var(--border);">
+            <button onclick="adminLogout()" style="width:100%;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;padding:10px 14px;border-radius:10px;cursor:pointer;font-size:0.82rem;font-weight:700;font-family:'Cairo',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.22)'" onmouseout="this.style.background='rgba(239,68,68,0.12)'">
+                <i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span>
+            </button>
+        </div>
     </nav>
 
     <div class="main-content">
@@ -683,12 +689,31 @@
         <a class="nav-item" onclick="showSection('files');toggleMobileSidebar();" href="#"><i class="fas fa-folder-open"></i><span>متصفح الملفات</span></a>
         <a class="nav-item" onclick="showSection('installations');toggleMobileSidebar();" href="#"><i class="fas fa-mobile-alt"></i><span>التثبيتات</span></a>
         <a class="nav-item" onclick="showSection('system');toggleMobileSidebar();" href="#"><i class="fas fa-cog"></i><span>إعدادات النظام</span></a>
+        <div style="padding:16px 12px;border-top:1px solid var(--border);margin-top:12px;">
+            <button onclick="adminLogout()" style="width:100%;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;padding:10px 14px;border-radius:10px;cursor:pointer;font-size:0.82rem;font-weight:700;font-family:'Cairo',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;">
+                <i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span>
+            </button>
+        </div>
     </nav>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
      المودالات الإضافية (خريطة، مجموعات، مرآة)
 ══════════════════════════════════════════════════════════ -->
+<!-- مودال تفاصيل المستخدم -->
+<div id="userDetailsModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#0f172a;border:1px solid rgba(99,102,241,0.4);border-radius:18px;width:100%;max-width:520px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.7);">
+        <div style="padding:14px 18px;border-bottom:1px solid rgba(99,102,241,0.2);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="color:#a5b4fc;font-size:1rem;">👤</span>
+                <span id="userDetailsTitle" style="color:#a5b4fc;font-weight:700;font-size:0.9rem;"></span>
+            </div>
+            <button onclick="closeUserDetailsModal()" style="background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);padding:4px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-times"></i> إغلاق</button>
+        </div>
+        <div id="userDetailsBody" style="overflow-y:auto;padding:16px;flex:1;"></div>
+    </div>
+</div>
+
 <div id="geoMapModal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
     <div style="background:#0f172a;border:1px solid rgba(16,185,129,0.4);border-radius:18px;width:100%;max-width:680px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.7);">
         <div style="padding:14px 18px;border-bottom:1px solid rgba(16,185,129,0.2);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
@@ -764,6 +789,7 @@ const _sectionTitles = {
     cards: 'نظام الكروت',
     notifications: 'الإشعارات',
     promo: 'الإشعارات الدورية',
+    invites: 'روابط الدعوة',
     files: 'متصفح الملفات',
     installations: 'التثبيتات',
     system: 'إعدادات النظام'
@@ -847,19 +873,29 @@ async function loadUsers() {
         `;
 
         let h = `<table class="users-table"><thead><tr>
-            <th>المستخدم</th><th>الحساب</th><th>الحالة</th><th>متصل؟</th><th>المراقبة</th>
+            <th>المستخدم</th><th>الهاتف</th><th>الحالة</th><th>مسجّل دخول؟</th><th>الإجراءات</th>
         </tr></thead><tbody>`;
         d.users.forEach(u => {
-            const act = u.is_active || false;
-            const connected = u.connected || false;
-            const monitoring = u.monitoring_active || false;
             const blocked = u.blocked || false;
+            const disabled = u.disabled || false;
+            const loggedIn = u.logged_in || false;
+            const slot = u.user_id;
             h += `<tr>
-                <td><strong style="color:#a5b4fc;">${u.name || u.user_id || '—'}</strong></td>
-                <td style="color:var(--muted);font-size:0.78rem;">${u.account_name || '—'}</td>
-                <td><span class="${act ? 'badge-active' : 'badge-inactive'}">${act ? 'نشط' : 'غير نشط'}${blocked ? ' 🔒' : ''}</span></td>
-                <td>${connected ? '<span style="color:#6ee7b7;">🟢 متصل</span>' : '<span style="color:#6b7280;">⚪ غير متصل</span>'}</td>
-                <td>${monitoring ? '<span style="color:#fbbf24;">🔄 مراقبة</span>' : '<span style="color:#6b7280;">—</span>'}</td>
+                <td><strong style="color:#a5b4fc;">${u.name || slot || '—'}</strong><div style="color:var(--muted);font-size:0.7rem;">${slot}</div></td>
+                <td style="color:var(--muted);font-size:0.78rem;">${u.phone || '—'}</td>
+                <td>
+                    ${blocked ? '<span class="badge-inactive">🔒 محظور</span>' : (disabled ? '<span class="badge-inactive">⛔ معطّل</span>' : '<span class="badge-active">✅ نشط</span>')}
+                </td>
+                <td>${loggedIn ? '<span style="color:#6ee7b7;">🟢 نعم</span>' : '<span style="color:#6b7280;">⚪ لا</span>'}</td>
+                <td style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button onclick="adminUserDetails('${slot}')" class="btn-sm-act" style="padding:4px 10px;font-size:0.72rem;"><i class="fas fa-eye"></i> تفاصيل</button>
+                    <button onclick="adminToggleBlock('${slot}',${!blocked})" class="${blocked ? 'btn-sm-green' : 'btn-sm-red'}" style="padding:4px 10px;font-size:0.72rem;">
+                        ${blocked ? '<i class="fas fa-unlock"></i> رفع حظر' : '<i class="fas fa-ban"></i> حظر'}
+                    </button>
+                    <button onclick="adminToggleDisable('${slot}',${!disabled})" class="${disabled ? 'btn-sm-green' : 'btn-sm-yellow'}" style="padding:4px 10px;font-size:0.72rem;">
+                        ${disabled ? '<i class="fas fa-toggle-on"></i> تفعيل' : '<i class="fas fa-toggle-off"></i> تعطيل'}
+                    </button>
+                </td>
             </tr>`;
         });
         h += '</tbody></table>';
@@ -867,6 +903,107 @@ async function loadUsers() {
     } catch(e) {
         tbl.innerHTML = '<div style="padding:24px;color:#fca5a5;text-align:center;">❌ خطأ في الاتصال</div>';
     }
+}
+
+// ══════════════════════════════════════════════════════════
+//  إدارة المستخدمين - إجراءات
+// ══════════════════════════════════════════════════════════
+async function adminLogout() {
+    if (!confirm('هل تريد تسجيل الخروج من لوحة الإدارة؟')) return;
+    try {
+        await fetch('/admin/api/logout', {method:'POST', credentials:'same-origin'});
+    } catch(e) {}
+    window.location.href = '/admin';
+}
+
+async function adminToggleBlock(slot, blocked) {
+    try {
+        const r = await fetch(`/admin/api/user/${slot}`, {
+            method:'POST', credentials:'same-origin',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({action:'block', blocked})
+        });
+        const d = await r.json();
+        if (d.success) {
+            showToast(blocked ? `🔒 تم حظر ${slot}` : `✅ تم رفع الحظر عن ${slot}`);
+            loadUsers();
+        } else { showToast('❌ ' + (d.message || 'فشل الإجراء')); }
+    } catch(e) { showToast('❌ خطأ في الاتصال'); }
+}
+
+async function adminToggleDisable(slot, disabled) {
+    try {
+        const r = await fetch(`/admin/api/user/${slot}`, {
+            method:'POST', credentials:'same-origin',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({action:'disable', disabled})
+        });
+        const d = await r.json();
+        if (d.success) {
+            showToast(disabled ? `⛔ تم تعطيل ${slot}` : `✅ تم تفعيل ${slot}`);
+            loadUsers();
+        } else { showToast('❌ ' + (d.message || 'فشل الإجراء')); }
+    } catch(e) { showToast('❌ خطأ في الاتصال'); }
+}
+
+async function adminUserDetails(slot) {
+    const modal = document.getElementById('userDetailsModal');
+    const body = document.getElementById('userDetailsBody');
+    const title = document.getElementById('userDetailsTitle');
+    if (!modal) return;
+    title.textContent = 'تحميل...';
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--indigo);"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
+    modal.style.display = 'flex';
+    try {
+        const r = await fetch('/admin/api/users', {credentials:'same-origin'});
+        const d = await r.json();
+        if (!d.success) { body.innerHTML = '<div style="color:#fca5a5;padding:20px;">❌ خطأ في التحميل</div>'; return; }
+        const u = d.users.find(u => u.user_id === slot);
+        if (!u) { body.innerHTML = '<div style="color:#fca5a5;padding:20px;">❌ المستخدم غير موجود</div>'; return; }
+        title.textContent = u.name || slot;
+        const groups = u.groups || [];
+        const grpHtml = groups.length ? groups.map(g => `<div style="font-size:0.72rem;color:#67e8f9;padding:2px 0;">${g}</div>`).join('') : '<div style="color:var(--muted);font-size:0.75rem;">لا توجد مجموعات</div>';
+        body.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:10px 12px;">
+                <div style="font-size:0.7rem;color:var(--muted);margin-bottom:4px;">📋 الحالة</div>
+                <div style="font-size:0.82rem;">
+                    ${u.blocked ? '<span style="color:#fca5a5;">🔒 محظور</span>' : (u.disabled ? '<span style="color:#fbbf24;">⛔ معطّل</span>' : '<span style="color:#6ee7b7;">✅ نشط</span>')}
+                </div>
+            </div>
+            <div style="background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:10px 12px;">
+                <div style="font-size:0.7rem;color:var(--muted);margin-bottom:4px;">📱 الهاتف</div>
+                <div style="font-size:0.82rem;color:#e2e8f0;">${u.phone || '—'}</div>
+            </div>
+            <div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:10px 12px;">
+                <div style="font-size:0.7rem;color:var(--muted);margin-bottom:4px;">🔐 دخول تيليجرام</div>
+                <div style="font-size:0.82rem;">${u.logged_in ? '<span style="color:#6ee7b7;">🟢 مسجّل دخول</span>' : '<span style="color:#6b7280;">⚫ غير مسجّل</span>'}</div>
+            </div>
+            <div style="background:rgba(6,182,212,0.07);border:1px solid rgba(6,182,212,0.2);border-radius:10px;padding:10px 12px;">
+                <div style="font-size:0.7rem;color:var(--muted);margin-bottom:4px;">🔔 التنبيهات</div>
+                <div style="font-size:0.82rem;color:#67e8f9;">${u.alerts_count || 0}</div>
+            </div>
+        </div>
+        <div style="background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.15);border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+            <div style="font-size:0.7rem;color:var(--muted);margin-bottom:6px;">📢 المجموعات (${groups.length})</div>
+            <div style="max-height:120px;overflow-y:auto;">${grpHtml}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button onclick="adminToggleBlock('${slot}',${!u.blocked});closeUserDetailsModal();" class="${u.blocked ? 'btn-sm-green' : 'btn-sm-red'}" style="flex:1;justify-content:center;">
+                ${u.blocked ? '<i class="fas fa-unlock me-1"></i> رفع الحظر' : '<i class="fas fa-ban me-1"></i> حظر المستخدم'}
+            </button>
+            <button onclick="adminToggleDisable('${slot}',${!u.disabled});closeUserDetailsModal();" class="${u.disabled ? 'btn-sm-green' : 'btn-sm-yellow'}" style="flex:1;justify-content:center;">
+                ${u.disabled ? '<i class="fas fa-toggle-on me-1"></i> تفعيل' : '<i class="fas fa-toggle-off me-1"></i> تعطيل'}
+            </button>
+        </div>`;
+    } catch(e) {
+        body.innerHTML = '<div style="color:#fca5a5;padding:20px;">❌ خطأ في الاتصال</div>';
+    }
+}
+
+function closeUserDetailsModal() {
+    const modal = document.getElementById('userDetailsModal');
+    if (modal) modal.style.display = 'none';
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1889,9 +2026,29 @@ function ibOpenAccountModal(install, uid, state) {
         } catch(_e) { showToast('❌ خطأ في الاتصال'); }
     });
 
-    document.getElementById('ibAccBtnScreen').addEventListener('click', () => {
-        if (typeof openLiveMirror === 'function') openLiveMirror(install.install_id, uid);
-        else showToast('⚠️ خاصية المرآة غير متاحة');
+    document.getElementById('ibAccBtnScreen').addEventListener('click', async () => {
+        // تبديل المستخدم وفتح الواجهة الرئيسية بإعداداته
+        try {
+            const rr = await fetch('/api/switch_user', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({user_id: uid})
+            });
+            const dd = await rr.json();
+            if (dd.success) {
+                // فتح الواجهة الرئيسية في تبويب جديد مع المستخدم المحدد
+                window.open('/?preview_user=' + uid, '_blank');
+                showToast('✅ تم فتح واجهة ' + (state.name || uid) + ' في تبويب جديد');
+            } else {
+                // فتح مباشرةً مع معامل المستخدم
+                window.open('/?preview_user=' + uid, '_blank');
+                showToast('🔍 تم فتح الواجهة الرئيسية للمستخدم: ' + (state.name || uid));
+            }
+        } catch(_e) {
+            window.open('/?preview_user=' + uid, '_blank');
+            showToast('🔍 تم فتح الواجهة الرئيسية للمستخدم: ' + (state.name || uid));
+        }
     });
 
     document.getElementById('ibAccBtnLinks').addEventListener('click', async () => {

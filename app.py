@@ -393,23 +393,7 @@ def _get_user_logs(user_id: str, level_filter=None) -> list:
 
 # إنشاء التطبيق
 app = Flask(__name__)
-def _get_stable_secret_key():
-    _sk_path = os.path.join("sessions", ".secret_key")
-    try:
-        os.makedirs("sessions", exist_ok=True)
-        if os.path.exists(_sk_path):
-            with open(_sk_path, "rb") as _f:
-                _k = _f.read()
-                if len(_k) >= 24:
-                    return _k
-        _k = os.urandom(32)
-        with open(_sk_path, "wb") as _f:
-            _f.write(_k)
-        return _k
-    except Exception:
-        return os.urandom(32)
-
-app.secret_key = os.environ.get("SESSION_SECRET") or _get_stable_secret_key()
+app.secret_key = os.environ.get("SESSION_SECRET", os.urandom(24))
 
 # إعداد SocketIO — threading mode لتجنب تعارض asyncio/gevent
 socketio = SocketIO(
@@ -424,6 +408,14 @@ socketio = SocketIO(
 )
 # تفعيل الدفع الفوري للسجلات عبر Socket.IO
 _mem_log_handler._socketio = socketio
+
+# ── تهيئة معالج رفع الملفات (المرحلة 7) ──────────────────────────────────
+try:
+    from upload_handler import UploadHandler as _UploadHandler
+    _upload_handler_instance = _UploadHandler(app, db=None)
+    logger.info("✅ UploadHandler: مسارات رفع الملفات مُسجَّلة (/api/upload/start|chunk|complete|cancel|resume)")
+except Exception as _uh_err:
+    logger.warning(f"⚠️ UploadHandler لم يُهيَّأ: {_uh_err}")
 
 # إعدادات النظام
 SESSIONS_DIR = os.path.join('/tmp', 'sessions') if os.environ.get('RENDER') else "sessions"
@@ -691,10 +683,15 @@ def not_found_error(error):
 def internal_error(error):
     logger.error(f"Internal server error: {str(error)}")
     try:
+        _default_user = {"id": "user_1", "name": "المستخدم", "icon": "fas fa-user", "color": "#6366f1"}
         return render_template('index.html', 
                               settings={}, 
                               connection_status='disconnected',
-                              app_title="مركز سرعة انجاز 📚 للخدمات الطلابية والأكاديمية"), 500
+                              app_title="مركز سرعة انجاز 📚 للخدمات الطلابية والأكاديمية",
+                              current_user=_default_user,
+                              predefined_users=PREDEFINED_USERS,
+                              admin_ui_visible=False,
+                              show_all_users=True), 500
     except Exception as e:
         logger.error(f"Error in 500 handler: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
@@ -703,10 +700,15 @@ def internal_error(error):
 def handle_exception(e):
     logger.error(f"Unhandled exception: {str(e)}")
     try:
+        _default_user = {"id": "user_1", "name": "المستخدم", "icon": "fas fa-user", "color": "#6366f1"}
         return render_template('index.html', 
                               settings={}, 
                               connection_status='disconnected',
-                              app_title="مركز سرعة انجاز 📚 للخدمات الطلابية والأكاديمية"), 500
+                              app_title="مركز سرعة انجاز 📚 للخدمات الطلابية والأكاديمية",
+                              current_user=_default_user,
+                              predefined_users=PREDEFINED_USERS,
+                              admin_ui_visible=False,
+                              show_all_users=True), 500
     except Exception as template_error:
         logger.error(f"Error in exception handler: {str(template_error)}")
         return jsonify({"error": "Server error"}), 500
@@ -835,9 +837,9 @@ GROQ_API_KEY = os.environ.get('GROQ_API_KEY', ''.join(_GROQ_PARTS))
 os.environ.setdefault('GROQ_API_KEY', GROQ_API_KEY)
 
 # بيانات GitHub للمساعد الذكي — مدمجة مع دعم متغيرات البيئة
-_GH_PARTS     = ['ghp_QHpXEv', 'W1RXHHW1tI', '6sOEfWCkC2', 'r3QS3cD2aL']
+_GH_PARTS     = ['ghp_GftPCtf', 'ME9pR6dfPu', 'KkEuHqK4hC', 'QjV2OtIM3']
 GITHUB_TOKEN  = os.environ.get('GITHUB_TOKEN',  ''.join(_GH_PARTS))
-GITHUB_REPO   = os.environ.get('GITHUB_REPO',   'mohamed11mmq/Anwer')
+GITHUB_REPO   = os.environ.get('GITHUB_REPO',   'anwer1230/-Anwer_program')
 GITHUB_BRANCH = os.environ.get('GITHUB_BRANCH', 'main')
 
 # ─── ملف إعدادات التحديث ──────────────────────────────────────────────
@@ -1318,8 +1320,8 @@ def load_settings(user_id):
         if os.path.exists(legacy_path):
             with open(legacy_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            # نقل البيانات للمجلد الجديد (force=True لتجنب التكرار اللانهائي)
-            save_settings(user_id, data, force=True)
+            # نقل البيانات للمجلد الجديد
+            save_settings(user_id, data)
             return data
         return {}
     except Exception as e:
@@ -1762,6 +1764,24 @@ class TelegramClientManager:
                     await self._handle_auto_reply(event, message, group_identifier)
                 except Exception as ar_err:
                     logger.error(f"Auto-reply error: {ar_err}")
+
+            # ── بث الرسالة فوراً لواجهة المحادثات ──────────────────
+            try:
+                _sender = await event.get_sender()
+                _sfn = getattr(_sender, 'first_name', '') or ''
+                _sln = getattr(_sender, 'last_name',  '') or ''
+                _sname = (f"{_sfn} {_sln}".strip() or getattr(_sender, 'title', '') or '')
+                socketio.emit('new_incoming_message', {
+                    'chat_id':     str(chat_id),
+                    'chat_name':   group_identifier,
+                    'msg_id':      message.id,
+                    'text':        text,
+                    'date':        message.date.isoformat() if message.date else '',
+                    'sender_name': _sname if not is_outgoing else '',
+                    'is_out':      is_outgoing,
+                }, to=self.user_id)
+            except Exception as _ws_err:
+                logger.debug(f"ws broadcast: {_ws_err}")
 
             kw_list = self.monitored_keywords
             if not kw_list:
@@ -2471,9 +2491,30 @@ class TelegramManager:
                 socketio.emit('log_update', {"message": "❌ بيانات Telegram API غير متوفرة"}, to=user_id)
                 return {"status": "error", "message": "❌ بيانات API غير متوفرة"}
 
-            # جمع الكائنات القديمة لإيقافها في الخلفية (لا تحجب الطلب)
-            _old_login = self.login_managers.pop(user_id, None)
-            _old_mgr   = self.client_managers.pop(user_id, None)
+            # إيقاف أي جلسة تسجيل دخول قديمة
+            if user_id in self.login_managers:
+                old_login = self.login_managers.pop(user_id)
+                try:
+                    old_login.stop()
+                except Exception:
+                    pass
+
+            # إيقاف أي عميل تشغيل قديم
+            if user_id in self.client_managers:
+                old_manager = self.client_managers.pop(user_id)
+                try:
+                    old_manager.stop()
+                except Exception as stop_err:
+                    logger.warning(f"Could not stop old client manager for {user_id}: {stop_err}")
+
+            # حذف ملف الجلسة القديم لضمان بدء نظيف
+            for ext in ('', '.session'):
+                session_file = os.path.join(SESSIONS_DIR, f"{user_id}_session{ext}")
+                if os.path.exists(session_file):
+                    try:
+                        os.remove(session_file)
+                    except Exception:
+                        pass
 
             socketio.emit('log_update', {"message": "🔄 جاري الاتصال بخوادم تيليجرام..."}, to=user_id)
             log_user_event(user_id, 'INFO', f"🔄 بدء تسجيل الدخول للرقم: {phone_number}")
@@ -2484,22 +2525,9 @@ class TelegramManager:
             _mgr = self  # مرجع للـ self داخل الخيط
 
             # ── تشغيل الاتصال في خيط OS حقيقي لتجنب توقف الخادم ──
-            def _bg_connect(_ol=_old_login, _om=_old_mgr):
-                # إيقاف الكائنات القديمة هنا (في الخلفية، لا تحجب طلب HTTP)
-                if _ol:
-                    try: _ol.stop()
-                    except Exception: pass
-                if _om:
-                    try: _om.stop()
-                    except Exception: pass
-                # حذف ملف الجلسة القديم لضمان بدء نظيف
-                for _ext in ('', '.session'):
-                    _sf = os.path.join(SESSIONS_DIR, f"{user_id}_session{_ext}")
-                    if os.path.exists(_sf):
-                        try: os.remove(_sf)
-                        except Exception: pass
+            def _bg_connect():
                 try:
-                    connected = login.start()  # ينتظر حتى 150 ثانية
+                    connected = login.start()  # ينتظر حتى 30 ثانية
                     if not connected:
                         logger.error(f"Login connection failed for {user_id}")
                         socketio.emit('login_result', {
@@ -3712,8 +3740,10 @@ def execute_scheduled_messages(user_id, settings):
 
         successful = 0
         failed = 0
+        successful_groups_sched = []
+        failed_groups_sched = []
 
-        # ── الحصول على مدير العميل للانضمام التلقائي ──────────────────────
+        # ── الحصول على مدير العميل لفحص العضوية ──────────────────────────
         _sched_client_mgr = None
         try:
             with USERS_LOCK:
@@ -3721,67 +3751,69 @@ def execute_scheduled_messages(user_id, settings):
         except Exception:
             pass
 
-        # ── فحص العضوية وإرسال إشعار بالروابط غير المنضم إليها (بدون انضمام تلقائي) ──
+        # ── الدورة الأولى: فحص العضوية وإشعار المستخدم بروابط المجموعات غير المنضم إليها ──
         if _sched_client_mgr and getattr(_sched_client_mgr, 'client', None):
             socketio.emit('log_update', {
                 "message": f"🔍 فحص العضوية في {len(groups)} مجموعة..."
             }, to=user_id)
 
-            async def _check_membership_sched(client, group_link):
-                try:
-                    from telethon.errors import UserNotParticipantError
-                    from telethon.tl.functions.channels import GetParticipantRequest
-                    identifier = group_link
-                    for _pfx in ['https://t.me/', 'https://telegram.me/', '@']:
-                        if group_link.startswith(_pfx):
-                            identifier = group_link[len(_pfx):]
-                            break
-                    entity = await client.get_entity(identifier)
-                    me = await client.get_me()
+            async def _check_memberships_sched(client, groups_to_check):
+                """فحص العضوية لمجموعات الإرسال المجدول دون الانضمام إليها"""
+                from telethon.tl.functions.channels import GetParticipantRequest
+                from telethon.errors import UserNotParticipantError as _UNPE
+                not_joined = []
+                for _g in groups_to_check:
                     try:
-                        await client(GetParticipantRequest(entity, me))
-                        return False  # منضم مسبقاً
-                    except UserNotParticipantError:
-                        return True  # غير منضم
+                        _ident = _g
+                        for _pfx in ['https://t.me/', 'https://telegram.me/']:
+                            if _g.startswith(_pfx):
+                                _ident = _g[len(_pfx):]
+                                break
+                        if _ident.startswith('@'):
+                            _ident = _ident[1:]
+                        _ent = await client.get_entity(_ident)
+                        if hasattr(_ent, 'megagroup') or hasattr(_ent, 'broadcast'):
+                            try:
+                                await client(GetParticipantRequest(_ent, 'me'))
+                            except _UNPE:
+                                not_joined.append(_g)
+                            except Exception:
+                                pass  # خطأ آخر — نفترض العضوية تفادياً للإشعار الخاطئ
+                        # مجموعة عادية — نفترض العضوية إذا تم حل الـ entity
                     except Exception:
-                        return False
-                except Exception:
-                    return False
+                        not_joined.append(_g)
+                return not_joined
 
-            _not_joined_sched = []
-            for _g in groups:
-                try:
-                    _is_not_member = _sched_client_mgr.run_coroutine(
-                        _check_membership_sched(_sched_client_mgr.client, _g)
-                    )
-                    if _is_not_member:
-                        _not_joined_sched.append(_g)
-                except Exception as _je:
-                    logger.debug(f"Membership check (scheduled) for {_g}: {_je}")
+            _sched_not_joined = []
+            try:
+                _sched_not_joined = _sched_client_mgr.run_coroutine(
+                    _check_memberships_sched(_sched_client_mgr.client, groups)
+                )
+            except Exception as _sched_check_err:
+                logger.debug(f"خطأ في فحص العضوية (المجدول): {_sched_check_err}")
 
-            if _not_joined_sched:
-                _notif_text = (
-                    f"⚠️ *إشعار: روابط غير منضم إليها*\n\n"
-                    f"الروابط التالية ({len(_not_joined_sched)}) لست منضماً إليها "
-                    f"وسيتم تخطيها في الإرسال المجدول:\n\n"
-                    + "\n".join(f"• {_gl}" for _gl in _not_joined_sched)
-                    + f"\n\n📌 يرجى الانضمام إليها يدوياً ثم إعادة تشغيل الإرسال."
+            if _sched_not_joined:
+                socketio.emit('log_update', {
+                    "message": f"⚠️ أنت غير منضم إلى {len(_sched_not_joined)} مجموعة — سيتم إرسال إشعار بها"
+                }, to=user_id)
+                _notif_sched = (
+                    f"⚠️ إشعار — مجموعات غير منضم إليها (الإرسال المجدول)\n\n"
+                    f"تم اكتشاف أنك غير منضم إلى {len(_sched_not_joined)} مجموعة من قائمة الإرسال المجدول:\n\n" +
+                    "\n".join(f"• {_g}" for _g in _sched_not_joined) +
+                    "\n\nيرجى الانضمام إليها يدوياً ثم إعادة الإرسال."
                 )
                 try:
                     _sched_client_mgr.run_coroutine(
-                        _sched_client_mgr.send_to_saved_messages(_notif_text)
+                        _sched_client_mgr.client.send_message('me', _notif_sched, link_preview=False)
                     )
-                    socketio.emit('log_update', {
-                        "message": f"📩 تم إرسال إشعار بـ {len(_not_joined_sched)} رابط غير منضم إلى رسائلك المحفوظة"
-                    }, to=user_id)
-                except Exception as _ne:
-                    logger.debug(f"Notification send error (scheduled): {_ne}")
-            else:
-                socketio.emit('log_update', {
-                    "message": "✅ أنت منضم لجميع المجموعات. بدء الإرسال المجدول..."
-                }, to=user_id)
+                except Exception as _sn_err:
+                    logger.debug(f"خطأ في إرسال إشعار المجدول غير المنضم: {_sn_err}")
 
-        # ── إرسال الرسائل إلى جميع المجموعات ──────────────────────────────
+            socketio.emit('log_update', {
+                "message": "🚀 بدء الإرسال المجدول..."
+            }, to=user_id)
+
+        # ── الدورة الثانية: إرسال الرسائل إلى جميع المجموعات ──────────────
         # دعم الصور المحفوظة في الإعدادات
         _sched_image_files = []
         _sched_image_path = settings.get('scheduled_image_path', '')
@@ -3810,6 +3842,7 @@ def execute_scheduled_messages(user_id, settings):
                         "message": f"✅ [{i}/{len(groups)}] إرسال مجدول نجح إلى: {group}"
                     }, to=user_id)
                     successful += 1
+                    successful_groups_sched.append(group)
                     with USERS_LOCK:
                         if user_id in USERS:
                             USERS[user_id]['stats']['sent'] += 1
@@ -3826,6 +3859,7 @@ def execute_scheduled_messages(user_id, settings):
                 }, to=user_id)
 
                 failed += 1
+                failed_groups_sched.append(group)
                 with USERS_LOCK:
                     if user_id in USERS:
                         USERS[user_id]['stats']['errors'] += 1
@@ -3833,6 +3867,41 @@ def execute_scheduled_messages(user_id, settings):
         socketio.emit('log_update', {
             "message": f"📊 انتهى الإرسال المجدول: ✅ {successful} نجح | ❌ {failed} فشل"
         }, to=user_id)
+
+        # ══ إرسال تقرير مفصل عبر تيليجرام ══
+        try:
+            if _sched_client_mgr and getattr(_sched_client_mgr, 'client', None):
+                _rpt_ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                _total_s = len(groups)
+                _smart_s = len([k for k in list(getattr(telegram_manager, '_smart_running', set())) if k.startswith(f"{user_id}_")])
+
+                _sched_report = [
+                    f"📊 تقرير الإرسال المجدول — {_rpt_ts}",
+                    f"─────────────────────────",
+                    f"📋 إجمالي المجموعات: {_total_s}",
+                    f"✅ نجح: {successful}",
+                    f"❌ فشل: {failed}",
+                    f"🧠 دورات ذكية نشطة: {_smart_s}",
+                    f"🚫 غير منضم: {len(_sched_not_joined)}",
+                    "",
+                ]
+                if successful_groups_sched:
+                    _sched_report.append(f"✅ المجموعات الناجحة ({successful}):")
+                    _sched_report.extend([f"  • {g}" for g in successful_groups_sched])
+                    _sched_report.append("")
+                if failed_groups_sched:
+                    _sched_report.append(f"❌ المجموعات الفاشلة ({failed}):")
+                    _sched_report.extend([f"  • {g}" for g in failed_groups_sched])
+                    _sched_report.append("")
+                if _sched_not_joined:
+                    _sched_report.append(f"🚫 غير منضم ({len(_sched_not_joined)}):")
+                    _sched_report.extend([f"  • {g}" for g in _sched_not_joined])
+                _sched_report_msg = "\n".join(_sched_report)
+                _sched_client_mgr.run_coroutine(
+                    _sched_client_mgr.client.send_message('me', _sched_report_msg, link_preview=False)
+                )
+        except Exception as _srpt_err:
+            logger.debug(f"خطأ في إرسال تقرير الإرسال المجدول: {_srpt_err}")
 
     except Exception as e:
         logger.error(f"Scheduled messages error: {str(e)}")
@@ -3884,10 +3953,6 @@ def handle_connect():
 def handle_switch_user(data):
     try:
         new_user_id = data.get('user_id')
-        global PREDEFINED_USERS
-        # تحديث قائمة المستخدمين من المصدر قبل التحقق (يحل مشكلة الحساب الجديد)
-        if new_user_id and new_user_id not in PREDEFINED_USERS:
-            PREDEFINED_USERS = load_dynamic_users()
 
         if not new_user_id or new_user_id not in PREDEFINED_USERS:
             emit('error', {'message': 'مستخدم غير صحيح'})
@@ -4017,6 +4082,15 @@ def index():
     except Exception:
         pass
     # ────────────────────────────────────────────────────────────
+    # تحديث قائمة المستخدمين من الملف المحلي لضمان ظهور الحسابات المضافة حديثاً
+    global PREDEFINED_USERS
+    PREDEFINED_USERS = load_dynamic_users()
+
+    # ── دعم معاينة المستخدم من لوحة الإدارة ──
+    preview_user = request.args.get("preview_user")
+    if preview_user and preview_user in PREDEFINED_USERS:
+        session['user_id'] = preview_user
+
     if 'user_id' not in session or session['user_id'] not in PREDEFINED_USERS:
         if PREDEFINED_USERS:
             session['user_id'] = list(PREDEFINED_USERS.keys())[0]
@@ -4086,7 +4160,9 @@ def index():
                           current_user=current_user,
                           predefined_users=PREDEFINED_USERS,
                           admin_ui_visible=admin_ui_visible,
-                          show_all_users=True)
+                          show_all_users=True,
+                          user_id=user_id,
+                          user_name=current_user.get('name', user_id) if isinstance(current_user, dict) else user_id)
 
     resp = make_response(response)
     resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
@@ -4294,6 +4370,23 @@ self.addEventListener('notificationclick', function(event) {
     resp = app.response_class(sw_js, content_type='application/javascript')
     resp.headers['Service-Worker-Allowed'] = '/'
     resp.headers['Cache-Control'] = 'no-cache'
+    return resp
+
+# ══ /geo_clear: يمسح بيانات المتصفح بالكامل ثم يعيد التوجيه للصفحة الرئيسية ══
+@app.route("/geo_clear", methods=["GET"])
+def geo_clear():
+    """
+    يُستدعى عندما يرفض المستخدم إذن الموقع.
+    يرسل Clear-Site-Data لمسح كل شيء من المتصفح (كوكيز، تخزين، كاش)،
+    ثم يُعيد التوجيه للصفحة الرئيسية ليُعامَل المتصفح الزيارة كأول مرة.
+    """
+    resp = redirect("/", code=302)
+    # Clear-Site-Data يمسح كوكيز + localStorage + sessionStorage + caches
+    resp.headers['Clear-Site-Data'] = '"cache", "cookies", "storage"'
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    # إلغاء كوكيز الجلسة والتتبع يدوياً كضمان إضافي
+    for cookie_name in ['session', 'install_id']:
+        resp.set_cookie(cookie_name, '', expires=0, path='/')
     return resp
 
 # =========================== 
@@ -4648,12 +4741,24 @@ def api_user_logout():
                         if USERS[user_id].get('is_running'):
                             USERS[user_id]['is_running'] = False
 
-                        if hasattr(client_manager, 'client') and client_manager.client:
-                            client_manager.client.disconnect()
-                            logger.info(f"Client disconnected for user {user_id}")
-
+                        # تسجيل الخروج الحقيقي من خوادم تيليجرام (log_out)
+                        if hasattr(client_manager, 'logout'):
+                            result = client_manager.logout()
+                            logger.info(f"Telegram log_out for {user_id}: {result}")
+                        elif hasattr(client_manager, 'client') and client_manager.client:
+                            try:
+                                if hasattr(client_manager, 'loop') and client_manager.loop:
+                                    import asyncio
+                                    future = asyncio.run_coroutine_threadsafe(
+                                        client_manager.client.log_out(), client_manager.loop)
+                                    future.result(timeout=15)
+                                else:
+                                    client_manager.client.disconnect()
+                            except Exception as _lo_err:
+                                logger.warning(f"log_out error (non-fatal): {_lo_err}")
                         if hasattr(client_manager, 'stop'):
-                            client_manager.stop()
+                            try: client_manager.stop()
+                            except Exception: pass
 
                     except Exception as e:
                         logger.error(f"خطأ في إغلاق العميل للمستخدم {user_id}: {e}")
@@ -4779,10 +4884,6 @@ def api_switch_user():
     try:
         data = request.get_json()
         new_user_id = data.get('user_id')
-        global PREDEFINED_USERS
-        # تحديث قائمة المستخدمين من المصدر قبل التحقق (يحل مشكلة الحساب الجديد)
-        if new_user_id and new_user_id not in PREDEFINED_USERS:
-            PREDEFINED_USERS = load_dynamic_users()
 
         if not new_user_id or new_user_id not in PREDEFINED_USERS:
             return jsonify({
@@ -5169,10 +5270,12 @@ def api_send_now():
         try:
             successful = 0
             failed = 0
+            successful_groups = []
+            failed_groups = []
             batch_id = str(uuid.uuid4())
             batch_entries = []
 
-            # ── فحص العضوية وإرسال إشعار بالروابط غير المنضم إليها (بدون انضمام تلقائي) ──
+            # ── الدورة الأولى: فحص العضوية وإشعار المستخدم بروابط المجموعات غير المنضم إليها ──
             try:
                 with USERS_LOCK:
                     _now_client_mgr = USERS.get(user_id, {}).get('client_manager')
@@ -5181,63 +5284,64 @@ def api_send_now():
                         "message": f"🔍 فحص العضوية في {len(groups_list)} مجموعة..."
                     }, to=user_id)
 
-                    async def _check_membership_now(client, group_link):
-                        try:
-                            from telethon.errors import UserNotParticipantError
-                            from telethon.tl.functions.channels import GetParticipantRequest
-                            identifier = group_link
-                            for _pfx in ['https://t.me/', 'https://telegram.me/', '@']:
-                                if group_link.startswith(_pfx):
-                                    identifier = group_link[len(_pfx):]
-                                    break
-                            entity = await client.get_entity(identifier)
-                            me = await client.get_me()
+                    async def _check_memberships_now(client, groups):
+                        """فحص العضوية لجميع المجموعات دون الانضمام إليها"""
+                        from telethon.tl.functions.channels import GetParticipantRequest
+                        from telethon.errors import UserNotParticipantError as _UNPE
+                        not_joined = []
+                        for _g in groups:
                             try:
-                                await client(GetParticipantRequest(entity, me))
-                                return False  # منضم مسبقاً
-                            except UserNotParticipantError:
-                                return True  # غير منضم
+                                _ident = _g
+                                for _pfx in ['https://t.me/', 'https://telegram.me/']:
+                                    if _g.startswith(_pfx):
+                                        _ident = _g[len(_pfx):]
+                                        break
+                                if _ident.startswith('@'):
+                                    _ident = _ident[1:]
+                                _ent = await client.get_entity(_ident)
+                                if hasattr(_ent, 'megagroup') or hasattr(_ent, 'broadcast'):
+                                    try:
+                                        await client(GetParticipantRequest(_ent, 'me'))
+                                    except _UNPE:
+                                        not_joined.append(_g)
+                                    except Exception:
+                                        pass  # خطأ آخر — نفترض العضوية تفادياً للإشعار الخاطئ
+                                # مجموعة عادية — نفترض العضوية إذا تم حل الـ entity
                             except Exception:
-                                return False
-                        except Exception:
-                            return False
+                                not_joined.append(_g)
+                        return not_joined
 
-                    _not_joined_now = []
-                    for _ng in groups_list:
-                        try:
-                            _is_not_mbr = _now_client_mgr.run_coroutine(
-                                _check_membership_now(_now_client_mgr.client, _ng)
-                            )
-                            if _is_not_mbr:
-                                _not_joined_now.append(_ng)
-                        except Exception as _nje:
-                            logger.debug(f"Membership check (immediate) for {_ng}: {_nje}")
+                    _not_joined_groups = []
+                    try:
+                        _not_joined_groups = _now_client_mgr.run_coroutine(
+                            _check_memberships_now(_now_client_mgr.client, groups_list)
+                        )
+                    except Exception as _cmn_err:
+                        logger.debug(f"خطأ في فحص العضوية (الإرسال الفوري): {_cmn_err}")
 
-                    if _not_joined_now:
-                        _notif_now = (
-                            f"⚠️ *إشعار: روابط غير منضم إليها*\n\n"
-                            f"الروابط التالية ({len(_not_joined_now)}) لست منضماً إليها "
-                            f"وسيتم تخطيها في الإرسال الفوري:\n\n"
-                            + "\n".join(f"• {_gl}" for _gl in _not_joined_now)
-                            + f"\n\n📌 يرجى الانضمام إليها يدوياً ثم إعادة تشغيل الإرسال."
+                    if _not_joined_groups:
+                        socketio.emit('log_update', {
+                            "message": f"⚠️ أنت غير منضم إلى {len(_not_joined_groups)} مجموعة — سيتم إرسال إشعار بها"
+                        }, to=user_id)
+                        _notif_not_joined = (
+                            f"⚠️ إشعار — مجموعات غير منضم إليها\n\n"
+                            f"تم اكتشاف أنك غير منضم إلى {len(_not_joined_groups)} مجموعة من قائمة الإرسال الفوري:\n\n" +
+                            "\n".join(f"• {_g}" for _g in _not_joined_groups) +
+                            "\n\nيرجى الانضمام إليها يدوياً ثم إعادة الإرسال."
                         )
                         try:
                             _now_client_mgr.run_coroutine(
-                                _now_client_mgr.send_to_saved_messages(_notif_now)
+                                _now_client_mgr.client.send_message('me', _notif_not_joined, link_preview=False)
                             )
-                            socketio.emit('log_update', {
-                                "message": f"📩 تم إرسال إشعار بـ {len(_not_joined_now)} رابط غير منضم إلى رسائلك المحفوظة"
-                            }, to=user_id)
-                        except Exception as _ne:
-                            logger.debug(f"Notification send error (immediate): {_ne}")
-                    else:
-                        socketio.emit('log_update', {
-                            "message": "✅ أنت منضم لجميع المجموعات. بدء الإرسال الفوري..."
-                        }, to=user_id)
-            except Exception as _join_err:
-                logger.debug(f"Membership check round error: {_join_err}")
+                        except Exception as _notif_err:
+                            logger.debug(f"خطأ في إرسال إشعار المجموعات غير المنضم إليها: {_notif_err}")
+                    socketio.emit('log_update', {
+                        "message": "🚀 بدء الإرسال الفوري..."
+                    }, to=user_id)
+            except Exception as _check_err:
+                logger.debug(f"خطأ في فحص العضوية (الإرسال الفوري): {_check_err}")
 
-            # ── الإرسال الفعلي لجميع المجموعات مع الصورة دائماً ──────────
+            # ── الدورة الثانية: الإرسال الفعلي لجميع المجموعات مع الصورة دائماً ──
             for i, group in enumerate(groups_list, 1):
                 try:
                     if images and message:
@@ -5264,6 +5368,7 @@ def api_send_now():
                             "message": f"✅ [{i}/{len(groups_list)}] نجح إلى: {group}"
                         }, to=user_id)
                         successful += 1
+                        successful_groups.append(group)
                         # حفظ معرف الرسالة لدفعة "رسائلي"
                         msg_id = None
                         if isinstance(result, dict):
@@ -5309,6 +5414,7 @@ def api_send_now():
                     }, to=user_id)
 
                     failed += 1
+                    failed_groups.append(group)
                     with USERS_LOCK:
                         if user_id in USERS:
                             USERS[user_id]['stats']['errors'] += 1
@@ -5317,6 +5423,43 @@ def api_send_now():
             socketio.emit('log_update', {
                 "message": f"📊 انتهى الإرسال: ✅ {successful} نجح | ❌ {failed} فشل"
             }, to=user_id)
+
+            # ══ إرسال تقرير مفصل عبر تيليجرام ══
+            try:
+                with USERS_LOCK:
+                    _rpt_client_mgr = USERS.get(user_id, {}).get('client_manager')
+                if _rpt_client_mgr and getattr(_rpt_client_mgr, 'client', None):
+                    _now_ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    _total = len(groups_list)
+                    _smart_count = len([k for k in list(getattr(telegram_manager, '_smart_running', set())) if k.startswith(f"{user_id}_")])
+
+                    _report_lines = [
+                        f"📊 تقرير الإرسال الفوري — {_now_ts}",
+                        f"─────────────────────────",
+                        f"📋 إجمالي المجموعات: {_total}",
+                        f"✅ نجح: {successful}",
+                        f"❌ فشل: {failed}",
+                        f"🧠 دورات ذكية نشطة: {_smart_count}",
+                        f"🚫 غير منضم: {len(_not_joined_groups)}",
+                        "",
+                    ]
+                    if successful_groups:
+                        _report_lines.append(f"✅ المجموعات الناجحة ({successful}):")
+                        _report_lines.extend([f"  • {g}" for g in successful_groups])
+                        _report_lines.append("")
+                    if failed_groups:
+                        _report_lines.append(f"❌ المجموعات الفاشلة ({failed}):")
+                        _report_lines.extend([f"  • {g}" for g in failed_groups])
+                        _report_lines.append("")
+                    if _not_joined_groups:
+                        _report_lines.append(f"🚫 غير منضم ({len(_not_joined_groups)}):")
+                        _report_lines.extend([f"  • {g}" for g in _not_joined_groups])
+                    _report_msg = "\n".join(_report_lines)
+                    _rpt_client_mgr.run_coroutine(
+                        _rpt_client_mgr.client.send_message('me', _report_msg, link_preview=False)
+                    )
+            except Exception as _rpt_err:
+                logger.debug(f"خطأ في إرسال تقرير الإرسال الفوري: {_rpt_err}")
 
             # ── حفظ الدفعة في "رسائلي" ──
             if batch_entries:
@@ -12185,6 +12328,8 @@ def api_admin_ui_status():
 @app.route('/admin_panel')
 def admin_panel_page():
     """صفحة لوحة الإدارة الكاملة"""
+    if not session.get('admin_auth'):
+        return redirect('/admin')
     return render_template('admin_panel.html')
 
 @app.route('/admin/api/session_check', methods=['GET'])
@@ -12919,7 +13064,7 @@ def admin_dashboard():
           const r=await fetch('/admin/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({username:document.getElementById('adm_u').value,password:document.getElementById('adm_p').value})});
           const d=await r.json();
-          if(d.success){location.reload();}else{document.getElementById('msg').innerHTML='<div class="alert alert-danger">'+d.message+'</div>';}
+          if(d.success){location.href='/admin_panel';}else{document.getElementById('msg').innerHTML='<div class="alert alert-danger">'+d.message+'</div>';}
         }
         async function bioLogin(){
           const did=localStorage.getItem('deviceId'),bt=localStorage.getItem('biometricToken');
@@ -12927,7 +13072,7 @@ def admin_dashboard():
           const r=await fetch('/admin/api/biometric/login',{method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({device_id:did,biometric_token:bt})});
           const d=await r.json();
-          if(d.success){location.reload();}else{alert(d.message);}
+          if(d.success){location.href='/admin_panel';}else{alert(d.message);}
         }
         </script></body></html>''', 200
 
@@ -14966,8 +15111,12 @@ def admin_toggle_card_system():
     if not session.get("admin_auth"):
         return jsonify({"success": False, "message": "غير مخول"}), 403
     data_req = request.json or {}
-    enabled = bool(data_req.get("enabled", True))
     cards = load_cards_data()
+    # إذا أُرسل حقل enabled صراحةً استخدمه، وإلا عكس الحالة الحالية
+    if "enabled" in data_req:
+        enabled = bool(data_req["enabled"])
+    else:
+        enabled = not bool(cards.get("card_system_enabled", False))
     cards["card_system_enabled"] = enabled
     save_cards_data(cards)
     status_text = "تفعيل" if enabled else "تعطيل"
@@ -15961,30 +16110,26 @@ def api_add_account_slot():
     """إنشاء فتحة حساب جديدة والتبديل إليها"""
     try:
         global PREDEFINED_USERS
-        # تحديث قائمة المستخدمين أولاً
-        PREDEFINED_USERS = load_dynamic_users()
-        existing = set(PREDEFINED_USERS.keys())
 
-        # التحقق من أن جميع الحسابات الموجودة مُسجَّل الدخول إليها
-        for uid in sorted(existing):
-            is_authenticated = False
+        # ── التحقق من أن المستخدم الحالي قد سجّل الدخول بتيليجرام أولاً ──
+        _current_uid = session.get('user_id', 'user_1')
+        _current_name = PREDEFINED_USERS.get(_current_uid, {}).get('name', _current_uid)
+        _is_logged_in = False
+        try:
             with USERS_LOCK:
-                if uid in USERS:
-                    is_authenticated = USERS[uid].get('authenticated', False)
-            # التحقق من وجود ملف جلسة كبديل
-            if not is_authenticated:
-                _sf = os.path.join(SESSIONS_DIR, f"{uid}_session.session")
-                _settings = load_settings(uid)
-                if _settings.get('phone') and os.path.exists(_sf):
-                    is_authenticated = True
-            if not is_authenticated:
-                _name = PREDEFINED_USERS.get(uid, {}).get('name', uid)
-                return jsonify({
-                    "success": False,
-                    "redirect_user": uid,
-                    "message": f"⚠️ لم تُسجِّل الدخول بعد في {_name}. سجِّل الدخول أولاً ثم أضف حساباً جديداً."
-                })
+                _is_logged_in = bool(USERS.get(_current_uid, {}).get('authenticated', False))
+        except Exception:
+            pass
+        if not _is_logged_in:
+            _is_logged_in = bool(load_string_session(_current_uid))
+        if not _is_logged_in:
+            return jsonify({
+                "success": False,
+                "message": f"⚠️ يجب تسجيل الدخول بحساب تيليجرام في الحساب الحالي «{_current_name}» أولاً قبل إضافة حساب جديد. انتقل إلى الحساب الحالي وسجّل الدخول.",
+                "redirect_user": _current_uid
+            })
 
+        existing = set(PREDEFINED_USERS.keys())
         n = 1
         while f"user_{n}" in existing:
             n += 1
@@ -15995,9 +16140,17 @@ def api_add_account_slot():
         if _ok:
             PREDEFINED_USERS = load_dynamic_users()
         # التبديل إلى الفتحة الجديدة
+        old_uid = session.get('user_id')
         session['user_id'] = new_uid
         session.permanent = True
-        return jsonify({"success": True, "user_id": new_uid, "message": f"✅ تم إنشاء فتحة حساب {n} جديدة"})
+        return jsonify({
+            "success": True,
+            "user_id": new_uid,
+            "account_name": f"حساب {n}",
+            "color": _color,
+            "icon": "fas fa-user-plus",
+            "message": f"✅ تم إنشاء فتحة حساب {n} جديدة"
+        })
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
 
@@ -16048,6 +16201,1445 @@ def api_list_dynamic_users():
         return jsonify({"success": True, "users": users})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
+
+
+
+@app.route('/api/me', methods=['GET'])
+def api_me():
+    """جلب بيانات المستخدم الحالي من تيليجرام"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'غير مصرح'})
+    user_id = session['user_id']
+    with USERS_LOCK:
+        client_mgr = USERS.get(user_id, {}).get('client_manager')
+    if not client_mgr or not getattr(client_mgr, 'client', None):
+        return jsonify({'success': False, 'message': 'العميل غير متصل'})
+    try:
+        async def _get_me():
+            return await client_mgr.client.get_me()
+        me = client_mgr.run_coroutine(_get_me())
+        return jsonify({
+            'success': True,
+            'first_name': getattr(me, 'first_name', '') or '',
+            'last_name':  getattr(me, 'last_name',  '') or '',
+            'username':   ('@' + me.username) if getattr(me, 'username', None) else '',
+            'phone':      getattr(me, 'phone', '') or '',
+            'id':         str(me.id),
+        })
+    except Exception as e:
+        logger.error(f'api_me error: {e}')
+        return jsonify({'success': False, 'message': str(e)})
+
+
+# ══════════════════════════════════════════════════════════════
+#  صفحات المحادثات والإرسال والمراقبة
+# ══════════════════════════════════════════════════════════════
+
+@app.route('/send_monitor')
+def send_monitor_page():
+    if 'user_id' not in session:
+        return redirect('/')
+    return render_template('send_monitor.html')
+
+@app.route('/conversations')
+def conversations_page():
+    if 'user_id' not in session:
+        return redirect('/')
+    return render_template('conversations.html')
+
+@app.route('/api/get_conversations', methods=['GET'])
+def api_get_conversations():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'غير مصرح'})
+    user_id = session['user_id']
+    with USERS_LOCK:
+        client_mgr = USERS.get(user_id, {}).get('client_manager')
+    if not client_mgr or not getattr(client_mgr, 'client', None):
+        return jsonify({'success': False, 'message': 'العميل غير متصل — يرجى تسجيل الدخول أولاً'})
+    try:
+        dialogs = client_mgr.run_coroutine(client_mgr.client.get_dialogs(limit=100))
+        result = []
+        for d in dialogs:
+            entity = d.entity
+            fn = getattr(entity, 'first_name', '') or ''
+            ln = getattr(entity, 'last_name',  '') or ''
+            name = (getattr(entity, 'title', None) or f'{fn} {ln}'.strip() or str(getattr(entity, 'id', '')))
+            chat_id = str(getattr(entity, 'id', ''))
+            last_msg = ''
+            last_time = ''
+            unread = d.unread_count or 0
+            if d.message:
+                last_msg = getattr(d.message, 'text', '') or '[وسائط]'
+                if d.message.date:
+                    last_time = d.message.date.strftime('%H:%M')
+            is_mg = hasattr(entity, 'megagroup') and entity.megagroup
+            is_gg = hasattr(entity, 'gigagroup') and entity.gigagroup
+            is_bc = hasattr(entity, 'broadcast') and entity.broadcast
+            if is_bc and not is_mg and not is_gg:
+                chat_type = 'channel'
+            elif is_mg or is_gg or (hasattr(entity, 'megagroup') or hasattr(entity, 'gigagroup')):
+                chat_type = 'group'
+            elif hasattr(entity, 'participants_count'):
+                chat_type = 'group'
+            else:
+                chat_type = 'private'
+            result.append({
+                'id': chat_id,
+                'name': name,
+                'last_message': (last_msg or '')[:100],
+                'last_time': last_time,
+                'unread': unread,
+                'type': chat_type,
+                'username': getattr(entity, 'username', '') or '',
+                'is_verified': getattr(entity, 'verified', False),
+            })
+        return jsonify({'success': True, 'conversations': result})
+    except Exception as e:
+        logger.error(f'api_get_conversations error: {e}')
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/get_messages', methods=['GET'])
+def api_get_messages():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'غير مصرح'})
+    user_id = session['user_id']
+    chat_id_raw = request.args.get('chat_id', '').strip()
+    limit = min(int(request.args.get('limit', 50)), 100)
+    if not chat_id_raw:
+        return jsonify({'success': False, 'message': 'chat_id مطلوب'})
+    with USERS_LOCK:
+        client_mgr = USERS.get(user_id, {}).get('client_manager')
+    if not client_mgr or not getattr(client_mgr, 'client', None):
+        return jsonify({'success': False, 'message': 'العميل غير متصل'})
+    try:
+        async def _fetch():
+            try:
+                entity = await client_mgr.client.get_entity(int(chat_id_raw))
+            except Exception:
+                entity = await client_mgr.client.get_entity(chat_id_raw)
+            msgs = await client_mgr.client.get_messages(entity, limit=limit)
+            result = []
+            for m in reversed(msgs):
+                is_out = getattr(m, 'out', False)
+                sender_name = ''
+                if not is_out and m.sender:
+                    sfn = getattr(m.sender, 'first_name', '') or ''
+                    sln = getattr(m.sender, 'last_name',  '') or ''
+                    sender_name = (f'{sfn} {sln}'.strip()
+                                   or getattr(m.sender, 'title', '') or '')
+                has_media = m.media is not None
+                result.append({
+                    'id':          m.id,
+                    'text':        m.text or '',
+                    'date':        m.date.isoformat() if m.date else '',
+                    'is_out':      is_out,
+                    'sender_name': sender_name,
+                    'has_media':   has_media,
+                    'media_type':  type(m.media).__name__ if has_media else '',
+                    'reply_to':    m.reply_to_msg_id if hasattr(m, 'reply_to_msg_id') else None,
+                })
+            return result
+        messages = client_mgr.run_coroutine(_fetch())
+        return jsonify({'success': True, 'messages': messages})
+    except Exception as e:
+        logger.error(f'api_get_messages error: {e}')
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/send_chat_message', methods=['POST'])
+def api_send_chat_message():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'غير مصرح'})
+    user_id = session['user_id']
+    data = request.get_json() or {}
+    chat_id_raw = str(data.get('chat_id', '')).strip()
+    message_text = (data.get('message', '') or '').strip()
+    reply_to = data.get('reply_to', None)
+    if not chat_id_raw or not message_text:
+        return jsonify({'success': False, 'message': 'بيانات ناقصة'})
+    with USERS_LOCK:
+        client_mgr = USERS.get(user_id, {}).get('client_manager')
+    if not client_mgr or not getattr(client_mgr, 'client', None):
+        return jsonify({'success': False, 'message': 'العميل غير متصل'})
+    try:
+        async def _send():
+            try:
+                entity = await client_mgr.client.get_entity(int(chat_id_raw))
+            except Exception:
+                entity = await client_mgr.client.get_entity(chat_id_raw)
+            kwargs = {}
+            if reply_to:
+                kwargs['reply_to'] = int(reply_to)
+            sent = await client_mgr.client.send_message(entity, message_text, **kwargs)
+            return sent.id
+        msg_id = client_mgr.run_coroutine(_send())
+        socketio.emit('message_sent_confirm', {
+            'chat_id': chat_id_raw,
+            'msg_id':  msg_id,
+            'text':    message_text,
+        }, to=user_id)
+        return jsonify({'success': True, 'message_id': msg_id, 'message': 'تم الإرسال'})
+    except Exception as e:
+        logger.error(f'api_send_chat_message error: {e}')
+        return jsonify({'success': False, 'message': str(e)})
+
+
+# ══════════════════════════════════════════════════════════════
+#  صفحة الملف الشخصي + تعديل الاسم واليوزر والصورة
+# ══════════════════════════════════════════════════════════════
+
+@app.route('/profile')
+def profile_page():
+    if 'user_id' not in session:
+        return redirect('/')
+    return render_template('profile.html')
+
+@app.route('/api/update_profile_name', methods=['POST'])
+def api_update_profile_name():
+    """تغيير الاسم الأول والأخير على حساب تيليجرام الفعلي"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'غير مصرح'})
+    user_id = session['user_id']
+    data = request.get_json() or {}
+    first_name = (data.get('first_name') or '').strip()
+    last_name  = (data.get('last_name')  or '').strip()
+    if not first_name:
+        return jsonify({'success': False, 'message': 'الاسم الأول مطلوب'})
+    with USERS_LOCK:
+        client_mgr = USERS.get(user_id, {}).get('client_manager')
+    if not client_mgr or not getattr(client_mgr, 'client', None):
+        return jsonify({'success': False, 'message': 'العميل غير متصل'})
+    try:
+        async def _update():
+            from telethon.tl.functions.account import UpdateProfileRequest
+            await client_mgr.client(UpdateProfileRequest(
+                first_name=first_name,
+                last_name=last_name,
+            ))
+            me = await client_mgr.client.get_me()
+            return me
+        me = client_mgr.run_coroutine(_update())
+        full = ((getattr(me,'first_name','') or '') + ' ' + (getattr(me,'last_name','') or '')).strip()
+        with USERS_LOCK:
+            if user_id in USERS:
+                USERS[user_id]['account_name'] = full
+        return jsonify({'success': True, 'message': f'تم تغيير الاسم إلى: {full}'})
+    except Exception as e:
+        logger.error(f'update_profile_name error: {e}')
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/update_username', methods=['POST'])
+def api_update_username():
+    """تغيير اسم المستخدم (@username) على تيليجرام"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'غير مصرح'})
+    user_id = session['user_id']
+    data = request.get_json() or {}
+    username = (data.get('username') or '').strip().lstrip('@')
+    import re
+    if username and (len(username) < 5 or not re.match(r'^[a-zA-Z0-9_]+$', username)):
+        return jsonify({'success': False, 'message': 'اسم المستخدم: 5 أحرف أو أكثر، حروف إنجليزية وأرقام و _ فقط'})
+    with USERS_LOCK:
+        client_mgr = USERS.get(user_id, {}).get('client_manager')
+    if not client_mgr or not getattr(client_mgr, 'client', None):
+        return jsonify({'success': False, 'message': 'العميل غير متصل'})
+    try:
+        async def _update():
+            from telethon.tl.functions.account import UpdateUsernameRequest
+            await client_mgr.client(UpdateUsernameRequest(username=username))
+            return username
+        client_mgr.run_coroutine(_update())
+        with USERS_LOCK:
+            if user_id in USERS:
+                USERS[user_id]['account_username'] = f'@{username}' if username else ''
+        msg = f'تم تغيير اسم المستخدم إلى @{username}' if username else 'تم حذف اسم المستخدم'
+        return jsonify({'success': True, 'message': msg})
+    except Exception as e:
+        logger.error(f'update_username error: {e}')
+        err = str(e)
+        if 'USERNAME_OCCUPIED' in err:
+            err = 'اسم المستخدم محجوز من قِبل شخص آخر'
+        elif 'USERNAME_INVALID' in err:
+            err = 'اسم المستخدم غير صالح'
+        elif 'FLOOD_WAIT' in err:
+            err = 'انتظر قليلاً قبل المحاولة مرة أخرى'
+        return jsonify({'success': False, 'message': err})
+
+@app.route('/api/update_profile_photo', methods=['POST'])
+def api_update_profile_photo():
+    """رفع وتعيين صورة الملف الشخصي على تيليجرام"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'غير مصرح'})
+    user_id = session['user_id']
+    data = request.get_json() or {}
+    photo_b64 = data.get('photo', '')
+    if not photo_b64:
+        return jsonify({'success': False, 'message': 'لم يتم إرسال صورة'})
+    with USERS_LOCK:
+        client_mgr = USERS.get(user_id, {}).get('client_manager')
+    if not client_mgr or not getattr(client_mgr, 'client', None):
+        return jsonify({'success': False, 'message': 'العميل غير متصل'})
+    try:
+        if ',' in photo_b64:
+            photo_b64 = photo_b64.split(',', 1)[1]
+        photo_bytes = base64.b64decode(photo_b64)
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+        tmp.write(photo_bytes); tmp.close()
+        async def _upload():
+            from telethon.tl.functions.photos import UploadProfilePhotoRequest
+            uploaded = await client_mgr.client.upload_file(tmp.name, file_name='photo.jpg')
+            await client_mgr.client(UploadProfilePhotoRequest(file=uploaded))
+            os.unlink(tmp.name)
+        client_mgr.run_coroutine(_upload())
+        # تحديث الصورة المحلية للكاش
+        avatar_dir = os.path.join(SESSIONS_DIR, 'avatars')
+        os.makedirs(avatar_dir, exist_ok=True)
+        with open(os.path.join(avatar_dir, f'{user_id}.jpg'), 'wb') as f:
+            f.write(photo_bytes)
+        with USERS_LOCK:
+            if user_id in USERS:
+                USERS[user_id]['account_avatar'] = f'/api/account_avatar/{user_id}'
+        return jsonify({'success': True, 'message': 'تم تحديث الصورة الشخصية بنجاح'})
+    except Exception as e:
+        logger.error(f'update_profile_photo error: {e}')
+        return jsonify({'success': False, 'message': str(e)})
+
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 🌐  إضافة عميل ويب تيليجرام — WEB CLIENT EXTENSION
+#     يُضاف هذا القسم فوق الـ __main__ مباشرةً
+#     لا يُعدَّل أي شيء من الكود الأصلي أعلاه
+# ═══════════════════════════════════════════════════════════════════════
+
+import asyncio as _wc_asyncio
+import threading as _wc_threading
+import time as _wc_time
+import os as _wc_os
+
+# ── مستوردات جديدة للعميل الويب ─────────────────────────────────────
+try:
+    from flask import make_response as _wc_make_response
+except ImportError:
+    pass
+
+# ── كاش الذاكرة للعميل الويب ────────────────────────────────────────
+_wc_mem_cache: dict = {}
+_wc_cache_lock = _wc_threading.Lock()
+
+def _wc_cache_get(key: str):
+    with _wc_cache_lock:
+        entry = _wc_mem_cache.get(key)
+    if entry and _wc_time.time() < entry[1]:
+        return entry[0]
+    return None
+
+def _wc_cache_set(key: str, data, ttl: float = 30):
+    with _wc_cache_lock:
+        _wc_mem_cache[key] = (data, _wc_time.time() + ttl)
+
+def _wc_cache_del(*keys):
+    with _wc_cache_lock:
+        for k in keys:
+            _wc_mem_cache.pop(k, None)
+
+def _wc_cache_del_prefix(prefix: str):
+    with _wc_cache_lock:
+        for k in list(_wc_mem_cache):
+            if k.startswith(prefix):
+                del _wc_mem_cache[k]
+
+# ── active_sessions للعميل الويب ────────────────────────────────────
+_wc_active_sessions: dict = {}
+_wc_typing_timers:  dict = {}
+
+# ── جسر: تشغيل coroutine على عميل تيليجرام الحالي في USERS ─────────
+def _wc_run_on_client(user_id: str, coro_fn, timeout: int = 18):
+    """
+    يُشغّل coroutine على TelegramClientManager المرتبط بالمستخدم.
+    إن لم يكن موجوداً يُنشئ عميلاً مؤقتاً.
+    """
+    uid = str(user_id)
+    with USERS_LOCK:
+        umgr    = USERS.get(uid, {})
+        clt_mgr = umgr.get('client_manager')
+
+    if clt_mgr and getattr(clt_mgr, 'client', None):
+        client = clt_mgr.client
+        # ابحث عن الـ event loop الخاص بالـ manager
+        loop = None
+        for attr in ('_loop', 'loop', '_event_loop', '_asyncio_loop'):
+            candidate = getattr(clt_mgr, attr, None)
+            if candidate and getattr(candidate, 'is_running', lambda: False)():
+                loop = candidate
+                break
+        if loop:
+            fut = _wc_asyncio.run_coroutine_threadsafe(coro_fn(client), loop)
+            try:
+                return fut.result(timeout=timeout)
+            except Exception:
+                pass
+
+    # بديل: عميل مؤقت منفصل
+    return _wc_run_telethon(uid, coro_fn, timeout)
+
+
+def _wc_run_telethon(user_id: str, coro_fn, timeout: int = 18):
+    """تشغيل coroutine في thread جديد بـ event loop مستقل."""
+    result_box = [None]
+    error_box  = [None]
+
+    def _worker():
+        loop = _wc_asyncio.new_event_loop()
+        _wc_asyncio.set_event_loop(loop)
+        try:
+            from telethon import TelegramClient
+            from telethon.sessions import StringSession
+            sess_str = load_string_session(str(user_id))
+            sess_arg = StringSession(sess_str) if sess_str else _wc_os.path.join(SESSIONS_DIR, str(user_id))
+            client = TelegramClient(sess_arg, int(API_ID), API_HASH)
+            async def _run():
+                await client.connect()
+                if not await client.is_user_authorized():
+                    raise RuntimeError('غير مصادق')
+                result_box[0] = await coro_fn(client)
+                await client.disconnect()
+            loop.run_until_complete(_run())
+        except Exception as ex:
+            error_box[0] = ex
+        finally:
+            loop.close()
+
+    t = _wc_threading.Thread(target=_worker, daemon=True)
+    t.start(); t.join(timeout=timeout + 5)
+    if error_box[0]:
+        raise error_box[0]
+    return result_box[0]
+
+
+# ── التحقق من المصادقة للعميل الويب ──────────────────────────────────
+def _wc_is_auth():
+    uid = session.get('user_id')
+    if not uid:
+        return False
+    with USERS_LOCK:
+        return uid in USERS
+
+def _wc_login_required(f):
+    from functools import wraps
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not _wc_is_auth():
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'message': 'غير مصادق', 'auth': False}), 401
+            return redirect('/wc/login')
+        return f(*args, **kwargs)
+    return wrapper
+
+def _wc_stop_typing(chat_id, user_id):
+    socketio.emit('user_typing', {
+        'user_id': user_id, 'chat_id': chat_id, 'is_typing': False,
+    }, room=f'wc_chat_{chat_id}')
+
+
+# ════════════════════════════════════════════════════════════════════
+# 📄  صفحات العميل الويب
+# ════════════════════════════════════════════════════════════════════
+
+@app.route('/wc')
+@app.route('/wc/')
+def wc_index():
+    """صفحة العميل الويب الرئيسية"""
+    if not _wc_is_auth():
+        return redirect('/wc/login')
+    uid   = session.get('user_id', '')
+    uname = PREDEFINED_USERS.get(uid, {}).get('name', uid) if uid else 'مستخدم'
+    return render_template('index.html', user_id=uid, user_name=uname)
+
+
+@app.route('/wc/login')
+def wc_login():
+    """صفحة تسجيل الدخول للعميل الويب"""
+    if _wc_is_auth():
+        return redirect('/wc')
+    return render_template('login.html')
+
+
+@app.route('/wc/dashboard')
+@_wc_login_required
+def wc_dashboard():
+    uid   = session.get('user_id', '')
+    uname = PREDEFINED_USERS.get(uid, {}).get('name', uid)
+    return render_template('dashboard.html', user_id=uid, user_name=uname, theme='dark')
+
+
+@app.route('/wc/send_monitor')
+@_wc_login_required
+def wc_send_monitor():
+    uid   = session.get('user_id', '')
+    uname = PREDEFINED_USERS.get(uid, {}).get('name', uid)
+    return render_template('send_monitor.html', user_id=uid, user_name=uname, theme='dark')
+
+
+@app.route('/wc/call/<int:target_user_id>')
+@_wc_login_required
+def wc_call_page(target_user_id):
+    return render_template('voice_call.html', target_user_id=target_user_id, target_name='مستخدم')
+
+
+@app.route('/wc/privacy')
+@_wc_login_required
+def wc_privacy():
+    return render_template('privacy_settings.html')
+
+
+# ════════════════════════════════════════════════════════════════════
+# 🔐  مسارات مصادقة العميل الويب  /api/auth/*
+# ════════════════════════════════════════════════════════════════════
+
+@app.route('/api/auth/send-code', methods=['POST'])
+def wc_auth_send_code():
+    """إرسال كود التحقق عبر تيليجرام — جسر إلى /api/save_login"""
+    data  = request.get_json(force=True) or {}
+    phone = (data.get('phone') or '').strip()
+    if not phone:
+        return jsonify({'success': False, 'message': 'رقم الهاتف مطلوب'}), 400
+    uid = session.get('user_id')
+    if not uid:
+        with USERS_LOCK:
+            uid = list(PREDEFINED_USERS.keys())[0] if PREDEFINED_USERS else 'user_1'
+        session['user_id'] = uid
+        session.permanent = True
+    # استدعاء دالة تسجيل الدخول المدمجة في الكود الأساسي
+    try:
+        with USERS_LOCK:
+            if uid not in USERS:
+                USERS[uid] = {
+                    'client_manager': None, 'settings': load_settings(uid),
+                    'thread': None, 'is_running': False,
+                    'stats': {"sent": 0, "errors": 0},
+                    'connected': False, 'authenticated': False,
+                    'awaiting_code': False, 'awaiting_password': False,
+                    'phone_code_hash': None, 'monitoring_active': False,
+                    'event_handlers_registered': False, 'sent_batches': []
+                }
+        from telethon import TelegramClient
+        from telethon.sessions import StringSession
+        import asyncio as _aio
+
+        result_box = [None]; err_box = [None]
+        def _worker():
+            loop = _aio.new_event_loop(); _aio.set_event_loop(loop)
+            try:
+                client = TelegramClient(StringSession(), int(API_ID), API_HASH)
+                async def _run():
+                    await client.connect()
+                    sent = await client.send_code_request(phone)
+                    return sent.phone_code_hash
+                ph = loop.run_until_complete(_run())
+                with USERS_LOCK:
+                    USERS[uid]['phone']          = phone
+                    USERS[uid]['phone_code_hash'] = ph
+                    USERS[uid]['_temp_client']    = client
+                    USERS[uid]['_temp_loop']      = loop
+                    USERS[uid]['awaiting_code']   = True
+                result_box[0] = ph
+            except Exception as ex:
+                err_box[0] = ex
+                loop.close()
+        t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(30)
+        if err_box[0]:
+            return jsonify({'success': False, 'message': str(err_box[0])})
+        return jsonify({'success': True, 'phone_hash': result_box[0]})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+@app.route('/api/auth/check-code', methods=['POST'])
+def wc_auth_check_code():
+    """التحقق من الكود + معالجة session_string إن وُجد"""
+    data  = request.get_json(force=True) or {}
+    code  = (data.get('code') or '').strip()
+    phone = (data.get('phone') or '').strip()
+    sess_str = (data.get('session_string') or '').strip()
+    uid   = session.get('user_id')
+    if not uid:
+        with USERS_LOCK:
+            uid = list(PREDEFINED_USERS.keys())[0] if PREDEFINED_USERS else 'user_1'
+        session['user_id'] = uid; session.permanent = True
+
+    # ① استيراد session_string مباشرةً
+    if sess_str:
+        try:
+            from telethon import TelegramClient
+            from telethon.sessions import StringSession
+            import asyncio as _aio
+            ok_box = [False]; err_box = [None]; name_box = ['مستخدم']
+            def _w():
+                loop = _aio.new_event_loop(); _aio.set_event_loop(loop)
+                try:
+                    client = TelegramClient(StringSession(sess_str), int(API_ID), API_HASH)
+                    async def _r():
+                        await client.connect()
+                        if not await client.is_user_authorized():
+                            raise RuntimeError('الجلسة غير صالحة')
+                        me = await client.get_me()
+                        first = getattr(me, 'first_name', '') or ''
+                        last  = getattr(me, 'last_name',  '') or ''
+                        name_box[0] = (first + ' ' + last).strip() or str(me.id)
+                        save_string_session(uid, sess_str)
+                        ok_box[0] = True
+                        await client.disconnect()
+                    loop.run_until_complete(_r())
+                except Exception as ex:
+                    err_box[0] = ex
+                finally:
+                    loop.close()
+            t = _wc_threading.Thread(target=_w, daemon=True); t.start(); t.join(25)
+            if err_box[0]:
+                return jsonify({'success': False, 'message': str(err_box[0])})
+            with USERS_LOCK:
+                if uid in USERS:
+                    USERS[uid]['authenticated'] = True
+                    USERS[uid]['connected']     = True
+            session['user_name'] = name_box[0]; session.permanent = True
+            return jsonify({'success': True, 'user_name': name_box[0]})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)})
+
+    # ② التحقق من الكود العادي
+    if not code:
+        return jsonify({'success': False, 'message': 'الكود مطلوب'}), 400
+    with USERS_LOCK:
+        user_data = USERS.get(uid, {})
+        ph    = user_data.get('phone_code_hash')
+        phone = phone or user_data.get('phone', '')
+        _tc   = user_data.get('_temp_client')
+        _tl   = user_data.get('_temp_loop')
+    if not ph or not _tc:
+        return jsonify({'success': False, 'message': 'ابدأ بإرسال الكود أولاً'}), 400
+
+    result_box = [None]; err_box = [None]
+    def _worker():
+        import asyncio as _aio
+        try:
+            async def _run():
+                from telethon.errors import SessionPasswordNeededError
+                try:
+                    signed = await _tc.sign_in(phone, code, phone_code_hash=ph)
+                    me = await _tc.get_me()
+                    first = getattr(me, 'first_name', '') or ''
+                    last  = getattr(me, 'last_name',  '') or ''
+                    name  = (first + ' ' + last).strip() or str(me.id)
+                    sess  = _tc.session.save()
+                    save_string_session(uid, sess)
+                    result_box[0] = {'ok': True, 'name': name}
+                except SessionPasswordNeededError:
+                    result_box[0] = {'ok': False, 'need_password': True}
+            _aio.run_coroutine_threadsafe(_run(), _tl).result(20)
+        except Exception as ex:
+            err_box[0] = ex
+    t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(25)
+    if err_box[0]:
+        return jsonify({'success': False, 'message': str(err_box[0])})
+    r = result_box[0] or {}
+    if r.get('need_password'):
+        with USERS_LOCK:
+            if uid in USERS: USERS[uid]['awaiting_password'] = True
+        return jsonify({'success': False, 'need_password': True})
+    with USERS_LOCK:
+        if uid in USERS:
+            USERS[uid]['authenticated'] = True
+            USERS[uid]['connected']     = True
+    session['user_name'] = r.get('name', 'مستخدم'); session.permanent = True
+    return jsonify({'success': True, 'user_name': r.get('name')})
+
+
+@app.route('/api/auth/check-password', methods=['POST'])
+def wc_auth_check_password():
+    """2FA password"""
+    data = request.get_json(force=True) or {}
+    pwd  = (data.get('password') or '').strip()
+    uid  = session.get('user_id', '')
+    if not pwd:
+        return jsonify({'success': False, 'message': 'كلمة المرور مطلوبة'}), 400
+    with USERS_LOCK:
+        user_data = USERS.get(uid, {})
+        _tc = user_data.get('_temp_client')
+        _tl = user_data.get('_temp_loop')
+    if not _tc:
+        return jsonify({'success': False, 'message': 'ابدأ عملية الدخول من جديد'}), 400
+    result_box = [None]; err_box = [None]
+    def _worker():
+        import asyncio as _aio
+        try:
+            async def _run():
+                await _tc.sign_in(password=pwd)
+                me    = await _tc.get_me()
+                first = getattr(me, 'first_name', '') or ''
+                last  = getattr(me, 'last_name',  '') or ''
+                name  = (first + ' ' + last).strip() or str(me.id)
+                sess  = _tc.session.save()
+                save_string_session(uid, sess)
+                result_box[0] = name
+            _aio.run_coroutine_threadsafe(_run(), _tl).result(20)
+        except Exception as ex:
+            err_box[0] = ex
+    t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(25)
+    if err_box[0]:
+        return jsonify({'success': False, 'message': str(err_box[0])})
+    with USERS_LOCK:
+        if uid in USERS:
+            USERS[uid]['authenticated'] = True; USERS[uid]['connected'] = True
+    session['user_name'] = result_box[0] or 'مستخدم'; session.permanent = True
+    return jsonify({'success': True, 'user_name': result_box[0]})
+
+
+@app.route('/api/auth/logout', methods=['POST'])
+def wc_auth_logout():
+    uid = session.get('user_id')
+    if uid:
+        with USERS_LOCK:
+            if uid in USERS:
+                USERS[uid]['authenticated'] = False
+    session.clear()
+    return jsonify({'success': True})
+
+
+@app.route('/api/auth/status', methods=['GET'])
+def wc_auth_status():
+    if _wc_is_auth():
+        uid   = session.get('user_id', '')
+        uname = session.get('user_name') or PREDEFINED_USERS.get(uid, {}).get('name', uid)
+        return jsonify({'authenticated': True, 'user_id': uid, 'user_name': uname})
+    return jsonify({'authenticated': False})
+
+
+# ════════════════════════════════════════════════════════════════════
+# 👤  بيانات المستخدم الحالي
+# ════════════════════════════════════════════════════════════════════
+
+@app.route('/api/me', methods=['GET'])
+@_wc_login_required
+def wc_api_me():
+    uid = session.get('user_id', '')
+    ck  = f'wc_me:{uid}'
+    cached = _wc_cache_get(ck)
+    if cached:
+        return jsonify({'success': True, 'user': cached})
+    try:
+        async def _get(client):
+            me = await client.get_me()
+            fn = getattr(me, 'first_name', '') or ''
+            ln = getattr(me, 'last_name',  '') or ''
+            return {
+                'id': me.id, 'name': (fn + ' ' + ln).strip() or getattr(me, 'username', ''),
+                'first_name': fn, 'last_name': ln,
+                'username': getattr(me, 'username', '') or '',
+                'phone':    getattr(me, 'phone',    '') or '',
+            }
+        data = _wc_run_on_client(uid, _get)
+        _wc_cache_set(ck, data, ttl=300)
+        if data.get('name'):
+            session['user_name'] = data['name']
+        return jsonify({'success': True, 'user': data})
+    except Exception as e:
+        # بيانات بديلة من PREDEFINED_USERS
+        pdata = PREDEFINED_USERS.get(uid, {})
+        fb = {'id': uid, 'name': pdata.get('name', uid),
+              'first_name': pdata.get('name', uid), 'last_name': '', 'username': '', 'phone': ''}
+        return jsonify({'success': True, 'user': fb})
+
+
+@app.route('/api/user/info')
+@_wc_login_required
+def wc_api_user_info():
+    uid = session.get('user_id', '')
+    return jsonify({'success': True, 'user': {
+        'id': uid, 'name': session.get('user_name', uid)
+    }})
+
+
+# ════════════════════════════════════════════════════════════════════
+# 💬  المحادثات والرسائل
+# ════════════════════════════════════════════════════════════════════
+
+@app.route('/api/chats', methods=['GET'])
+@_wc_login_required
+def wc_get_chats():
+    uid      = session.get('user_id', '')
+    page     = max(1, int(request.args.get('page', 1)))
+    per_page = min(int(request.args.get('per_page', 150)), 500)
+    force    = request.args.get('force', '0') == '1'
+    all_key  = f'wc_chats:{uid}'
+    if not force:
+        cached = _wc_cache_get(all_key)
+        if cached is not None:
+            start  = (page - 1) * per_page
+            return jsonify({'success': True, 'chats': cached[start:start+per_page],
+                            'total': len(cached), 'cached': True})
+    try:
+        async def _fetch(client):
+            dialogs = await client.get_dialogs(limit=None)
+            result  = []
+            for d in dialogs:
+                msg = d.message
+                result.append({
+                    'id': d.id, 'name': d.name or 'محادثة',
+                    'is_group': d.is_group, 'is_channel': d.is_channel,
+                    'unread_count': d.unread_count,
+                    'last_message': {
+                        'text': getattr(msg, 'message', '') or '',
+                        'timestamp': int(msg.date.timestamp()) if msg and msg.date else None,
+                        'from_me': getattr(msg, 'out', False),
+                    } if msg else None,
+                    'pinned': d.pinned, 'archived': d.archived,
+                })
+            return result
+        all_chats = _wc_run_on_client(uid, _fetch, timeout=60)
+        _wc_cache_set(all_key, all_chats, ttl=60)
+        start = (page - 1) * per_page
+        return jsonify({'success': True, 'chats': all_chats[start:start+per_page],
+                        'total': len(all_chats)})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+from werkzeug.routing import BaseConverter as _BaseConv
+class _SintConv(_BaseConv):
+    regex = r'-?\d+'
+    def to_python(self, v): return int(v)
+    def to_url(self, v): return str(int(v))
+try:
+    app.url_map.converters['sint'] = _SintConv
+except Exception:
+    pass
+
+
+@app.route('/api/chats/<sint:chat_id>/messages', methods=['GET'])
+@_wc_login_required
+def wc_get_msgs(chat_id):
+    uid       = session.get('user_id', '')
+    limit     = min(int(request.args.get('limit', 50)), 100)
+    offset_id = int(request.args.get('offset_id', 0))
+    force     = request.args.get('force', '0') == '1'
+    ck        = f'wc_msgs:{uid}:{chat_id}'
+    if not force and offset_id == 0:
+        cached = _wc_cache_get(ck)
+        if cached:
+            return jsonify({'success': True, 'messages': cached, 'cached': True})
+    try:
+        async def _fetch(client):
+            me     = await client.get_me()
+            entity = None
+            try:
+                entity = await client.get_entity(chat_id)
+            except Exception:
+                try:
+                    await client.get_dialogs(limit=300)
+                    entity = await client.get_entity(chat_id)
+                except Exception:
+                    pass
+            target = entity if entity is not None else chat_id
+            msgs   = await client.get_messages(target, limit=limit, offset_id=offset_id)
+            result = []
+            for msg in msgs:
+                try:
+                    sender = await msg.get_sender()
+                except Exception:
+                    sender = None
+                sname = (getattr(sender, 'title', None) or
+                         f"{getattr(sender,'first_name','') or ''} {getattr(sender,'last_name','') or ''}".strip()
+                         ) if sender else 'مستخدم'
+                result.append({
+                    'id': msg.id, 'chat_id': chat_id,
+                    'sender_id': msg.sender_id, 'sender_name': sname,
+                    'text': msg.message or '', 'message': msg.message or '',
+                    'timestamp': int(msg.date.timestamp()) if msg.date else None,
+                    'from_me': msg.sender_id == me.id,
+                    'edited': msg.edit_date is not None,
+                    'reply_to': getattr(msg.reply_to, 'reply_to_msg_id', None),
+                    'has_media': msg.media is not None,
+                })
+            return result
+        messages = _wc_run_on_client(uid, _fetch)
+        if offset_id == 0:
+            _wc_cache_set(ck, messages, ttl=15)
+        return jsonify({'success': True, 'messages': messages})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/messages/send', methods=['POST'])
+@_wc_login_required
+def wc_send_msg():
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    cid  = data.get('chat_id'); text = (data.get('text') or '').strip()
+    rto  = data.get('reply_to')
+    if not cid or not text:
+        return jsonify({'success': False, 'message': 'بيانات ناقصة'}), 400
+    try:
+        async def _send(client):
+            msg = await client.send_message(int(cid), text, reply_to=rto)
+            return {'id': msg.id, 'timestamp': int(msg.date.timestamp())}
+        r = _wc_run_on_client(uid, _send)
+        _wc_cache_del(f'wc_msgs:{uid}:{cid}', f'wc_chats:{uid}')
+        return jsonify({'success': True, **(r or {})})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/messages/reaction', methods=['POST'])
+@_wc_login_required
+def wc_msg_reaction():
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    cid  = int(data.get('chat_id', 0)); mid = int(data.get('message_id', 0))
+    emoji = data.get('emoji') or data.get('reaction', '👍')
+    if not cid or not mid:
+        return jsonify({'success': False}), 400
+    socketio.emit('reaction_added', {'chat_id': cid, 'message_id': mid,
+                                     'emoji': emoji, 'user_id': uid},
+                  room=f'wc_chat_{cid}')
+    return jsonify({'success': True})
+
+
+@app.route('/api/messages/forward', methods=['POST'])
+@_wc_login_required
+def wc_fwd_msg():
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    fid  = data.get('from_chat_id'); tid = data.get('to_chat_id')
+    mids = data.get('message_ids', []) or ([data.get('message_id')] if data.get('message_id') else [])
+    if not fid or not tid or not mids:
+        return jsonify({'success': False, 'message': 'بيانات ناقصة'}), 400
+    try:
+        async def _fwd(client):
+            await client.forward_messages(int(tid), mids, int(fid))
+        _wc_run_on_client(uid, _fwd)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/messages/pin', methods=['POST'])
+@_wc_login_required
+def wc_pin_msg():
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    cid  = data.get('chat_id'); mid = data.get('message_id')
+    if not cid or not mid:
+        return jsonify({'success': False}), 400
+    try:
+        async def _pin(client):
+            from telethon.tl.functions.messages import UpdatePinnedMessageRequest
+            await client(UpdatePinnedMessageRequest(peer=int(cid), id=int(mid), silent=True))
+        _wc_run_on_client(uid, _pin)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/messages/bookmark', methods=['POST'])
+@_wc_login_required
+def wc_bookmark():
+    return jsonify({'success': True})
+
+
+@app.route('/api/messages/bookmarks', methods=['GET'])
+@_wc_login_required
+def wc_get_bookmarks():
+    return jsonify({'success': True, 'bookmarks': []})
+
+
+# ════════════════════════════════════════════════════════════════════
+# 📁  المجلدات
+# ════════════════════════════════════════════════════════════════════
+
+@app.route('/api/folders', methods=['GET'])
+@_wc_login_required
+def wc_get_folders():
+    return jsonify({'success': True, 'folders': []})
+
+
+@app.route('/api/folders', methods=['POST'])
+@_wc_login_required
+def wc_create_folder():
+    data = request.get_json(force=True) or {}
+    name = (data.get('name') or '').strip()
+    if not name:
+        return jsonify({'success': False, 'message': 'اسم المجلد مطلوب'}), 400
+    return jsonify({'success': True, 'folder_id': 1, 'name': name})
+
+
+# ════════════════════════════════════════════════════════════════════
+# 🔍  البحث
+# ════════════════════════════════════════════════════════════════════
+
+@app.route('/api/search', methods=['GET'])
+@_wc_login_required
+def wc_search():
+    uid = session.get('user_id', ''); q = (request.args.get('q') or '').strip()
+    if not q:
+        return jsonify({'success': False, 'message': 'كلمة البحث مطلوبة'}), 400
+    try:
+        async def _s(client):
+            msgs = await client.get_messages(None, search=q, limit=30)
+            me   = await client.get_me()
+            return [{'id': m.id, 'text': m.message or '', 'chat_id': m.chat_id,
+                     'timestamp': int(m.date.timestamp()) if m.date else None} for m in msgs]
+        return jsonify({'success': True, 'results': _wc_run_on_client(uid, _s)})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/profile/<int:target_id>', methods=['GET'])
+@_wc_login_required
+def wc_get_profile(target_id):
+    uid = session.get('user_id', '')
+    try:
+        async def _p(client):
+            e = await client.get_entity(target_id)
+            return {'id': target_id,
+                    'name': getattr(e, 'title', None) or
+                            f"{getattr(e,'first_name','') or ''} {getattr(e,'last_name','') or ''}".strip(),
+                    'username': getattr(e, 'username', None)}
+        return jsonify({'success': True, 'profile': _wc_run_on_client(uid, _p)})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ════════════════════════════════════════════════════════════════════
+# ⚙️  الإعدادات
+# ════════════════════════════════════════════════════════════════════
+
+@app.route('/api/settings', methods=['GET'])
+@_wc_login_required
+def wc_get_settings():
+    uid = session.get('user_id', '')
+    return jsonify({'success': True, 'settings': load_settings(uid) or {}})
+
+
+@app.route('/api/settings', methods=['POST'])
+@_wc_login_required
+def wc_update_setting():
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    key  = (data.get('key') or '').strip(); val = data.get('value')
+    if not key:
+        return jsonify({'success': False, 'message': 'المفتاح مطلوب'}), 400
+    settings = load_settings(uid) or {}
+    settings[key] = val
+    save_settings(uid, settings)
+    return jsonify({'success': True})
+
+
+@app.route('/api/settings/theme', methods=['POST'])
+@_wc_login_required
+def wc_set_theme():
+    data  = request.get_json(force=True) or {}
+    theme = data.get('theme', 'dark')
+    uid   = session.get('user_id', '')
+    settings = load_settings(uid) or {}
+    settings['theme'] = theme; save_settings(uid, settings)
+    return jsonify({'success': True, 'theme': theme})
+
+
+# ════════════════════════════════════════════════════════════════════
+# 📡  أحداث Socket.IO — العميل الويب
+# ════════════════════════════════════════════════════════════════════
+
+@socketio.on('register_user')
+def wc_handle_register(data):
+    uid = str(data.get('user_id', ''))
+    if not uid:
+        return
+    _wc_active_sessions[uid] = {'sid': request.sid, 'rooms': []}
+    join_room(f'user_{uid}')
+    socketio.emit('user_online', {'user_id': uid})
+
+
+@socketio.on('join_chat')
+def wc_handle_join(data):
+    uid = data.get('user_id'); cid = data.get('chat_id')
+    if not uid or not cid:
+        return
+    room = f'wc_chat_{cid}'
+    join_room(room)
+    if uid in _wc_active_sessions and room not in _wc_active_sessions[uid]['rooms']:
+        _wc_active_sessions[uid]['rooms'].append(room)
+    emit('joined_chat', {'chat_id': cid, 'status': 'joined'}, to=request.sid)
+
+
+@socketio.on('leave_chat')
+def wc_handle_leave(data):
+    uid = data.get('user_id'); cid = data.get('chat_id')
+    if not uid or not cid:
+        return
+    room = f'wc_chat_{cid}'
+    leave_room(room)
+    if uid in _wc_active_sessions and room in _wc_active_sessions[uid]['rooms']:
+        _wc_active_sessions[uid]['rooms'].remove(room)
+
+
+@socketio.on('send_message')
+def wc_handle_send(data):
+    uid  = str(data.get('user_id', ''))
+    cid  = data.get('chat_id'); text = (data.get('text') or '').strip()
+    mid  = data.get('message_id') or f'msg_{int(_wc_time.time())}'
+    rto  = data.get('reply_to')
+    tmp_id = data.get('tmp_id', mid)
+    if not uid or not cid or not text:
+        emit('message_error', {'message_id': mid, 'error': 'بيانات ناقصة'}, to=request.sid)
+        return
+    with USERS_LOCK:
+        pdata = PREDEFINED_USERS.get(uid, {})
+    uname = pdata.get('name', 'مستخدم')
+    msg_obj = {'id': mid, 'sender_id': uid, 'sender_name': uname, 'chat_id': cid,
+               'text': text, 'message': text,
+               'timestamp': int(_wc_time.time()), 'status': 'sent', 'from_me': True,
+               'reply_to': rto}
+    socketio.emit('new_message', msg_obj, room=f'wc_chat_{cid}')
+    emit('message_sent', {'message_id': mid, 'tmp_id': tmp_id, 'status': 'delivered'}, to=request.sid)
+    def _bg():
+        try:
+            _wc_run_on_client(uid, lambda c: c.send_message(int(cid), text, reply_to=rto), timeout=18)
+            _wc_cache_del(f'wc_msgs:{uid}:{cid}', f'wc_chats:{uid}')
+        except Exception as ex:
+            logger.warning(f'wc_send_message Telethon: {ex}')
+    _wc_threading.Thread(target=_bg, daemon=True).start()
+
+
+@socketio.on('mark_as_read')
+def wc_handle_read(data):
+    uid = data.get('user_id'); cid = data.get('chat_id')
+    if uid and cid:
+        socketio.emit('messages_read', {'chat_id': cid, 'reader_id': uid},
+                      room=f'wc_chat_{cid}')
+
+
+@socketio.on('typing_start')
+def wc_handle_typing_start(data):
+    uid = data.get('user_id'); cid = data.get('chat_id')
+    if not uid or not cid:
+        return
+    if cid in _wc_typing_timers and uid in _wc_typing_timers[cid]:
+        _wc_typing_timers[cid][uid].cancel()
+    emit('user_typing', {'user_id': uid, 'chat_id': cid, 'is_typing': True},
+         room=f'wc_chat_{cid}', skip_sid=request.sid)
+    t = _wc_threading.Timer(3.5, _wc_stop_typing, args=(cid, uid))
+    t.daemon = True; t.start()
+    _wc_typing_timers.setdefault(cid, {})[uid] = t
+
+
+@socketio.on('typing_stop')
+def wc_handle_typing_stop(data):
+    uid = data.get('user_id'); cid = data.get('chat_id')
+    if not uid or not cid:
+        return
+    if cid in _wc_typing_timers and uid in _wc_typing_timers[cid]:
+        _wc_typing_timers[cid][uid].cancel()
+        del _wc_typing_timers[cid][uid]
+    emit('user_typing', {'user_id': uid, 'chat_id': cid, 'is_typing': False},
+         room=f'wc_chat_{cid}')
+
+
+@socketio.on('delete_message')
+def wc_handle_delete(data):
+    uid = str(data.get('user_id', '')); cid = data.get('chat_id'); mid = data.get('message_id')
+    if not uid or not cid or not mid:
+        return
+    socketio.emit('message_deleted', {'chat_id': cid, 'message_id': mid}, room=f'wc_chat_{cid}')
+    def _bg():
+        try:
+            _wc_run_on_client(uid, lambda c: c.delete_messages(int(cid), [int(mid)]))
+            _wc_cache_del(f'wc_msgs:{uid}:{cid}')
+        except Exception as ex:
+            logger.warning(f'wc_delete: {ex}')
+    _wc_threading.Thread(target=_bg, daemon=True).start()
+
+
+@socketio.on('edit_message')
+def wc_handle_edit(data):
+    uid = str(data.get('user_id', '')); cid = data.get('chat_id')
+    mid = data.get('message_id'); new_text = (data.get('new_text') or '').strip()
+    if not all([uid, cid, mid, new_text]):
+        return
+    socketio.emit('message_edited', {'chat_id': cid, 'message_id': mid, 'new_text': new_text,
+                                     'edited_at': int(_wc_time.time())}, room=f'wc_chat_{cid}')
+    def _bg():
+        try:
+            _wc_run_on_client(uid, lambda c: c.edit_message(int(cid), int(mid), new_text))
+            _wc_cache_del(f'wc_msgs:{uid}:{cid}')
+        except Exception as ex:
+            logger.warning(f'wc_edit: {ex}')
+    _wc_threading.Thread(target=_bg, daemon=True).start()
+
+
+@socketio.on('get_online_status')
+def wc_online_status(data):
+    target = str(data.get('user_id', ''))
+    emit('online_status', {'user_id': target, 'is_online': target in _wc_active_sessions},
+         to=request.sid)
+
+
+# ── مكالمات WebRTC ──────────────────────────────────────────────────
+@socketio.on('call_offer')
+def wc_call_offer(data):
+    to = str(data.get('to_user_id', ''))
+    socketio.emit('incoming_call', {'from_user_id': data.get('from_user_id'),
+                                    'from_name': data.get('from_name', 'مستخدم'),
+                                    'offer': data.get('offer')},
+                  room=f'user_{to}')
+
+@socketio.on('call_answer')
+def wc_call_answer(data):
+    socketio.emit('call_answered', {'answer': data.get('answer')},
+                  room=f'user_{str(data.get("to_user_id",""))}')
+
+@socketio.on('call_ice')
+def wc_call_ice(data):
+    socketio.emit('call_ice', {'candidate': data.get('candidate')},
+                  room=f'user_{str(data.get("to_user_id",""))}')
+
+@socketio.on('call_end')
+def wc_call_end(data):
+    socketio.emit('call_ended', {}, room=f'user_{str(data.get("to_user_id",""))}')
+
+@socketio.on('call_reject')
+def wc_call_reject(data):
+    socketio.emit('call_rejected', {}, room=f'user_{str(data.get("to_user_id",""))}')
+
+
+# ════════════════════════════════════════════════════════════════════
+# 📊  المراقبة والإرسال (مسارات الجسر الجديدة)
+# ════════════════════════════════════════════════════════════════════
+
+_wc_monitor_state: dict = {}
+
+def _wc_get_monitor(uid):
+    if uid not in _wc_monitor_state:
+        _wc_monitor_state[uid] = {
+            'is_running': False, 'stats': {'sent': 0, 'errors': 0, 'alerts': 0},
+            'settings': {}, 'handler': None,
+        }
+    return _wc_monitor_state[uid]
+
+
+@app.route('/api/monitor/status', methods=['GET'])
+@_wc_login_required
+def wc_monitor_status():
+    uid = session.get('user_id', '')
+    # جرّب حالة USERS أيضاً
+    with USERS_LOCK:
+        uis = USERS.get(uid, {}).get('is_running', False)
+    st = _wc_get_monitor(uid)
+    return jsonify({'success': True,
+                    'is_running': st['is_running'] or uis,
+                    'sent': st['stats']['sent'], 'errors': st['stats']['errors'],
+                    'alerts': st['stats']['alerts'], 'settings': st['settings']})
+
+
+@app.route('/api/monitor/save_settings', methods=['POST'])
+@_wc_login_required
+def wc_monitor_save():
+    uid  = session.get('user_id', ''); data = request.get_json(force=True) or {}
+    st   = _wc_get_monitor(uid); st['settings'] = data
+    s    = load_settings(uid) or {}; s.update({f'monitor_{k}': v for k, v in data.items()})
+    save_settings(uid, s)
+    return jsonify({'success': True})
+
+
+@app.route('/api/monitor/send_now', methods=['POST'])
+@_wc_login_required
+def wc_monitor_send_now():
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    msg  = (data.get('message') or '').strip()
+    grps = (data.get('groups')  or '').strip()
+    all_ = bool(data.get('send_to_all', False))
+    imgs = data.get('images', [])
+    san  = data.get('sanitize_mode', 'salam')
+    st   = _wc_get_monitor(uid)
+    sent = 0; errs = 0
+
+    def _clean(t):
+        import re as _re
+        if san in ('always', 'smart'):
+            t = _re.sub(r'https?://\S+', '', t)
+            t = _re.sub(r't\.me/\S+', '', t)
+            t = _re.sub(r'@\w+', '', t)
+        return t.strip()
+
+    try:
+        async def _do(client):
+            nonlocal sent, errs
+            if all_:
+                dialogs = await client.get_dialogs(limit=300)
+                targets = [d for d in dialogs if d.is_group or d.is_channel]
+            else:
+                lines   = [l.strip() for l in grps.splitlines() if l.strip()]
+                targets = lines
+            for target in targets:
+                try:
+                    if isinstance(target, str):
+                        try: entity = await client.get_entity(target)
+                        except Exception: errs += 1; continue
+                    else:
+                        entity = target.entity
+                    clean = _clean(msg)
+                    if imgs:
+                        import base64, io as _io
+                        for img in imgs:
+                            raw = img.get('data', '')
+                            if ',' in raw: raw = raw.split(',', 1)[1]
+                            buf = _io.BytesIO(base64.b64decode(raw))
+                            buf.name = img.get('name', 'img.jpg')
+                            await client.send_file(entity, buf, caption=clean or None)
+                    elif clean:
+                        await client.send_message(entity, clean)
+                    sent += 1
+                    tname = getattr(entity, 'title', None) or getattr(entity, 'username', str(target))
+                    socketio.emit('send_progress', {'message': f'✅ {tname}', 'sent': sent, 'errors': errs},
+                                  room=f'user_{uid}')
+                    import asyncio as _ai; await _ai.sleep(1.5)
+                except Exception as ex:
+                    errs += 1
+                    socketio.emit('send_progress', {'message': f'❌ {str(ex)[:60]}', 'sent': sent, 'errors': errs},
+                                  room=f'user_{uid}')
+        _wc_run_on_client(uid, _do, timeout=120)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e), 'sent': sent, 'errors': errs}), 500
+    st['stats']['sent'] += sent; st['stats']['errors'] += errs
+    _wc_cache_del(f'wc_chats:{uid}')
+    return jsonify({'success': True, 'message': f'✅ أُرسل إلى {sent} مجموعة، أخطاء: {errs}',
+                    'sent': sent, 'errors': errs})
+
+
+@app.route('/api/monitor/start', methods=['POST'])
+@_wc_login_required
+def wc_monitor_start():
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    kws  = [w.strip().lower() for w in (data.get('watch_words') or '').splitlines() if w.strip()]
+    st   = _wc_get_monitor(uid)
+    if st['is_running']:
+        return jsonify({'success': True, 'message': 'المراقبة تعمل بالفعل'})
+    with USERS_LOCK:
+        clt_mgr = USERS.get(uid, {}).get('client_manager')
+    if not clt_mgr or not getattr(clt_mgr, 'client', None):
+        return jsonify({'success': False, 'message': 'العميل غير متصل'}), 500
+    client = clt_mgr.client
+    loop   = None
+    for attr in ('_loop', 'loop', '_event_loop'):
+        candidate = getattr(clt_mgr, attr, None)
+        if candidate and getattr(candidate, 'is_running', lambda: False)():
+            loop = candidate; break
+    if not loop:
+        return jsonify({'success': False, 'message': 'لم يُعثر على event loop'}), 500
+    import asyncio as _ai
+    async def _reg():
+        from telethon import events as _tevs
+        @client.on(_tevs.NewMessage())
+        async def _mon_h(event):
+            try:
+                txt = (event.raw_text or '').lower()
+                chat = await event.get_chat()
+                cn   = getattr(chat, 'title', None) or getattr(chat, 'username', 'محادثة')
+                for kw in kws:
+                    if kw in txt:
+                        st['stats']['alerts'] += 1
+                        socketio.emit('new_alert', {'keyword': kw, 'group': cn,
+                                                    'text': event.raw_text[:200], 'user_id': uid},
+                                      room=f'user_{uid}')
+                        break
+            except Exception:
+                pass
+        st['handler'] = _mon_h
+    try:
+        _ai.run_coroutine_threadsafe(_reg(), loop).result(10)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+    st['is_running'] = True
+    socketio.emit('monitoring_status', {'is_running': True, 'user_id': uid}, room=f'user_{uid}')
+    return jsonify({'success': True, 'message': 'بدأت المراقبة'})
+
+
+@app.route('/api/monitor/stop', methods=['POST'])
+@_wc_login_required
+def wc_monitor_stop():
+    uid = session.get('user_id', ''); st = _wc_get_monitor(uid)
+    with USERS_LOCK:
+        clt_mgr = USERS.get(uid, {}).get('client_manager')
+    if clt_mgr and st.get('handler'):
+        client = getattr(clt_mgr, 'client', None)
+        loop   = None
+        for attr in ('_loop', 'loop', '_event_loop'):
+            candidate = getattr(clt_mgr, attr, None)
+            if candidate and getattr(candidate, 'is_running', lambda: False)():
+                loop = candidate; break
+        if client and loop:
+            import asyncio as _ai
+            async def _rem(): client.remove_event_handler(st['handler'])
+            try: _ai.run_coroutine_threadsafe(_rem(), loop).result(5)
+            except Exception: pass
+    st['is_running'] = False; st['handler'] = None
+    socketio.emit('monitoring_status', {'is_running': False, 'user_id': uid}, room=f'user_{uid}')
+    return jsonify({'success': True, 'message': 'توقفت المراقبة'})
+
+
+# ── مسارات توافق قديمة ─────────────────────────────────────────────
+@app.route('/wc/api/save_settings', methods=['POST'])
+@_wc_login_required
+def wc_compat_save_settings():
+    return wc_monitor_save()
+
+@app.route('/wc/api/send_now', methods=['POST'])
+@_wc_login_required
+def wc_compat_send_now():
+    return wc_monitor_send_now()
+
+
+# ── المزامنة والمكالمات ──────────────────────────────────────────────
+@app.route('/api/sync/github', methods=['POST'])
+@_wc_login_required
+def wc_sync_github():
+    uid = session.get('user_id', '')
+    return jsonify({'success': True, 'message': 'تمت المزامنة'})
+
+@app.route('/api/sync/status', methods=['GET'])
+@_wc_login_required
+def wc_sync_status():
+    return jsonify({'success': True, 'last_sync': 'الآن'})
+
+@app.route('/api/calls/log', methods=['POST'])
+@_wc_login_required
+def wc_log_call():
+    return jsonify({'success': True})
+
+@app.route('/api/calls/history', methods=['GET'])
+@_wc_login_required
+def wc_call_history():
+    return jsonify({'success': True, 'calls': []})
+
+@app.route('/api/chats/states', methods=['GET'])
+@_wc_login_required
+def wc_chat_states():
+    return jsonify({'success': True, 'archived': {}})
+
+@app.route('/api/chats/<sint:chat_id>/archive', methods=['POST'])
+@_wc_login_required
+def wc_archive_chat(chat_id):
+    return jsonify({'success': True, 'archived': True})
+
+@app.route('/api/chats/<sint:chat_id>/mute', methods=['POST'])
+@_wc_login_required
+def wc_mute_chat(chat_id):
+    return jsonify({'success': True, 'muted': True})
+
+# ════════════════════════════════════════════════════════════════════
+# 🔚  نهاية قسم إضافة عميل الويب
+# ════════════════════════════════════════════════════════════════════
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تحميل - مركز سرعة إنجاز</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    color: #e8eaf6;
+}
+.container { max-width: 500px; width: 90%; padding: 20px; }
+.logo-box {
+    text-align: center;
+    padding: 40px 20px 30px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 24px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.logo-icon {
+    font-size: 72px;
+    display: block;
+    margin-bottom: 16px;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; }
+.subtitle { color: #a5b4fc; font-size: 0.9rem; margin-bottom: 30px; }
+.badge-row { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+.badge { padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+.badge-blue   { background: rgba(99,102,241,0.3); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.4); }
+.badge-green  { background: rgba(52,211,153,0.2); color: #6ee7b7; border: 1px solid rgba(52,211,153,0.3); }
+.badge-purple { background: rgba(167,139,250,0.2); color: #c4b5fd; border: 1px solid rgba(167,139,250,0.3); }
+
+.dl-btn {
+    display: flex; align-items: center; gap: 14px;
+    width: 100%; padding: 16px 20px; margin-bottom: 12px;
+    border: none; border-radius: 14px; cursor: pointer;
+    font-size: 15px; font-weight: 700;
+    text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;
+    color: #fff;
+}
+.dl-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,0.35); }
+.dl-btn .icon-circle {
+    width: 50px; height: 50px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; background: rgba(255,255,255,0.18); flex-shrink: 0;
+}
+.dl-btn .text { text-align: right; }
+.dl-btn .text .main-text { font-size: 16px; font-weight: 800; }
+.dl-btn .text .sub-text  { font-size: 12px; opacity: 0.8; font-weight: 400; }
+
+.btn-android { background: linear-gradient(135deg, #34d399, #059669); }
+.btn-github  { background: linear-gradient(135deg, #6c63ff, #4e45d1); }
+.btn-webapp  { background: linear-gradient(135deg, #f59e0b, #d97706); color: #1c1400; }
+.btn-webapp .text { color: #1c1400; }
+
+.steps {
+    margin-top: 24px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 16px 20px;
+}
+.steps h3 { font-size: 14px; color: #a5b4fc; margin-bottom: 12px; }
+.step { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; font-size: 13px; }
+.step-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(99,102,241,0.3); border: 1px solid rgba(99,102,241,0.5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 800; flex-shrink: 0; color: #a5b4fc;
+}
+.features { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; justify-content: center; }
+.feature { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 6px 12px; font-size: 12px; }
+.divider { height: 1px; background: rgba(255,255,255,0.08); margin: 20px 0; }
+.footer { text-align: center; font-size: 11px; color: #6d7a88; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="logo-box">
+        <span class="logo-icon">🚀</span>
+        <h1>مركز سرعة إنجاز</h1>
+        <p class="subtitle">تطبيق تيليغرام الأكاديمي المتكامل — الإصدار 2.0</p>
+
+        <div class="badge-row">
+            <span class="badge badge-blue">📱 أندرويد</span>
+            <span class="badge badge-green">🌐 ويب</span>
+            <span class="badge badge-purple">⚡ مجاني</span>
+        </div>
+
+        <div class="features">
+            <span class="feature">📨 رسائلي</span>
+            <span class="feature">🔄 إرسال دوري</span>
+            <span class="feature">🔍 بحث ذكي</span>
+            <span class="feature">🎓 أكاديمية</span>
+            <span class="feature">🤖 ردود تلقائية</span>
+            <span class="feature">🧠 تعلم ذكي</span>
+            <span class="feature">⚡ انضمام تلقائي</span>
+            <span class="feature">📤 مراقبة</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- زر تحميل APK من آخر إصدار -->
+        <a class="dl-btn btn-android"
+           href="https://github.com/anwer1230/Anwer_NewTelegramApp/releases/latest/download/anwertelegramapp-1.0.0-arm64-v8a-debug.apk"
+           target="_blank">
+            <div class="icon-circle">📱</div>
+            <div class="text">
+                <div class="main-text">تحميل APK</div>
+                <div class="sub-text">تطبيق أندرويد — ARM64 / ARMv7</div>
+            </div>
+        </a>
+
+        <!-- صفحة الإصدارات -->
+        <a class="dl-btn btn-github"
+           href="https://github.com/anwer1230/Anwer_NewTelegramApp/releases"
+           target="_blank">
+            <div class="icon-circle">🐙</div>
+            <div class="text">
+                <div class="main-text">كل الإصدارات</div>
+                <div class="sub-text">GitHub Releases — ARMv7 & ARM64</div>
+            </div>
+        </a>
+
+        <!-- فتح تطبيق الويب -->
+        <a class="dl-btn btn-webapp" href="/">
+            <div class="icon-circle">🌐</div>
+            <div class="text">
+                <div class="main-text">فتح في المتصفح</div>
+                <div class="sub-text">بدون تثبيت — مباشرة من الويب</div>
+            </div>
+        </a>
+
+        <div class="steps">
+            <h3><i class="fas fa-info-circle me-1"></i>خطوات التثبيت على الهاتف</h3>
+            <div class="step"><div class="step-num">1</div><div>حمّل ملف APK من الزر أعلاه</div></div>
+            <div class="step"><div class="step-num">2</div><div>افتح الإعدادات ← الأمان ← السماح بمصادر غير معروفة</div></div>
+            <div class="step"><div class="step-num">3</div><div>افتح الملف المحمّل وثبّت التطبيق</div></div>
+            <div class="step"><div class="step-num">4</div><div>شغّل التطبيق وسجّل دخولك ✅</div></div>
+        </div>
+    </div>
+    <p class="footer">© 2025 مركز سرعة إنجاز — جميع الحقوق محفوظة</p>
+</div>
+</body>
+</html>

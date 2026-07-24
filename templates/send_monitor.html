@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الإرسال والمراقبة — مركز سرعة إنجاز</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --tg-bg:           #0e1621;
+            --tg-bg-secondary: #17212b;
+            --tg-bg-card:      #242f3a;
+            --tg-bg-input:     #1a232d;
+            --tg-blue:         #2a92e7;
+            --tg-blue-light:   #6bc1ff;
+            --tg-text:         #e3e9ef;
+            --tg-text-secondary:#8e9aa7;
+            --tg-text-light:   #6d7a88;
+            --tg-border:       rgba(255,255,255,0.07);
+            --tg-green:        #4bcb7b;
+            --tg-red:          #e74c3c;
+            --tg-yellow:       #f1c40f;
+            --tg-shadow:       0 4px 20px rgba(0,0,0,.4);
+            --tg-radius:       12px;
+            --tg-radius-sm:    8px;
+            --tg-transition:   all .18s ease;
+        }
+        [data-theme="light"] {
+            --tg-bg:           #f0f2f5;
+            --tg-bg-secondary: #ffffff;
+            --tg-bg-card:      #ffffff;
+            --tg-bg-input:     #f0f2f5;
+            --tg-text:         #1a1a2e;
+            --tg-text-secondary:#5a6472;
+            --tg-text-light:   #8a96a2;
+            --tg-border:       rgba(0,0,0,0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--tg-bg);
+            color: var(--tg-text);
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Tahoma, sans-serif;
+            min-height: 100vh;
+        }
+
+        .page-wrap {
+            max-width: 520px;
+            margin: 0 auto;
+            background: var(--tg-bg-secondary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ─── Header ─────────────────────────────────── */
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--tg-bg-card);
+            border-bottom: 1px solid var(--tg-border);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--tg-blue);
+            font-size: 24px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--tg-transition);
+        }
+        .back-btn:hover { background: var(--tg-border); }
+        .page-header h2 {
+            color: var(--tg-text);
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        /* ─── Content ─────────────────────────────────── */
+        .content { flex: 1; overflow-y: auto; padding: 12px 14px 80px; display: flex; flex-direction: column; gap: 10px; }
+
+        /* ─── Cards ──────────────────────────────────── */
+        .card {
+            background: var(--tg-bg-card);
+            border-radius: var(--tg-radius);
+            padding: 14px;
+            border: 1px solid var(--tg-border);
+        }
+        .card .card-label {
+            display: block;
+            color: var(--tg-text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+        }
+        .card textarea,
+        .card input[type="text"],
+        .card input[type="number"],
+        .card select {
+            width: 100%;
+            padding: 9px 12px;
+            border-radius: var(--tg-radius-sm);
+            border: 1px solid var(--tg-border);
+            background: var(--tg-bg-input);
+            color: var(--tg-text);
+            font-size: 14px;
+            outline: none;
+            transition: var(--tg-transition);
+            font-family: inherit;
+        }
+        .card textarea:focus,
+        .card input:focus,
+        .card select:focus {
+            border-color: var(--tg-blue);
+            box-shadow: 0 0 0 3px rgba(42,146,231,.15);
+        }
+        .card textarea { resize: none; }
+        .card select { cursor: pointer; }
+        .card .card-hint {
+            font-size: 11px;
+            color: var(--tg-text-light);
+            margin-top: 5px;
+        }
+
+        /* ─── Monitoring Status Bar ───────────────────── */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--tg-bg-card);
+            border-radius: var(--tg-radius);
+            padding: 12px 14px;
+            border: 1px solid var(--tg-border);
+        }
+        .status-dot {
+            width: 11px; height: 11px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            transition: background .3s;
+        }
+        .status-dot.active  { background: var(--tg-green); animation: pulse 1.5s infinite; }
+        .status-dot.inactive{ background: var(--tg-text-light); }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        .status-text { flex: 1; }
+        .status-text .main  { font-size: 14px; font-weight: 600; }
+        .status-text .sub   { font-size: 11px; color: var(--tg-text-secondary); margin-top: 1px; }
+
+        /* ─── Buttons ─────────────────────────────────── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: var(--tg-radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--tg-transition);
+            font-family: inherit;
+        }
+        .btn:disabled { opacity: .45; cursor: not-allowed; }
+        .btn.primary { background: var(--tg-blue);    color: #fff; }
+        .btn.success { background: var(--tg-green);   color: #fff; }
+        .btn.danger  { background: var(--tg-red);     color: #fff; }
+        .btn.warning { background: var(--tg-yellow);  color: #1a1a2e; }
+        .btn.ghost   { background: var(--tg-border);  color: var(--tg-text); border: 1px solid var(--tg-border); }
+        .btn:not(:disabled):hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-full { width: 100%; }
+
+        /* ─── Toggle Switch ───────────────────────────── */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .toggle-switch {
+            width: 44px; height: 24px;
+            background: var(--tg-text-light);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background .3s;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .toggle-switch.on { background: var(--tg-blue); }
+        .toggle-switch .knob {
+            position: absolute;
+            top: 2px; right: 2px;
+            width: 20px; height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform .3s;
+        }
+        .toggle-switch.on .knob { transform: translateX(-20px); }
+        .toggle-label { font-size: 13px; color: var(--tg-text-secondary); }
+
+        /* ─── Image Upload ───────────────────────────── */
+        .upload-zone {
+            border: 2px dashed var(--tg-text-light);
+            border-radius: var(--tg-radius-sm);
+            padding: 18px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--tg-transition);
+            color: var(--tg-text-secondary);
+        }
+        .upload-zone:hover { border-color: var(--tg-blue); background: rgba(42,146,231,.05); }
+        .upload-zone i { font-size: 28px; color: var(--tg-text-light); display: block; margin-bottom: 6px; }
+        .upload-zone .uz-title { font-size: 13px; }
+        .upload-zone .uz-hint  { font-size: 11px; color: var(--tg-text-light); margin-top: 3px; }
+        .image-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .image-preview .img-item {
+            width: 64px; height: 64px;
+            border-radius: var(--tg-radius-sm);
+            overflow: hidden;
+            position: relative;
+            background: var(--tg-bg-input);
+            border: 1px solid var(--tg-border);
+        }
+        .image-preview .img-item img { width: 100%; height: 100%; object-fit: cover; }
+        .image-preview .img-item .rm-btn {
+            position: absolute; top: -5px; right: -5px;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background: var(--tg-red);
+            color: #fff;
+            border: 2px solid var(--tg-bg-card);
+            font-size: 9px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* ─── Protection Mode Options ─────────────────── */
+        .prot-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .prot-opt {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 10px;
+            background: var(--tg-bg-input);
+            border-radius: var(--tg-radius-sm);
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: var(--tg-transition);
+        }
+        .prot-opt:hover { border-color: rgba(42,146,231,.3); }
+        .prot-opt.active { border-color: var(--tg-blue); background: rgba(42,146,231,.1); }
+        .prot-opt .radio {
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            border: 2px solid var(--tg-text-light);
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            transition: border-color .2s;
+        }
+        .prot-opt.active .radio { border-color: var(--tg-blue); }
+        .prot-opt.active .radio::after {
+            content: '';
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--tg-blue);
+        }
+        .prot-opt .opt-info .opt-name { font-size: 12px; font-weight: 600; }
+        .prot-opt .opt-info .opt-desc { font-size: 10px; color: var(--tg-text-light); margin-top: 1px; }
+        .prot-opt.span2 { grid-column: span 2; }
+        .prot-opt.danger-opt.active { border-color: var(--tg-red); background: rgba(231,76,60,.1); }
+        .prot-opt.danger-opt.active .radio { border-color: var(--tg-red); }
+        .prot-opt.danger-opt.active .radio::after { background: var(--tg-red); }
+
+        /* ─── Log Box ─────────────────────────────────── */
+        .log-box {
+            background: var(--tg-bg-input);
+            border-radius: var(--tg-radius-sm);
+            padding: 10px 12px;
+            min-height: 100px;
+            max-height: 160px;
+            overflow-y: auto;
+            font-size: 12px;
+            font-family: monospace;
+        }
+        .log-entry {
+            padding: 2px 0;
+            border-bottom: 1px solid rgba(255,255,255,.03);
+            line-height: 1.5;
+        }
+        .log-entry .ts { color: var(--tg-text-light); margin-left: 6px; }
+        .log-entry.ok   { color: var(--tg-green); }
+        .log-entry.err  { color: var(--tg-red); }
+        .log-entry.warn { color: var(--tg-yellow); }
+        .log-entry.info { color: var(--tg-blue-light); }
+
+        /* ─── Stats Row ───────────────────────────────── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .stat-box {
+            background: var(--tg-bg-input);
+            border-radius: var(--tg-radius-sm);
+            padding: 10px;
+            text-align: center;
+            border: 1px solid var(--tg-border);
+        }
+        .stat-box .stat-val { font-size: 22px; font-weight: 700; color: var(--tg-blue); }
+        .stat-box .stat-lbl { font-size: 11px; color: var(--tg-text-secondary); margin-top: 2px; }
+
+        /* ─── Section heading inside card ─────────────── */
+        .section-heading {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--tg-blue-light);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ─── Bottom nav ──────────────────────────────── */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 520px;
+            background: var(--tg-bg-card);
+            border-top: 1px solid var(--tg-border);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+            z-index: 20;
+        }
+        .nav-icon {
+            color: var(--tg-text-secondary);
+            font-size: 20px;
+            cursor: pointer;
+            transition: color .2s;
+            width: 44px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--tg-radius-sm);
+        }
+        .nav-icon:hover, .nav-icon.active { color: var(--tg-blue); }
+
+        /* ─── Schedule Danger Card ────────────────────── */
+        .danger-card {
+            border-color: rgba(231,76,60,.3);
+            background: rgba(231,76,60,.05);
+        }
+    </style>
+</head>
+<body data-theme="{{ theme or 'dark' }}">
+<div class="page-wrap">
+
+    <!-- Header -->
+    <div class="page-header">
+        <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-right"></i></button>
+        <i class="fas fa-rocket" style="color:var(--tg-blue);font-size:20px;"></i>
+        <h2>الإرسال والمراقبة</h2>
+    </div>
+
+    <div class="content">
+
+        <!-- حالة المراقبة -->
+        <div class="status-bar">
+            <span class="status-dot inactive" id="monitoringDot"></span>
+            <div class="status-text">
+                <div class="main" id="monitoringStatusText">المراقبة: متوقفة</div>
+                <div class="sub"  id="monitoringSubText">اضغط «بدء» للتفعيل</div>
+            </div>
+        </div>
+
+        <!-- الإحصائيات -->
+        <div class="stats-row" id="statsRow">
+            <div class="stat-box"><div class="stat-val" id="statSent">0</div><div class="stat-lbl">مُرسَل</div></div>
+            <div class="stat-box"><div class="stat-val" id="statErr" style="color:var(--tg-red)">0</div><div class="stat-lbl">أخطاء</div></div>
+            <div class="stat-box"><div class="stat-val" id="statAlert" style="color:var(--tg-yellow)">0</div><div class="stat-lbl">تنبيهات</div></div>
+        </div>
+
+        <!-- الرسالة -->
+        <div class="card">
+            <span class="card-label">📝 نص الرسالة</span>
+            <textarea id="messageText" rows="4" placeholder="اكتب الرسالة هنا..."></textarea>
+        </div>
+
+        <!-- رفع الصور -->
+        <div class="card">
+            <span class="card-label">📷 صور مرفقة</span>
+            <div class="upload-zone" onclick="document.getElementById('imageInput').click()">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <div class="uz-title">اضغط لاختيار صور</div>
+                <div class="uz-hint">JPG · PNG · GIF · WebP — الحد الأقصى 10 MB لكل صورة</div>
+                <input type="file" id="imageInput" accept="image/*" multiple style="display:none" onchange="handleImages(this.files)">
+            </div>
+            <div class="image-preview" id="imagePreviewContainer"></div>
+        </div>
+
+        <!-- المجموعات -->
+        <div class="card">
+            <span class="card-label">👥 المجموعات المستهدفة</span>
+            <textarea id="groupsInput" rows="3" placeholder="ضع كل مجموعة في سطر واحد&#10;(اسم المجموعة أو معرّفها أو رابطها)"></textarea>
+            <div class="toggle-row">
+                <div class="toggle-switch" id="allGroupsToggle" onclick="toggleAllGroups()">
+                    <div class="knob"></div>
+                </div>
+                <span class="toggle-label" id="allGroupsLabel">إرسال لكل المجموعات تلقائياً</span>
+            </div>
+        </div>
+
+        <!-- نوع الإرسال -->
+        <div class="card">
+            <span class="card-label">⏰ نوع الإرسال</span>
+            <select id="sendType" onchange="toggleSchedule()">
+                <option value="manual">يدوي — إرسال عند الضغط</option>
+                <option value="scheduled">مجدول — إرسال تلقائي دوري</option>
+            </select>
+        </div>
+
+        <!-- خيارات المجدول -->
+        <div id="scheduleOptions" style="display:none; flex-direction:column; gap:10px;">
+            <div class="card">
+                <span class="card-label">⏱️ الفترة بين الإرسالات</span>
+                <input type="number" id="intervalMinutes" value="25" min="1" placeholder="25">
+                <div class="card-hint">بالدقائق — الحد الأدنى 1 دقيقة</div>
+            </div>
+            <div class="card">
+                <span class="card-label">⏹️ مدة التشغيل</span>
+                <input type="number" id="scheduleDuration" value="0" min="0" step="0.5" placeholder="0 = بلا حد">
+                <div class="card-hint">بالساعات — 0 = يعمل حتى إيقاف يدوي</div>
+            </div>
+            <div class="card danger-card">
+                <button class="btn danger btn-full" onclick="stopScheduledSend()">
+                    <i class="fas fa-stop-circle"></i> إيقاف الإرسال المجدول فوراً
+                </button>
+            </div>
+        </div>
+
+        <!-- كلمات المراقبة -->
+        <div class="card">
+            <span class="card-label">🔍 كلمات المراقبة</span>
+            <textarea id="watchWords" rows="3" placeholder="كلمة أو عبارة في كل سطر...&#10;سيُنبّهك النظام عند ظهورها في أي محادثة"></textarea>
+        </div>
+
+        <!-- وضع الحماية -->
+        <div class="card">
+            <span class="card-label">🛡️ وضع المجموعات المحمية</span>
+            <div class="prot-grid" id="protGrid">
+                <div class="prot-opt active" data-value="salam" onclick="selectProtMode(this)">
+                    <div class="radio"></div>
+                    <div class="opt-info">
+                        <div class="opt-name">🤖 ذكي (salam)</div>
+                        <div class="opt-desc">أرسل السلام ثم عدّل</div>
+                    </div>
+                </div>
+                <div class="prot-opt" data-value="skip" onclick="selectProtMode(this)">
+                    <div class="radio"></div>
+                    <div class="opt-info">
+                        <div class="opt-name">⏭️ تخطي</div>
+                        <div class="opt-desc">لا ترسل للمحمية</div>
+                    </div>
+                </div>
+                <div class="prot-opt" data-value="smart" onclick="selectProtMode(this)">
+                    <div class="radio"></div>
+                    <div class="opt-info">
+                        <div class="opt-name">🧠 ذكية</div>
+                        <div class="opt-desc">تنقية النص تلقائياً</div>
+                    </div>
+                </div>
+                <div class="prot-opt" data-value="always" onclick="selectProtMode(this)">
+                    <div class="radio"></div>
+                    <div class="opt-info">
+                        <div class="opt-name">🛡️ تنقية دائمة</div>
+                        <div class="opt-desc">إزالة الروابط دائماً</div>
+                    </div>
+                </div>
+                <div class="prot-opt span2 danger-opt" data-value="off" onclick="selectProtMode(this)">
+                    <div class="radio"></div>
+                    <div class="opt-info">
+                        <div class="opt-name" style="color:var(--tg-red)">🚫 معطّل — إرسال كما هي</div>
+                        <div class="opt-desc">خطر حظر من المجموعة!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- أزرار التحكم -->
+        <div class="btn-grid">
+            <button class="btn primary" id="sendNowBtn" onclick="sendNow()">
+                <i class="fas fa-paper-plane"></i> إرسال الآن
+            </button>
+            <button class="btn ghost" onclick="saveSettings()">
+                <i class="fas fa-save"></i> حفظ الإعدادات
+            </button>
+            <button class="btn success" id="startMonitorBtn" onclick="startMonitoring()">
+                <i class="fas fa-play"></i> بدء المراقبة
+            </button>
+            <button class="btn danger" id="stopMonitorBtn" onclick="stopMonitoring()" style="display:none;">
+                <i class="fas fa-stop"></i> إيقاف المراقبة
+            </button>
+        </div>
+
+        <!-- سجل العمليات -->
+        <div class="card">
+            <div class="section-heading"><i class="fas fa-list-alt"></i> سجل العمليات</div>
+            <div class="log-box" id="operationLog">
+                <div class="log-entry info">● النظام جاهز للعمل</div>
+            </div>
+            <button class="btn ghost btn-full" onclick="clearLog()" style="margin-top:8px;font-size:12px;padding:6px;">
+                <i class="fas fa-trash-alt"></i> مسح السجل
+            </button>
+        </div>
+
+    </div><!-- /content -->
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+        <span class="nav-icon" onclick="location.href='/'"><i class="fas fa-home"></i></span>
+        <span class="nav-icon active"><i class="fas fa-paper-plane"></i></span>
+        <span class="nav-icon" onclick="location.href='/profile'"><i class="fas fa-user"></i></span>
+        <span class="nav-icon" onclick="location.href='/settings_page'"><i class="fas fa-cog"></i></span>
+    </div>
+
+</div><!-- /page-wrap -->
+
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+<script>
+'use strict';
+
+// ── الثوابت ────────────────────────────────────────────────────
+const CURRENT_USER_ID   = "{{ user_id }}";
+const CURRENT_USER_NAME = "{{ user_name }}";
+
+// ── الحالة ─────────────────────────────────────────────────────
+let socket          = null;
+let isMonitoring    = false;
+let uploadedImages  = [];
+let selectedMode    = 'salam';
+let allGroupsSel    = false;
+let alertCount      = 0;
+let sentCount       = 0;
+let errCount        = 0;
+
+// ─────────────────────────────────────────────────────────────
+//  Socket.IO
+// ─────────────────────────────────────────────────────────────
+function initSocket() {
+    socket = io({ transports: ['polling', 'websocket'] });
+
+    socket.on('connect', () => {
+        socket.emit('register_user', { user_id: CURRENT_USER_ID });
+        addLog('متصل بالخادم ✅', 'ok');
+    });
+
+    socket.on('disconnect', () => addLog('انقطع الاتصال ⚠️', 'warn'));
+
+    socket.on('new_alert', (data) => {
+        alertCount++;
+        document.getElementById('statAlert').textContent = alertCount;
+        addLog(`🚨 تنبيه: "${data.keyword}" في ${data.group || 'محادثة'}`, 'warn');
+        playBeep();
+    });
+
+    socket.on('log_update', (data) => addLog(data.message || ''));
+
+    socket.on('monitoring_status', (data) => {
+        if (data.is_running !== undefined) {
+            isMonitoring = data.is_running;
+            updateMonitorUI(isMonitoring);
+        }
+    });
+
+    socket.on('send_progress', (data) => {
+        if (data.sent)  { sentCount = data.sent; document.getElementById('statSent').textContent = sentCount; }
+        if (data.errors){ errCount  = data.errors; document.getElementById('statErr').textContent = errCount; }
+        addLog(data.message || '');
+    });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Log
+// ─────────────────────────────────────────────────────────────
+function addLog(message, type = '') {
+    const box  = document.getElementById('operationLog');
+    const time = new Date().toLocaleTimeString('ar-EG', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    const div  = document.createElement('div');
+    div.className = 'log-entry ' + type;
+    div.innerHTML = `<span class="ts">[${time}]</span> ${escHtml(message)}`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    if (box.children.length > 80) box.removeChild(box.firstChild);
+}
+
+function clearLog() {
+    document.getElementById('operationLog').innerHTML =
+        '<div class="log-entry info">● السجل مُصفَّى</div>';
+}
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function playBeep() {
+    try {
+        const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = 880; osc.type = 'sine';
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+        osc.start(); osc.stop(ctx.currentTime + 0.25);
+        setTimeout(() => ctx.close(), 400);
+    } catch(e) {}
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Navigation
+// ─────────────────────────────────────────────────────────────
+function goBack() { window.history.back(); }
+
+// ─────────────────────────────────────────────────────────────
+//  All-groups toggle
+// ─────────────────────────────────────────────────────────────
+function toggleAllGroups() {
+    allGroupsSel = !allGroupsSel;
+    const t = document.getElementById('allGroupsToggle');
+    const l = document.getElementById('allGroupsLabel');
+    t.classList.toggle('on', allGroupsSel);
+    l.textContent = allGroupsSel ? '✅ سيُرسَل لكل مجموعاتك' : 'إرسال لكل المجموعات تلقائياً';
+    document.getElementById('groupsInput').disabled = allGroupsSel;
+    addLog(allGroupsSel ? 'تفعيل الإرسال لكل المجموعات' : 'إلغاء اختيار الكل');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Protection mode
+// ─────────────────────────────────────────────────────────────
+function selectProtMode(el) {
+    selectedMode = el.dataset.value;
+    document.querySelectorAll('#protGrid .prot-opt').forEach(e => e.classList.remove('active'));
+    el.classList.add('active');
+    const names = { salam:'ذكي', skip:'تخطي', smart:'ذكية', always:'تنقية دائمة', off:'معطّل' };
+    addLog('🛡️ وضع الحماية: ' + (names[selectedMode] || selectedMode));
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Schedule toggle
+// ─────────────────────────────────────────────────────────────
+function toggleSchedule() {
+    const is = document.getElementById('sendType').value === 'scheduled';
+    document.getElementById('scheduleOptions').style.display = is ? 'flex' : 'none';
+    addLog(is ? '⏰ تفعيل الإرسال المجدول' : '📌 وضع الإرسال اليدوي');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Image upload
+// ─────────────────────────────────────────────────────────────
+function handleImages(files) {
+    for (const file of files) {
+        if (file.size > 10 * 1024 * 1024) { addLog(`⚠️ ${file.name} أكبر من 10MB`, 'warn'); continue; }
+        const reader = new FileReader();
+        reader.onload = e => {
+            uploadedImages.push({ name: file.name, data: e.target.result, type: file.type });
+            renderImages();
+            addLog(`📷 تم إضافة: ${file.name}`);
+        };
+        reader.readAsDataURL(file);
+    }
+    document.getElementById('imageInput').value = '';
+}
+
+function renderImages() {
+    document.getElementById('imagePreviewContainer').innerHTML =
+        uploadedImages.map((img, i) => `
+            <div class="img-item">
+                <img src="${img.data}" alt="${escHtml(img.name)}">
+                <button class="rm-btn" onclick="removeImage(${i})">✕</button>
+            </div>`).join('');
+}
+
+function removeImage(i) {
+    uploadedImages.splice(i, 1);
+    renderImages();
+    addLog('🗑️ تم حذف الصورة');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Save settings
+// ─────────────────────────────────────────────────────────────
+function saveSettings() {
+    const payload = {
+        message:                 document.getElementById('messageText').value,
+        groups:                  document.getElementById('groupsInput').value,
+        watch_words:             document.getElementById('watchWords').value,
+        send_type:               document.getElementById('sendType').value,
+        interval_seconds:        (parseInt(document.getElementById('intervalMinutes').value) || 25) * 60,
+        schedule_duration_hours: parseFloat(document.getElementById('scheduleDuration').value) || 0,
+        sanitize_mode:           selectedMode,
+        send_to_all:             allGroupsSel,
+    };
+    fetch('/api/monitor/save_settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    })
+    .then(r => r.json())
+    .then(d => addLog(d.success ? '✅ حُفظت الإعدادات' : '❌ فشل الحفظ: ' + d.message, d.success ? 'ok' : 'err'))
+    .catch(e => addLog('❌ خطأ: ' + e.message, 'err'));
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Send now
+// ─────────────────────────────────────────────────────────────
+function sendNow() {
+    const message = document.getElementById('messageText').value.trim();
+    const groups  = document.getElementById('groupsInput').value.trim();
+
+    if (!message && !uploadedImages.length) { addLog('⚠️ اكتب رسالة أو ارفع صورة', 'warn'); return; }
+    if (!allGroupsSel && !groups)           { addLog('⚠️ حدد المجموعات أو فعّل "كل المجموعات"', 'warn'); return; }
+
+    const btn = document.getElementById('sendNowBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+
+    addLog('📤 جاري الإرسال...', 'info');
+
+    fetch('/api/monitor/send_now', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            message:     message,
+            groups:      groups,
+            send_to_all: allGroupsSel,
+            images:      uploadedImages.map(img => ({ name: img.name, data: img.data, type: img.type })),
+            sanitize_mode: selectedMode,
+        }),
+    })
+    .then(r => r.json())
+    .then(d => {
+        addLog(d.success ? '✅ ' + (d.message || 'تم الإرسال') : '❌ ' + d.message, d.success ? 'ok' : 'err');
+        if (d.sent  !== undefined) { sentCount = d.sent; document.getElementById('statSent').textContent = sentCount; }
+        if (d.errors !== undefined){ errCount  = d.errors; document.getElementById('statErr').textContent = errCount; }
+        if (d.success) { uploadedImages = []; renderImages(); }
+    })
+    .catch(e => addLog('❌ خطأ في الاتصال: ' + e.message, 'err'))
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الآن';
+    });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Monitoring
+// ─────────────────────────────────────────────────────────────
+function startMonitoring() {
+    const words = document.getElementById('watchWords').value.trim();
+    fetch('/api/monitor/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ watch_words: words }),
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            isMonitoring = true;
+            updateMonitorUI(true);
+            addLog('🚀 بدأت المراقبة', 'ok');
+        } else {
+            addLog('❌ فشل البدء: ' + d.message, 'err');
+        }
+    })
+    .catch(e => addLog('❌ خطأ: ' + e.message, 'err'));
+}
+
+function stopMonitoring() {
+    fetch('/api/monitor/stop', { method: 'POST' })
+    .then(r => r.json())
+    .then(d => {
+        isMonitoring = false;
+        updateMonitorUI(false);
+        addLog('⏹ توقفت المراقبة', 'warn');
+    })
+    .catch(e => addLog('❌ خطأ: ' + e.message, 'err'));
+}
+
+function stopScheduledSend() {
+    if (!confirm('⚠️ إيقاف الإرسال المجدول الآن؟')) return;
+    stopMonitoring();
+}
+
+function updateMonitorUI(active) {
+    document.getElementById('monitoringDot').className       = 'status-dot ' + (active ? 'active' : 'inactive');
+    document.getElementById('monitoringStatusText').textContent = active ? '✅ المراقبة تعمل' : 'المراقبة: متوقفة';
+    document.getElementById('monitoringSubText').textContent    = active ? 'جميع المحادثات تحت المراقبة' : 'اضغط «بدء» للتفعيل';
+    document.getElementById('startMonitorBtn').style.display    = active ? 'none' : '';
+    document.getElementById('stopMonitorBtn').style.display     = active ? '' : 'none';
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Init
+// ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    initSocket();
+
+    // تحميل الحالة الحالية
+    fetch('/api/monitor/status')
+        .then(r => r.json())
+        .then(d => {
+            if (d.is_running) { isMonitoring = true; updateMonitorUI(true); addLog('🔄 المراقبة تعمل بالفعل', 'ok'); }
+            if (d.sent    !== undefined) { sentCount = d.sent;   document.getElementById('statSent').textContent  = sentCount; }
+            if (d.errors  !== undefined) { errCount  = d.errors; document.getElementById('statErr').textContent   = errCount;  }
+            if (d.alerts  !== undefined) { alertCount = d.alerts; document.getElementById('statAlert').textContent = alertCount; }
+            // استعادة الإعدادات المحفوظة
+            if (d.settings) {
+                const s = d.settings;
+                if (s.message)    document.getElementById('messageText').value      = s.message;
+                if (s.groups)     document.getElementById('groupsInput').value      = s.groups;
+                if (s.watch_words)document.getElementById('watchWords').value       = s.watch_words;
+                if (s.send_type)  document.getElementById('sendType').value         = s.send_type;
+                if (s.interval_seconds) document.getElementById('intervalMinutes').value = Math.round(s.interval_seconds / 60);
+                if (s.schedule_duration_hours !== undefined) document.getElementById('scheduleDuration').value = s.schedule_duration_hours;
+                if (s.sanitize_mode) {
+                    const el = document.querySelector(`#protGrid [data-value="${s.sanitize_mode}"]`);
+                    if (el) selectProtMode(el);
+                }
+                if (s.send_type === 'scheduled') toggleSchedule();
+            }
+            addLog('✅ تم تحميل الإعدادات');
+        })
+        .catch(() => addLog('ℹ️ لا توجد إعدادات محفوظة'));
+});
+</script>
+</body>
+</html>
