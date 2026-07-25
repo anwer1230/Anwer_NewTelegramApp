@@ -16907,11 +16907,18 @@ def wc_auth_check_code():
     result_box = [None]; err_box = [None]
     def _worker():
         import asyncio as _aio
+        # نُنشئ لوباً جديداً — اللوب القديم (_temp_loop) انتهى بعد run_until_complete
+        # واستخدام run_coroutine_threadsafe يحتاج لوباً يعمل في الخلفية
+        loop = _aio.new_event_loop()
+        _aio.set_event_loop(loop)
         try:
             async def _run():
                 from telethon.errors import SessionPasswordNeededError
                 try:
-                    signed = await _tc.sign_in(phone, code, phone_code_hash=ph)
+                    # إعادة الاتصال إن انقطع خلال فترة انتظار المستخدم
+                    if not _tc.is_connected():
+                        await _tc.connect()
+                    await _tc.sign_in(phone, code, phone_code_hash=ph)
                     me = await _tc.get_me()
                     first = getattr(me, 'first_name', '') or ''
                     last  = getattr(me, 'last_name',  '') or ''
@@ -16921,9 +16928,12 @@ def wc_auth_check_code():
                     result_box[0] = {'ok': True, 'name': name}
                 except SessionPasswordNeededError:
                     result_box[0] = {'ok': False, 'need_password': True}
-            _aio.run_coroutine_threadsafe(_run(), _tl).result(20)
+            loop.run_until_complete(_run())
         except Exception as ex:
             err_box[0] = ex
+        finally:
+            try: loop.close()
+            except Exception: pass
     t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(25)
     if err_box[0]:
         return jsonify({'success': False, 'message': str(err_box[0])})
@@ -16957,8 +16967,13 @@ def wc_auth_check_password():
     result_box = [None]; err_box = [None]
     def _worker():
         import asyncio as _aio
+        # لوب جديد مستقل — اللوب القديم انتهى بعد send-code
+        loop = _aio.new_event_loop()
+        _aio.set_event_loop(loop)
         try:
             async def _run():
+                if not _tc.is_connected():
+                    await _tc.connect()
                 await _tc.sign_in(password=pwd)
                 me    = await _tc.get_me()
                 first = getattr(me, 'first_name', '') or ''
@@ -16967,9 +16982,12 @@ def wc_auth_check_password():
                 sess  = _tc.session.save()
                 save_string_session(uid, sess)
                 result_box[0] = name
-            _aio.run_coroutine_threadsafe(_run(), _tl).result(20)
+            loop.run_until_complete(_run())
         except Exception as ex:
             err_box[0] = ex
+        finally:
+            try: loop.close()
+            except Exception: pass
     t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(25)
     if err_box[0]:
         return jsonify({'success': False, 'message': str(err_box[0])})
