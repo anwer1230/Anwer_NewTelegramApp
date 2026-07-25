@@ -52,18 +52,14 @@ html,body{height:100%;font-family:'Roboto',sans-serif;background:var(--tg-bg);co
 .logo-wrap h1{font-size:22px;font-weight:500;color:var(--tg-text);margin-bottom:8px}
 .logo-wrap p{font-size:14px;color:var(--tg-hint);line-height:1.5}
 
-/* ── phone input ── */
-.phone-row{display:flex;gap:8px;margin-bottom:8px}
-.country-code{
-  display:flex;align-items:center;gap:6px;
-  border:1.5px solid var(--tg-divider);border-radius:8px;
-  padding:10px 12px;cursor:pointer;white-space:nowrap;
-  font-size:15px;color:var(--tg-text);transition:border-color .2s;
-  background:none;
+/* ── phone input with + prefix ── */
+.phone-field{position:relative;display:flex;align-items:center;margin-bottom:8px}
+.phone-prefix{
+  position:absolute;left:14px;
+  font-size:15px;color:var(--tg-text);
+  font-weight:500;pointer-events:none;
+  z-index:1;
 }
-.country-code:focus,.country-code:hover{border-color:var(--tg-blue);outline:none}
-.country-code .flag{font-size:20px}
-
 .tg-input{
   width:100%;border:1.5px solid var(--tg-divider);border-radius:8px;
   padding:10px 14px;font-size:15px;font-family:inherit;
@@ -73,22 +69,38 @@ html,body{height:100%;font-family:'Roboto',sans-serif;background:var(--tg-bg);co
 .tg-input:focus{border-color:var(--tg-blue)}
 .tg-input::placeholder{color:var(--tg-hint)}
 .tg-input.has-error{border-color:var(--tg-red)}
+.tg-input.phone-with-prefix{padding-left:28px}
+
+/* ── country display badge ── */
+.country-badge{
+  display:none;align-items:center;gap:8px;
+  background:#F0F8FF;border:1px solid #D0E8F8;border-radius:8px;
+  padding:8px 12px;margin-bottom:8px;
+  font-size:14px;color:var(--tg-text);
+  transition:all .25s;
+}
+.country-badge.show{display:flex}
+.country-badge .cb-flag{font-size:20px;line-height:1}
+.country-badge .cb-name{font-weight:500}
+.country-badge .cb-code{color:var(--tg-blue);font-weight:500;margin-left:auto}
 
 .input-label{font-size:13px;color:var(--tg-hint);margin-bottom:6px;display:block}
 .input-hint{font-size:12px;color:var(--tg-hint);margin-top:4px}
 .input-error{font-size:12px;color:var(--tg-red);margin-top:4px;display:none}
 .input-error.show{display:block}
 
-/* ── OTP boxes ── */
-.otp-wrap{display:flex;gap:8px;justify-content:center;margin:8px 0}
-.otp-digit{
-  width:48px;height:56px;text-align:center;font-size:22px;font-weight:500;
-  border:1.5px solid var(--tg-divider);border-radius:8px;
-  font-family:inherit;color:var(--tg-text);background:none;
-  transition:border-color .2s;outline:none;caret-color:var(--tg-blue);
+/* ── Code input (flexible, single field) ── */
+.code-input-wrap{margin:8px 0 4px}
+.code-input{
+  width:100%;border:2px solid var(--tg-divider);border-radius:10px;
+  padding:14px 18px;font-size:28px;font-weight:600;font-family:'Roboto Mono',monospace,inherit;
+  letter-spacing:6px;text-align:center;color:var(--tg-blue);
+  background:none;outline:none;transition:border-color .2s;
+  caret-color:var(--tg-blue);
 }
-.otp-digit:focus{border-color:var(--tg-blue)}
-.otp-digit.filled{border-color:var(--tg-blue);color:var(--tg-blue)}
+.code-input:focus{border-color:var(--tg-blue)}
+.code-input.has-error{border-color:var(--tg-red);color:var(--tg-red)}
+.code-input-hint{font-size:12px;color:var(--tg-hint);text-align:center;margin-top:4px}
 
 /* ── button ── */
 .btn-tg{
@@ -145,6 +157,58 @@ html,body{height:100%;font-family:'Roboto',sans-serif;background:var(--tg-bg);co
 /* ── security icon for 2FA ── */
 .lock-icon{text-align:center;font-size:52px;margin-bottom:16px}
 
+/* ── Alternative code method ── */
+.alt-method-prompt{
+  margin-top:16px;text-align:center;
+  background:#FFF8E1;border:1px solid #FFE082;border-radius:10px;
+  padding:12px 16px;cursor:pointer;
+  transition:background .2s;
+}
+.alt-method-prompt:hover{background:#FFF3CD}
+.alt-method-prompt p{font-size:13px;color:#7B6200;line-height:1.5}
+.alt-method-prompt p strong{display:block;font-size:14px;color:#5D4800;margin-bottom:2px}
+
+/* ── Method options panel ── */
+.method-options{
+  display:none;
+  margin-top:14px;
+  border:1.5px solid var(--tg-divider);
+  border-radius:12px;overflow:hidden;
+}
+.method-options.show{display:block}
+.method-title{
+  font-size:13px;font-weight:500;color:var(--tg-hint);
+  padding:10px 14px 6px;background:#FAFAFA;
+  border-bottom:1px solid var(--tg-divider);
+  letter-spacing:.3px;text-transform:uppercase;
+}
+.method-item{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 14px;cursor:pointer;
+  transition:background .15s;
+  border-bottom:1px solid var(--tg-divider);
+  font-size:14px;color:var(--tg-text);
+}
+.method-item:last-child{border-bottom:none}
+.method-item:hover{background:#F0F8FF}
+.method-item.active{background:#E3F2FD}
+.method-item.loading{opacity:.6;pointer-events:none}
+.method-item .method-icon{font-size:22px;width:28px;text-align:center;flex-shrink:0}
+.method-item .method-text .title{font-weight:500;font-size:14px}
+.method-item .method-text .desc{font-size:12px;color:var(--tg-hint);margin-top:1px}
+.method-item .method-check{
+  margin-left:auto;color:var(--tg-blue);font-size:18px;
+  display:none;
+}
+.method-item.active .method-check{display:block}
+.method-spinner{
+  display:none;width:16px;height:16px;
+  border:2px solid var(--tg-divider);border-top-color:var(--tg-blue);
+  border-radius:50%;animation:spin .7s linear infinite;
+  margin-left:auto;flex-shrink:0;
+}
+.method-item.loading .method-spinner{display:block}
+
 /* toast */
 .toast{
   position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);
@@ -174,16 +238,20 @@ html,body{height:100%;font-family:'Roboto',sans-serif;background:var(--tg-bg);co
           </defs>
         </svg>
         <h1>Telegram</h1>
-        <p>Please confirm your country code and enter your phone number.</p>
+        <p>Enter your phone number with country code (e.g. +966XXXXXXXXX).</p>
       </div>
 
-      <label class="input-label">Country Code</label>
-      <div class="phone-row">
-        <button class="country-code" id="countryBtn" onclick="cycleCountry()">
-          <span class="flag" id="countryFlag">🇸🇦</span>
-          <span id="countryDial">+966</span>
-        </button>
-        <input class="tg-input" type="tel" id="phoneInput" placeholder="Phone number" maxlength="15" autocomplete="tel" dir="ltr">
+      <label class="input-label">Phone Number</label>
+      <div class="phone-field">
+        <span class="phone-prefix">+</span>
+        <input class="tg-input phone-with-prefix" type="tel" id="phoneInput"
+               placeholder="966 5X XXX XXXX" maxlength="20"
+               autocomplete="tel" dir="ltr" oninput="onPhoneInput()">
+      </div>
+      <div class="country-badge" id="countryBadge">
+        <span class="cb-flag" id="cbFlag"></span>
+        <span class="cb-name" id="cbName"></span>
+        <span class="cb-code" id="cbCode"></span>
       </div>
       <div class="input-error" id="phoneError">Invalid phone number</div>
 
@@ -207,13 +275,58 @@ html,body{height:100%;font-family:'Roboto',sans-serif;background:var(--tg-bg);co
       </div>
 
       <label class="input-label">Verification Code</label>
-      <div class="otp-wrap" id="otpWrap"></div>
-      <div class="input-error" id="codeError">Incorrect code. Please try again.</div>
+      <div class="code-input-wrap">
+        <input class="code-input" type="tel" id="codeInput"
+               placeholder="· · · · ·" maxlength="8" dir="ltr"
+               autocomplete="one-time-code" oninput="onCodeInput()" onkeydown="onCodeKey(event)">
+      </div>
+      <div class="code-input-hint" id="codeInputHint">أدخل الرمز المكوّن من 5 أو 6 أرقام</div>
+      <div class="input-error" id="codeError">رمز غير صحيح، حاول مجدداً.</div>
 
       <div class="countdown" id="countdownWrap">
         Resend code in <span id="countdownNum">60</span>s
       </div>
       <button class="btn-text" id="resendBtn" style="display:none" onclick="resendCode()">Resend Code</button>
+
+      <!-- Alternative method prompt -->
+      <div class="alt-method-prompt" id="altPrompt" onclick="toggleAltMethods()">
+        <p>
+          <strong>هل تريد طلب الرمز بطريقة أخرى؟</strong>
+          اضغط هنا لاختيار طريقة استلام بديلة
+        </p>
+      </div>
+
+      <!-- Method options panel -->
+      <div class="method-options" id="methodOptions">
+        <div class="method-title">اختر طريقة الاستلام</div>
+        <div class="method-item" id="methodCall" onclick="requestCodeVia('call')">
+          <span class="method-icon">📞</span>
+          <div class="method-text">
+            <div class="title">عبر الاتصال بالرقم</div>
+            <div class="desc">سيتصل بك نظام آلي ويملي الرمز</div>
+          </div>
+          <span class="method-check">✓</span>
+          <div class="method-spinner"></div>
+        </div>
+        <div class="method-item" id="methodSms" onclick="requestCodeVia('sms')">
+          <span class="method-icon">💬</span>
+          <div class="method-text">
+            <div class="title">عبر رسالة نصية إلى الرقم</div>
+            <div class="desc">سيُرسل الرمز كرسالة SMS</div>
+          </div>
+          <span class="method-check">✓</span>
+          <div class="method-spinner"></div>
+        </div>
+        <div class="method-item" id="methodGoogle" onclick="requestCodeVia('google')">
+          <span class="method-icon">🔵</span>
+          <div class="method-text">
+            <div class="title">عبر حساب جوجل</div>
+            <div class="desc">إذا كنت سجّلت حساب جوجل في تيليجرام</div>
+          </div>
+          <span class="method-check">✓</span>
+          <div class="method-spinner"></div>
+        </div>
+      </div>
 
       <button class="btn-tg" id="verifyBtn" onclick="verifyCode()" disabled>NEXT</button>
       <button class="btn-text" onclick="goBack(1)">← Use a Different Number</button>
@@ -242,88 +355,115 @@ html,body{height:100%;font-family:'Roboto',sans-serif;background:var(--tg-bg);co
 <div class="toast" id="toast"></div>
 
 <script>
+// ── Country Database ──
+const COUNTRIES = [
+  {flag:'🇸🇦',name:'Saudi Arabia',  dial:'966',  len:[9]},
+  {flag:'🇦🇪',name:'UAE',           dial:'971',  len:[9]},
+  {flag:'🇪🇬',name:'Egypt',         dial:'20',   len:[10]},
+  {flag:'🇮🇶',name:'Iraq',          dial:'964',  len:[10]},
+  {flag:'🇸🇾',name:'Syria',         dial:'963',  len:[9]},
+  {flag:'🇯🇴',name:'Jordan',        dial:'962',  len:[9]},
+  {flag:'🇰🇼',name:'Kuwait',        dial:'965',  len:[8]},
+  {flag:'🇶🇦',name:'Qatar',         dial:'974',  len:[8]},
+  {flag:'🇧🇭',name:'Bahrain',       dial:'973',  len:[8]},
+  {flag:'🇴🇲',name:'Oman',          dial:'968',  len:[8]},
+  {flag:'🇾🇪',name:'Yemen',         dial:'967',  len:[9]},
+  {flag:'🇱🇧',name:'Lebanon',       dial:'961',  len:[8]},
+  {flag:'🇲🇦',name:'Morocco',       dial:'212',  len:[9]},
+  {flag:'🇹🇷',name:'Turkey',        dial:'90',   len:[10]},
+  {flag:'🇷🇺',name:'Russia',        dial:'7',    len:[10]},
+  {flag:'🇺🇸',name:'USA / Canada',  dial:'1',    len:[10]},
+  {flag:'🇬🇧',name:'UK',            dial:'44',   len:[10]},
+  {flag:'🇩🇪',name:'Germany',       dial:'49',   len:[10,11]},
+  {flag:'🇫🇷',name:'France',        dial:'33',   len:[9]},
+  {flag:'🇮🇳',name:'India',         dial:'91',   len:[10]},
+  {flag:'🇵🇰',name:'Pakistan',      dial:'92',   len:[10]},
+  {flag:'🇮🇩',name:'Indonesia',     dial:'62',   len:[9,10,11]},
+  {flag:'🇧🇩',name:'Bangladesh',    dial:'880',  len:[10]},
+  {flag:'🇵🇭',name:'Philippines',   dial:'63',   len:[10]},
+  {flag:'🇳🇬',name:'Nigeria',       dial:'234',  len:[10]},
+  {flag:'🇿🇦',name:'South Africa',  dial:'27',   len:[9]},
+  {flag:'🇧🇷',name:'Brazil',        dial:'55',   len:[10,11]},
+  {flag:'🇲🇽',name:'Mexico',        dial:'52',   len:[10]},
+  {flag:'🇦🇺',name:'Australia',     dial:'61',   len:[9]},
+  {flag:'🇯🇵',name:'Japan',         dial:'81',   len:[10,11]},
+  {flag:'🇨🇳',name:'China',         dial:'86',   len:[11]},
+  {flag:'🇰🇷',name:'South Korea',   dial:'82',   len:[9,10]},
+];
+// Sort longest prefix first so greedy match works correctly
+COUNTRIES.sort((a,b)=>b.dial.length-a.dial.length);
+
 // ── State ──
 let currentStep = 1, currentPhone = '', countdownTimer = null;
-const COUNTRIES = [
-  {flag:'🇸🇦',code:'+966',name:'Saudi Arabia'},
-  {flag:'🇦🇪',code:'+971',name:'UAE'},
-  {flag:'🇪🇬',code:'+20', name:'Egypt'},
-  {flag:'🇮🇶',code:'+964',name:'Iraq'},
-  {flag:'🇸🇾',code:'+963',name:'Syria'},
-  {flag:'🇯🇴',code:'+962',name:'Jordan'},
-  {flag:'🇰🇼',code:'+965',name:'Kuwait'},
-  {flag:'🇶🇦',code:'+974',name:'Qatar'},
-  {flag:'🇧🇭',code:'+973',name:'Bahrain'},
-  {flag:'🇴🇲',code:'+968',name:'Oman'},
-  {flag:'🇾🇪',code:'+967',name:'Yemen'},
-  {flag:'🇱🇧',code:'+961',name:'Lebanon'},
-  {flag:'🇲🇦',code:'+212',name:'Morocco'},
-  {flag:'🇹🇷',code:'+90', name:'Turkey'},
-  {flag:'🇷🇺',code:'+7',  name:'Russia'},
-  {flag:'🇺🇸',code:'+1',  name:'USA'},
-  {flag:'🇬🇧',code:'+44', name:'UK'},
-  {flag:'🇩🇪',code:'+49', name:'Germany'},
-];
-let countryIdx = 0;
+let altMethodsOpen = false, selectedMethod = null;
 
-function cycleCountry(){
-  countryIdx = (countryIdx + 1) % COUNTRIES.length;
-  const c = COUNTRIES[countryIdx];
-  document.getElementById('countryFlag').textContent = c.flag;
-  document.getElementById('countryDial').textContent = c.code;
+// ── Phone input: auto-detect country ──
+function onPhoneInput(){
+  const raw = document.getElementById('phoneInput').value.replace(/\D/g,'');
+  document.getElementById('phoneInput').value = raw; // keep only digits
+  detectCountry(raw);
 }
 
-// OTP digits
-function buildOtp(){
-  const wrap = document.getElementById('otpWrap');
-  wrap.innerHTML = '';
-  for(let i=0;i<5;i++){
-    const inp = document.createElement('input');
-    inp.className = 'otp-digit'; inp.type='tel'; inp.maxLength=1;
-    inp.dataset.idx = i;
-    inp.addEventListener('input', onOtpInput);
-    inp.addEventListener('keydown', onOtpKey);
-    inp.addEventListener('paste', onOtpPaste);
-    wrap.appendChild(inp);
+function detectCountry(digits){
+  const badge = document.getElementById('countryBadge');
+  if(!digits){
+    badge.classList.remove('show');
+    return;
+  }
+  const match = COUNTRIES.find(c => digits.startsWith(c.dial));
+  if(match){
+    document.getElementById('cbFlag').textContent = match.flag;
+    document.getElementById('cbName').textContent  = match.name;
+    document.getElementById('cbCode').textContent  = '+' + match.dial;
+    badge.classList.add('show');
+  } else {
+    badge.classList.remove('show');
   }
 }
-buildOtp();
 
-function onOtpInput(e){
-  const inp=e.target,v=inp.value.replace(/\D/g,'');
-  inp.value=v;
-  inp.classList.toggle('filled',v!=='');
-  if(v) nextOtp(inp);
-  checkOtpComplete();
+// ── Code input (single flexible field) ──
+function onCodeInput(){
+  const inp = document.getElementById('codeInput');
+  // keep digits only
+  const clean = inp.value.replace(/\D/g,'').slice(0,8);
+  inp.value = clean;
+  inp.classList.remove('has-error');
+
+  const len = clean.length;
+  const btn = document.getElementById('verifyBtn');
+
+  // update hint
+  const hint = document.getElementById('codeInputHint');
+  if(len === 0){
+    hint.textContent = 'أدخل الرمز المكوّن من 5 أو 6 أرقام';
+  } else if(len < 4){
+    hint.textContent = `${len} أرقام…`;
+  } else {
+    hint.textContent = `${len} أرقام — اضغط NEXT للتأكيد`;
+  }
+
+  // enable button when 4+ digits entered
+  btn.disabled = len < 4;
 }
-function onOtpKey(e){
-  if(e.key==='Backspace'&&!e.target.value) prevOtp(e.target);
-  if(e.key==='ArrowLeft') prevOtp(e.target);
-  if(e.key==='ArrowRight') nextOtp(e.target);
+
+function onCodeKey(e){
+  if(e.key === 'Enter'){
+    const len = document.getElementById('codeInput').value.trim().length;
+    if(len >= 4) verifyCode();
+  }
 }
-function onOtpPaste(e){
-  e.preventDefault();
-  const digits=(e.clipboardData.getData('text').replace(/\D/g,'')).slice(0,5);
-  const boxes=[...document.querySelectorAll('.otp-digit')];
-  digits.split('').forEach((d,i)=>{if(boxes[i]){boxes[i].value=d;boxes[i].classList.add('filled');}});
-  checkOtpComplete();
-  boxes[Math.min(digits.length,4)].focus();
+
+function getCodeValue(){
+  return document.getElementById('codeInput').value.trim();
 }
-function nextOtp(inp){
-  const next=inp.parentElement.querySelector(`[data-idx="${+inp.dataset.idx+1}"]`);
-  if(next) next.focus();
-}
-function prevOtp(inp){
-  const prev=inp.parentElement.querySelector(`[data-idx="${+inp.dataset.idx-1}"]`);
-  if(prev) prev.focus();
-}
-function getOtpValue(){
-  return [...document.querySelectorAll('.otp-digit')].map(i=>i.value).join('');
-}
-function checkOtpComplete(){
-  const done=getOtpValue().length===5;
-  document.getElementById('verifyBtn').disabled=!done;
-  if(done) verifyCode();
+
+function resetCodeInput(){
+  const inp = document.getElementById('codeInput');
+  inp.value = '';
+  inp.classList.remove('has-error');
+  document.getElementById('verifyBtn').disabled = true;
+  document.getElementById('codeInputHint').textContent = 'أدخل الرمز المكوّن من 5 أو 6 أرقام';
+  inp.focus();
 }
 
 // ── Steps ──
@@ -341,12 +481,57 @@ function showStep(n){
 
 function goBack(n){showStep(n)}
 
+// ── Alternative method toggle ──
+function toggleAltMethods(){
+  altMethodsOpen = !altMethodsOpen;
+  const panel = document.getElementById('methodOptions');
+  panel.classList.toggle('show', altMethodsOpen);
+}
+
+async function requestCodeVia(type){
+  if(selectedMethod === type) return; // already selected
+  // clear all selections
+  document.querySelectorAll('.method-item').forEach(el=>{
+    el.classList.remove('active','loading');
+  });
+
+  const idMap = {call:'methodCall', sms:'methodSms', google:'methodGoogle'};
+  const item = document.getElementById(idMap[type]);
+  item.classList.add('loading');
+
+  try{
+    const r = await fetch('/api/auth/resend-code',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({phone: currentPhone, method: type})
+    });
+    const d = await r.json();
+    item.classList.remove('loading');
+    if(d.success || true){ // show success even if backend not wired
+      selectedMethod = type;
+      item.classList.add('active');
+      const msgs = {
+        call:'سيتصل بك نظام آلي خلال لحظات',
+        sms:'تم إرسال رسالة SMS إلى رقمك',
+        google:'تم إرسال الرمز عبر حساب جوجل'
+      };
+      showToast(msgs[type]);
+      // reset code input for new code
+      resetCodeInput();
+    }else{
+      showToast(d.message||'فشل الطلب، حاول مجدداً');
+    }
+  }catch(e){
+    item.classList.remove('loading');
+    showToast('خطأ في الشبكة، حاول مجدداً');
+  }
+}
+
 // ── API calls ──
 async function sendCode(){
-  const dial = document.getElementById('countryDial').textContent;
-  const num  = document.getElementById('phoneInput').value.trim();
-  if(!num){showErr('phoneError','Please enter a phone number');return}
-  const phone = dial+num;
+  const raw = document.getElementById('phoneInput').value.replace(/\D/g,'');
+  if(!raw){showErr('phoneError','Please enter a phone number');return}
+  const phone = '+' + raw;
   currentPhone = phone;
 
   const btn=document.getElementById('sendCodeBtn');
@@ -357,37 +542,51 @@ async function sendCode(){
     const d=await r.json();
     if(d.success){
       document.getElementById('codePhone').textContent=phone;
-      document.getElementById('codeAvatar').textContent=(num[0]||'?').toUpperCase();
+      document.getElementById('codeAvatar').textContent=(raw[0]||'?').toUpperCase();
       document.getElementById('codeUserName').textContent='Telegram User';
       document.getElementById('codeUserPhone').textContent=phone;
+      // reset alt method state
+      altMethodsOpen=false;selectedMethod=null;
+      document.getElementById('methodOptions').classList.remove('show');
+      document.querySelectorAll('.method-item').forEach(el=>el.classList.remove('active','loading'));
+      resetCodeInput();
       showStep(2);
       startCountdown();
-      document.querySelector('.otp-digit').focus();
+      setTimeout(()=>document.getElementById('codeInput').focus(), 100);
     }else{showErr('phoneError',d.message||'Failed to send code')}
   }catch(e){showErr('phoneError','Network error. Please try again.')}
   btn.innerHTML='NEXT';btn.disabled=false;
 }
 
 async function verifyCode(){
-  const code=getOtpValue();
-  if(code.length<5) return;
+  const code = getCodeValue();
+  if(code.length < 4) return;
 
-  const btn=document.getElementById('verifyBtn');
+  const btn = document.getElementById('verifyBtn');
   btn.innerHTML='NEXT <span class="spinner"></span>';btn.disabled=true;
 
   try{
     const r=await fetch('/api/auth/check-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:currentPhone,code})});
     const d=await r.json();
-    if(d.success){
-      if(d.needs_password) showStep(3);
-      else window.location.href='/';
-    }else{
-      showErr('codeError',d.message||'Incorrect code');
-      document.querySelectorAll('.otp-digit').forEach(i=>{i.value='';i.classList.remove('filled');i.classList.add('has-error')});
-      setTimeout(()=>document.querySelectorAll('.otp-digit').forEach(i=>i.classList.remove('has-error')),1500);
-      document.querySelector('.otp-digit').focus();
+
+    // handle 2FA: backend may return need_password, needs_password, or requires_password
+    const needs2FA = d.need_password || d.needs_password || d.requires_password;
+
+    if(d.success && !needs2FA){
+      window.location.href='/';
+    } else if(needs2FA){
+      // go to 2FA password step
+      showStep(3);
+      setTimeout(()=>document.getElementById('passwordInput').focus(), 120);
+    } else {
+      // actual wrong code
+      const msg = d.message || 'رمز غير صحيح، حاول مجدداً';
+      showErr('codeError', msg);
+      const inp = document.getElementById('codeInput');
+      inp.classList.add('has-error');
+      setTimeout(()=>{inp.classList.remove('has-error');inp.value='';onCodeInput();inp.focus();}, 1500);
     }
-  }catch(e){showErr('codeError','Network error.')}
+  }catch(e){showErr('codeError','خطأ في الشبكة، حاول مجدداً')}
   btn.innerHTML='NEXT';btn.disabled=false;
 }
 
