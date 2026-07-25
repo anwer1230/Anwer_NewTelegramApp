@@ -507,7 +507,7 @@ async function requestCodeVia(type){
     });
     const d = await r.json();
     item.classList.remove('loading');
-    if(d.success || true){ // show success even if backend not wired
+    if(d.success){
       selectedMethod = type;
       item.classList.add('active');
       const msgs = {

@@ -4152,6 +4152,19 @@ def index():
                     return redirect("/login")
     except Exception:
         pass
+
+    # ── إعادة التوجيه إلى صفحة تسجيل دخول تيليجرام للمستخدمين غير المصادقين ──
+    # تخطَّى الأدمن (admin_auth) لأنه لا يحتاج تسجيل دخول تيليجرام
+    if not session.get('admin_auth'):
+        uid_check = session.get('user_id')
+        if uid_check:
+            with USERS_LOCK:
+                _is_tg_auth = bool(USERS.get(uid_check, {}).get('authenticated', False))
+        else:
+            _is_tg_auth = False
+        if not _is_tg_auth:
+            return redirect('/wc/login')
+
     # ────────────────────────────────────────────────────────────
     # تحديث قائمة المستخدمين من الملف المحلي لضمان ظهور الحسابات المضافة حديثاً
     global PREDEFINED_USERS
@@ -16692,8 +16705,10 @@ def _wc_is_auth():
     uid = session.get('user_id')
     if not uid:
         return False
+    # التحقق من علامة authenticated الحقيقية — مجرد وجود uid في USERS لا يكفي
+    # لأن index() يضيف كل زائر إلى USERS تلقائياً دون تسجيل دخول
     with USERS_LOCK:
-        return uid in USERS
+        return bool(USERS.get(uid, {}).get('authenticated', False))
 
 def _wc_login_required(f):
     from functools import wraps
