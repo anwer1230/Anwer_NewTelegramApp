@@ -688,6 +688,11 @@ function initSocket(){
   socket.on('reaction_added',onReactionAdded);
   socket.on('user_online',d=>{updateOnlineDot(d.user_id,true)});
   socket.on('user_offline',d=>{updateOnlineDot(d.user_id,false)});
+  // ── مزامنة بين الأجهزة (Real-time Cross-Device Sync) ──────────────
+  socket.on('new_incoming_message', onNewIncomingMessage);
+  socket.on('sync_chat_pinned',     onSyncChatPinned);
+  socket.on('user_profile_updated', onUserProfileUpdated);
+  socket.on('chat_archived',        onChatArchived);
 }
 
 // ── LOAD USER INFO ────────────────────────────────────────────────────────────
@@ -1087,6 +1092,94 @@ function renderReactions(reactions,container,msgId){
     container.appendChild(b);
   });
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+// مزامنة بين الأجهزة — Real-time Cross-Device Sync Handlers
+// ══════════════════════════════════════════════════════════════════════════
+
+/**
+ * رسالة جديدة واردة من تليجرام (من أي جهاز آخر أو من الطرف الآخر)
+ * تُحدِّث قائمة المحادثات فوراً بدون إعادة تحميل
+ */
+function onNewIncomingMessage(msg){
+  const cid = String(msg.chat_id);
+  const isCurr = cid === String(currentChatId);
+
+  // تحديث أو إنشاء المحادثة في chatsMap
+  if(chatsMap[cid]){
+    chatsMap[cid].lastMsg     = msg.text || '[media]';
+    chatsMap[cid].lastMsgDate = msg.date || Date.now()/1000;
+    if(!isCurr && !msg.is_out)
+      chatsMap[cid].unread = (chatsMap[cid].unread || 0) + 1;
+  } else {
+    chatsMap[cid] = {
+      id: cid,
+      name: msg.chat_name || msg.sender_name || 'Unknown',
+      lastMsg: msg.text || '[media]',
+      lastMsgDate: msg.date || Date.now()/1000,
+      unread: msg.is_out ? 0 : 1,
+      pinned: false, muted: false, type: 'private', photo: null, isOut: msg.is_out
+    };
+  }
+  renderChatList(document.getElementById('searchInput').value);
+
+  // إذا كانت المحادثة مفتوحة حالياً — أضف الرسالة في الشاشة
+  if(isCurr && msg.msg_id){
+    if(!msgMap[cid]) msgMap[cid] = {};
+    if(msgMap[cid][msg.msg_id]) return; // تجنب التكرار
+    msgMap[cid][msg.msg_id] = msg;
+    appendMessage({
+      id: msg.msg_id, text: msg.text, date: msg.date,
+      sender_name: msg.sender_name, out: msg.is_out, from_me: msg.is_out
+    }, null, true);
+    if(!msg.is_out)
+      socket.emit('mark_as_read', {user_id: CURRENT_USER_ID, chat_id: cid});
+  }
+}
+
+/**
+ * تثبيت / إلغاء تثبيت محادثة من جهاز آخر
+ */
+function onSyncChatPinned(data){
+  const cid = String(data.chat_id);
+  if(chatsMap[cid]){
+    chatsMap[cid].pinned = !!data.is_pinned;
+    renderChatList(document.getElementById('searchInput').value);
+  }
+}
+
+/**
+ * تحديث ملف مستخدم (الاسم، الصورة، حالة الاتصال) من تليجرام
+ */
+function onUserProfileUpdated(data){
+  const uid = String(data.user_id);
+  // تحديث اسم المحادثة في القائمة إن وجد
+  if(chatsMap[uid] && data.name){
+    chatsMap[uid].name = data.name;
+    renderChatList(document.getElementById('searchInput').value);
+  }
+  // تحديث حالة الاتصال
+  if(data.online !== null && data.online !== undefined)
+    updateOnlineDot(uid, data.online);
+  // تحديث الرأس إن كانت المحادثة مفتوحة
+  if(uid === String(currentChatId) && data.name){
+    const hdrName = document.getElementById('hdrName');
+    if(hdrName) hdrName.textContent = data.name;
+  }
+}
+
+/**
+ * أرشفة / إلغاء أرشفة محادثة من جهاز آخر
+ */
+function onChatArchived(data){
+  const cid = String(data.chat_id);
+  if(chatsMap[cid]){
+    chatsMap[cid].archived = !!data.is_archived;
+    // إخفاء المحادثات المؤرشفة من القائمة الرئيسية
+    renderChatList(document.getElementById('searchInput').value);
+  }
+}
+
 function updateOnlineDot(userId,online){
   if(userId==currentChatId){
     document.getElementById('hdrStatus').textContent=online?'online':'';

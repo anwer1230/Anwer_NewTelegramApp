@@ -1724,8 +1724,79 @@ class TelegramClientManager:
                         bot = learning_manager.get_bot(self.user_id)
                         await bot.handle_incoming_message(event, self)
 
+            # ══════════════════════════════════════════════════════════════
+            # مزامنة كاملة بين الأجهزة — Real-time Cross-Device Sync
+            # ══════════════════════════════════════════════════════════════
+
+            @self.client.on(events.MessageEdited())
+            async def message_edited_handler(event):
+                """تعديل رسالة من أي جهاز آخر"""
+                try:
+                    msg = event.message
+                    socketio.emit('message_edited', {
+                        'chat_id':    str(event.chat_id),
+                        'message_id': msg.id,
+                        'new_text':   msg.text or '',
+                        'edited_at':  int(msg.edit_date.timestamp())
+                                      if getattr(msg, 'edit_date', None) else 0,
+                        'source':     'telegram_sync',
+                    }, to=self.user_id)
+                except Exception as _ee:
+                    logger.debug(f"[sync] message_edited: {_ee}")
+
+            @self.client.on(events.MessageDeleted())
+            async def message_deleted_handler(event):
+                """حذف رسالة من أي جهاز آخر"""
+                try:
+                    for msg_id in (event.deleted_ids or []):
+                        socketio.emit('message_deleted', {
+                            'chat_id':    str(event.chat_id or ''),
+                            'message_id': msg_id,
+                            'source':     'telegram_sync',
+                        }, to=self.user_id)
+                except Exception as _de:
+                    logger.debug(f"[sync] message_deleted: {_de}")
+
+            @self.client.on(events.ChatAction())
+            async def chat_action_handler(event):
+                """تثبيت/إلغاء تثبيت محادثة — وأي إجراء على المحادثة"""
+                try:
+                    # رسالة مثبّتة
+                    if getattr(event, 'pin_message', None) is not None \
+                            or getattr(event, 'unpin', False):
+                        socketio.emit('sync_chat_pinned', {
+                            'chat_id':  str(event.chat_id),
+                            'is_pinned': not getattr(event, 'unpin', False),
+                            'source':   'telegram_sync',
+                        }, to=self.user_id)
+                except Exception as _ce:
+                    logger.debug(f"[sync] chat_action: {_ce}")
+
+            @self.client.on(events.UserUpdate())
+            async def user_update_handler(event):
+                """تحديث بيانات مستخدم (الاسم، الصورة، حالة الاتصال)"""
+                try:
+                    user = await event.get_user()
+                    if not user:
+                        return
+                    fname = getattr(user, 'first_name', '') or ''
+                    lname = getattr(user, 'last_name', '')  or ''
+                    name  = f"{fname} {lname}".strip()
+                    socketio.emit('user_profile_updated', {
+                        'user_id':  str(user.id),
+                        'name':     name,
+                        'username': getattr(user, 'username', '') or '',
+                        'online':   getattr(event, 'online', None),
+                        'source':   'telegram_sync',
+                    }, to=self.user_id)
+                except Exception as _ue:
+                    logger.debug(f"[sync] user_update: {_ue}")
+
             self.event_handlers_registered = True
-            logger.info(f"✅ Event handlers registered for user {self.user_id} (all messages)")
+            logger.info(
+                f"✅ Event handlers registered for user {self.user_id} "
+                f"(NewMessage + MessageEdited + MessageDeleted + ChatAction + UserUpdate)"
+            )
 
         except Exception as e:
             logger.error(f"Failed to register event handlers: {str(e)}")
@@ -17314,8 +17385,18 @@ def wc_handle_send(data):
 def wc_handle_read(data):
     uid = data.get('user_id'); cid = data.get('chat_id')
     if uid and cid:
-        socketio.emit('messages_read', {'chat_id': cid, 'reader_id': uid},
-                      room=f'wc_chat_{cid}')
+        payload = {'chat_id': cid, 'reader_id': uid}
+        # (1) بث لكل نوافذ نفس المحادثة
+        socketio.emit('messages_read', payload, room=f'wc_chat_{cid}')
+        # (2) بث لكل أجهزة المستخدم — مزامنة بين الأجهزة
+        socketio.emit('messages_read', payload, room=uid)
+        # (3) تحديث حالة القراءة فعلياً في تليجرام
+        def _bg_read():
+            try:
+                _wc_run_on_client(uid, lambda c: c.send_read_acknowledge(int(cid)))
+            except Exception as _re:
+                logger.debug(f"[sync] read_acknowledge: {_re}")
+        _wc_threading.Thread(target=_bg_read, daemon=True).start()
 
 
 @socketio.on('typing_start')
