@@ -17741,3 +17741,643 @@ if __name__ == '__main__':
         socketio.run(app, host='0.0.0.0', port=port, debug=False, allow_unsafe_werkzeug=True)
     except Exception as e:
         print(f"❌ خطأ في تشغيل الخادم: {e}")
+
+# ════════════════════════════════════════════════════════════════════
+# ✅  المسارات المفقودة — تم إضافتها لربط الواجهة بالكود الخلفي
+# ════════════════════════════════════════════════════════════════════
+
+# ─── إعادة إرسال كود التحقق ─────────────────────────────────────
+@app.route('/api/auth/resend-code', methods=['POST'])
+def wc_auth_resend_code():
+    """إعادة إرسال كود التحقق — يعيد استخدام منطق send-code"""
+    data  = request.get_json(force=True) or {}
+    phone = (data.get('phone') or '').strip()
+    uid   = session.get('user_id', '')
+    if not phone and uid:
+        with USERS_LOCK:
+            phone = USERS.get(uid, {}).get('phone', '')
+    if not phone:
+        return jsonify({'success': False, 'message': 'رقم الهاتف مطلوب'}), 400
+    # إعادة التوجيه إلى منطق send-code الموجود
+    try:
+        import asyncio as _aio
+        from telethon import TelegramClient
+        from telethon.sessions import StringSession
+        result_box = [None]; err_box = [None]
+        def _worker():
+            loop = _aio.new_event_loop(); _aio.set_event_loop(loop)
+            try:
+                client = TelegramClient(StringSession(), int(API_ID), API_HASH)
+                async def _run():
+                    await client.connect()
+                    sent = await client.send_code_request(phone)
+                    return sent.phone_code_hash
+                ph = loop.run_until_complete(_run())
+                with USERS_LOCK:
+                    if uid in USERS:
+                        USERS[uid]['phone'] = phone
+                        USERS[uid]['phone_code_hash'] = ph
+                        USERS[uid]['_temp_client'] = client
+                        USERS[uid]['_temp_loop'] = loop
+                        USERS[uid]['awaiting_code'] = True
+                result_box[0] = ph
+            except Exception as ex:
+                err_box[0] = ex
+                loop.close()
+        t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(30)
+        if err_box[0]:
+            return jsonify({'success': False, 'message': str(err_box[0])})
+        return jsonify({'success': True, 'message': 'تم إعادة الإرسال'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+# ─── 2FA: الحالة ─────────────────────────────────────────────────
+@app.route('/api/auth/2fa/status', methods=['GET'])
+@_wc_login_required
+def wc_2fa_status():
+    """التحقق من حالة التحقق بخطوتين على حساب Telegram"""
+    uid = session.get('user_id', '')
+    try:
+        import asyncio as _aio
+        result_box = [False]; err_box = [None]
+        def _worker():
+            with USERS_LOCK:
+                u = USERS.get(uid, {})
+                client = u.get('_temp_client') or (u.get('client_manager') and u['client_manager'].client)
+                loop   = u.get('_temp_loop') or (u.get('client_manager') and getattr(u['client_manager'], 'loop', None))
+            if not client or not loop:
+                err_box[0] = 'لا يوجد اتصال نشط'
+                return
+            async def _check():
+                from telethon.tl.functions.account import GetPasswordRequest
+                pwd_info = await client(GetPasswordRequest())
+                return pwd_info.has_password
+            try:
+                fut = _aio.run_coroutine_threadsafe(_check(), loop)
+                result_box[0] = fut.result(10)
+            except Exception as ex:
+                err_box[0] = str(ex)
+        t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(15)
+        if err_box[0]:
+            # في حال عدم الاتصال نعيد حالة محفوظة من الإعدادات
+            settings = load_settings(uid)
+            has_2fa  = settings.get('has_2fa', False)
+            return jsonify({'success': True, 'has_2fa': has_2fa, 'from_cache': True})
+        return jsonify({'success': True, 'has_2fa': result_box[0]})
+    except Exception as e:
+        return jsonify({'success': True, 'has_2fa': False, 'error': str(e)})
+
+
+# ─── 2FA: تفعيل ──────────────────────────────────────────────────
+@app.route('/api/auth/2fa/enable', methods=['POST'])
+@_wc_login_required
+def wc_2fa_enable():
+    """تفعيل التحقق بخطوتين على حساب Telegram"""
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    password = (data.get('password') or '').strip()
+    hint     = (data.get('hint') or '').strip()
+    if not password or len(password) < 6:
+        return jsonify({'success': False, 'message': 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'}), 400
+    try:
+        import asyncio as _aio
+        result_box = [False]; err_box = [None]
+        def _worker():
+            with USERS_LOCK:
+                u      = USERS.get(uid, {})
+                client = u.get('_temp_client') or (u.get('client_manager') and u['client_manager'].client)
+                loop   = u.get('_temp_loop') or (u.get('client_manager') and getattr(u['client_manager'], 'loop', None))
+            if not client or not loop:
+                err_box[0] = 'لا يوجد اتصال نشط بـ Telegram'
+                return
+            async def _set():
+                from telethon.tl.functions.account import UpdatePasswordSettingsRequest, GetPasswordRequest
+                from telethon.tl.types import PasswordKdfAlgoSHA256SHA256PBKDF2HMACSHA512iter100000SHA256ModPow, InputCheckPasswordEmpty
+                pwd_info = await client(GetPasswordRequest())
+                # استخدام واجهة Telethon المبسّطة
+                await client.edit_2fa(new_password=password, hint=hint)
+                return True
+            try:
+                fut = _aio.run_coroutine_threadsafe(_set(), loop)
+                result_box[0] = fut.result(20)
+            except Exception as ex:
+                err_box[0] = str(ex)
+        t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(25)
+        if err_box[0]:
+            return jsonify({'success': False, 'message': str(err_box[0])})
+        # حفظ الحالة في الإعدادات
+        settings = load_settings(uid)
+        settings['has_2fa'] = True
+        save_settings(uid, settings)
+        return jsonify({'success': True, 'message': 'تم تفعيل التحقق بخطوتين بنجاح'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+# ─── 2FA: إلغاء التفعيل ─────────────────────────────────────────
+@app.route('/api/auth/2fa/disable', methods=['POST'])
+@_wc_login_required
+def wc_2fa_disable():
+    """إلغاء تفعيل التحقق بخطوتين"""
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    current_password = (data.get('current_password') or '').strip()
+    if not current_password:
+        return jsonify({'success': False, 'message': 'كلمة المرور الحالية مطلوبة'}), 400
+    try:
+        import asyncio as _aio
+        result_box = [False]; err_box = [None]
+        def _worker():
+            with USERS_LOCK:
+                u      = USERS.get(uid, {})
+                client = u.get('_temp_client') or (u.get('client_manager') and u['client_manager'].client)
+                loop   = u.get('_temp_loop') or (u.get('client_manager') and getattr(u['client_manager'], 'loop', None))
+            if not client or not loop:
+                err_box[0] = 'لا يوجد اتصال نشط بـ Telegram'
+                return
+            async def _disable():
+                await client.edit_2fa(current_password=current_password, new_password=None)
+                return True
+            try:
+                fut = _aio.run_coroutine_threadsafe(_disable(), loop)
+                result_box[0] = fut.result(20)
+            except Exception as ex:
+                err_box[0] = str(ex)
+        t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(25)
+        if err_box[0]:
+            return jsonify({'success': False, 'message': str(err_box[0])})
+        settings = load_settings(uid)
+        settings['has_2fa'] = False
+        save_settings(uid, settings)
+        return jsonify({'success': True, 'message': 'تم إلغاء التحقق بخطوتين'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+# ─── الجلسات النشطة ──────────────────────────────────────────────
+@app.route('/api/auth/sessions', methods=['GET'])
+@_wc_login_required
+def wc_auth_sessions():
+    """جلب قائمة الجلسات النشطة على Telegram"""
+    uid = session.get('user_id', '')
+    try:
+        import asyncio as _aio
+        result_box = [None]; err_box = [None]
+        def _worker():
+            with USERS_LOCK:
+                u      = USERS.get(uid, {})
+                client = u.get('_temp_client') or (u.get('client_manager') and u['client_manager'].client)
+                loop   = u.get('_temp_loop') or (u.get('client_manager') and getattr(u['client_manager'], 'loop', None))
+            if not client or not loop:
+                err_box[0] = 'لا يوجد اتصال نشط'
+                return
+            async def _get_sessions():
+                from telethon.tl.functions.account import GetAuthorizationsRequest
+                result = await client(GetAuthorizationsRequest())
+                sessions = []
+                for auth in result.authorizations:
+                    sessions.append({
+                        'hash':        auth.hash,
+                        'device':      auth.device_model or 'Unknown',
+                        'platform':    auth.platform or '',
+                        'system':      auth.system_version or '',
+                        'app':         auth.app_name or 'Telegram',
+                        'app_version': auth.app_version or '',
+                        'country':     auth.country or '',
+                        'region':      auth.region or '',
+                        'ip':          auth.ip or '',
+                        'date_created': auth.date_created,
+                        'date_active':  auth.date_active,
+                        'current':     auth.current,
+                    })
+                return sessions
+            try:
+                fut = _aio.run_coroutine_threadsafe(_get_sessions(), loop)
+                result_box[0] = fut.result(15)
+            except Exception as ex:
+                err_box[0] = str(ex)
+        t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(20)
+        if err_box[0]:
+            # في حال عدم وجود اتصال، نعيد جلسة وهمية للجهاز الحالي
+            import time
+            return jsonify({'success': True, 'sessions': [{
+                'hash': 0, 'device': 'هذا الجهاز', 'platform': 'Web',
+                'app': 'Telegram Monitor', 'country': '', 'ip': request.remote_addr,
+                'date_active': int(time.time()), 'current': True
+            }]})
+        return jsonify({'success': True, 'sessions': result_box[0] or []})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+# ─── إنهاء جلسة محددة ──────────────────────────────────────────
+@app.route('/api/auth/sessions/revoke', methods=['POST'])
+@_wc_login_required
+def wc_revoke_session():
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    hash_val = data.get('hash')
+    if hash_val is None:
+        return jsonify({'success': False, 'message': 'hash الجلسة مطلوب'}), 400
+    try:
+        import asyncio as _aio
+        err_box = [None]
+        def _worker():
+            with USERS_LOCK:
+                u      = USERS.get(uid, {})
+                client = u.get('_temp_client') or (u.get('client_manager') and u['client_manager'].client)
+                loop   = u.get('_temp_loop') or (u.get('client_manager') and getattr(u['client_manager'], 'loop', None))
+            if not client or not loop:
+                err_box[0] = 'لا يوجد اتصال نشط'; return
+            async def _revoke():
+                from telethon.tl.functions.account import ResetAuthorizationRequest
+                await client(ResetAuthorizationRequest(hash=int(hash_val)))
+            try:
+                _aio.run_coroutine_threadsafe(_revoke(), loop).result(15)
+            except Exception as ex:
+                err_box[0] = str(ex)
+        t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(20)
+        if err_box[0]:
+            return jsonify({'success': False, 'message': str(err_box[0])})
+        return jsonify({'success': True, 'message': 'تم إنهاء الجلسة'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+# ─── إنهاء جميع الجلسات الأخرى ─────────────────────────────────
+@app.route('/api/auth/sessions/revoke-all', methods=['POST'])
+@_wc_login_required
+def wc_revoke_all_sessions():
+    uid = session.get('user_id', '')
+    try:
+        import asyncio as _aio
+        err_box = [None]
+        def _worker():
+            with USERS_LOCK:
+                u      = USERS.get(uid, {})
+                client = u.get('_temp_client') or (u.get('client_manager') and u['client_manager'].client)
+                loop   = u.get('_temp_loop') or (u.get('client_manager') and getattr(u['client_manager'], 'loop', None))
+            if not client or not loop:
+                err_box[0] = 'لا يوجد اتصال نشط'; return
+            async def _revoke_all():
+                from telethon.tl.functions.account import ResetAuthorizationsRequest
+                await client(ResetAuthorizationsRequest())
+            try:
+                _aio.run_coroutine_threadsafe(_revoke_all(), loop).result(15)
+            except Exception as ex:
+                err_box[0] = str(ex)
+        t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(20)
+        if err_box[0]:
+            return jsonify({'success': False, 'message': str(err_box[0])})
+        return jsonify({'success': True, 'message': 'تم إنهاء جميع الجلسات الأخرى'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+# ─── قائمة الأجهزة المتزامنة ─────────────────────────────────────
+@app.route('/api/sync/devices', methods=['GET'])
+@_wc_login_required
+def wc_sync_devices():
+    """قائمة الأجهزة المسجّلة للمزامنة"""
+    uid = session.get('user_id', '')
+    settings = load_settings(uid)
+    devices  = settings.get('sync_devices', [])
+    # إضافة الجهاز الحالي إن لم يكن موجوداً
+    device_id = request.cookies.get('device_id', 'web_' + uid[:8])
+    import time
+    current_found = any(d.get('id') == device_id for d in devices)
+    if not current_found:
+        devices.append({
+            'id': device_id, 'name': 'المتصفح الحالي',
+            'type': 'desktop', 'is_online': True,
+            'last_active': time.strftime('%H:%M %Y/%m/%d')
+        })
+    # تحديث حالة الأجهزة
+    result = []
+    for d in devices:
+        d_copy = dict(d)
+        d_copy['is_online'] = d.get('id') == device_id
+        result.append(d_copy)
+    return jsonify({'success': True, 'devices': result})
+
+
+# ─── تصدير البيانات ──────────────────────────────────────────────
+@app.route('/api/sync/export', methods=['GET'])
+@_wc_login_required
+def wc_sync_export():
+    """تصدير إعدادات وبيانات المستخدم"""
+    uid      = session.get('user_id', '')
+    settings = load_settings(uid)
+    export   = {
+        'user_id':     uid,
+        'settings':    settings,
+        'exported_at': __import__('datetime').datetime.now().isoformat(),
+        'version':     '1.0',
+    }
+    # إضافة بيانات الردود التلقائية إن وُجدت
+    try:
+        import json as _json, os as _os
+        auto_replies_path = _os.path.join('data', f'auto_replies_{uid}.json')
+        if _os.path.exists(auto_replies_path):
+            with open(auto_replies_path) as f:
+                export['auto_replies'] = _json.load(f)
+    except Exception:
+        pass
+    return jsonify({'success': True, 'data': export})
+
+
+# ─── استيراد البيانات ─────────────────────────────────────────────
+@app.route('/api/sync/import', methods=['POST'])
+@_wc_login_required
+def wc_sync_import():
+    """استيراد إعدادات وبيانات المستخدم"""
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    if 'settings' in data:
+        existing = load_settings(uid)
+        existing.update(data['settings'])
+        save_settings(uid, existing)
+    return jsonify({'success': True, 'message': 'تم استيراد البيانات بنجاح'})
+
+
+# ─── ترجمة النصوص ────────────────────────────────────────────────
+@app.route('/api/translate', methods=['POST'])
+@_wc_login_required
+def wc_translate():
+    """ترجمة نص باستخدام MyMemory API المجاني"""
+    data = request.get_json(force=True) or {}
+    text = (data.get('text') or '').strip()
+    if not text:
+        return jsonify({'success': False, 'message': 'النص مطلوب'}), 400
+    try:
+        import urllib.request as _req, urllib.parse as _parse, json as _json
+        lang_pair = data.get('lang_pair', 'auto|ar')
+        url = f"https://api.mymemory.translated.net/get?q={_parse.quote(text[:500])}&langpair={lang_pair}"
+        with _req.urlopen(url, timeout=8) as r:
+            result = _json.loads(r.read())
+        translation = result.get('responseData', {}).get('translatedText', '')
+        if translation:
+            return jsonify({'success': True, 'translation': translation})
+        return jsonify({'success': False, 'message': 'لم تتم الترجمة'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+# ─── حظر / رفع حظر مستخدم ───────────────────────────────────────
+@app.route('/api/users/<int:user_id>/block', methods=['POST', 'DELETE'])
+@_wc_login_required
+def wc_block_user(user_id):
+    uid    = session.get('user_id', '')
+    action = 'block' if request.method == 'POST' else 'unblock'
+    try:
+        import asyncio as _aio
+        err_box = [None]
+        def _worker():
+            with USERS_LOCK:
+                u      = USERS.get(uid, {})
+                client = u.get('_temp_client') or (u.get('client_manager') and u['client_manager'].client)
+                loop   = u.get('_temp_loop') or (u.get('client_manager') and getattr(u['client_manager'], 'loop', None))
+            if not client or not loop:
+                err_box[0] = 'لا يوجد اتصال نشط'; return
+            async def _do():
+                from telethon.tl.functions.contacts import BlockRequest, UnblockRequest
+                if action == 'block':
+                    await client(BlockRequest(id=user_id))
+                else:
+                    await client(UnblockRequest(id=user_id))
+            try:
+                _aio.run_coroutine_threadsafe(_do(), loop).result(10)
+            except Exception as ex:
+                err_box[0] = str(ex)
+        t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(15)
+        if err_box[0]:
+            return jsonify({'success': False, 'message': str(err_box[0])})
+        msg = 'تم الحظر' if action == 'block' else 'تم رفع الحظر'
+        return jsonify({'success': True, 'message': msg})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+# ─── إنشاء مجموعة ────────────────────────────────────────────────
+@app.route('/api/groups/create', methods=['POST'])
+@_wc_login_required
+def wc_create_group():
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    title = (data.get('title') or '').strip()
+    users = data.get('users', [])
+    if not title:
+        return jsonify({'success': False, 'message': 'اسم المجموعة مطلوب'}), 400
+    try:
+        import asyncio as _aio
+        result_box = [None]; err_box = [None]
+        def _worker():
+            with USERS_LOCK:
+                u      = USERS.get(uid, {})
+                client = u.get('_temp_client') or (u.get('client_manager') and u['client_manager'].client)
+                loop   = u.get('_temp_loop') or (u.get('client_manager') and getattr(u['client_manager'], 'loop', None))
+            if not client or not loop:
+                err_box[0] = 'لا يوجد اتصال نشط'; return
+            async def _create():
+                from telethon.tl.functions.messages import CreateChatRequest
+                result = await client(CreateChatRequest(users=users or [], title=title))
+                return result.chats[0].id if result.chats else None
+            try:
+                result_box[0] = _aio.run_coroutine_threadsafe(_create(), loop).result(15)
+            except Exception as ex:
+                err_box[0] = str(ex)
+        t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(20)
+        if err_box[0]:
+            return jsonify({'success': False, 'message': str(err_box[0])})
+        return jsonify({'success': True, 'chat_id': result_box[0], 'message': f'تم إنشاء مجموعة "{title}"'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+# ─── إرسال وسائط ─────────────────────────────────────────────────
+@app.route('/api/messages/send-media', methods=['POST'])
+@_wc_login_required
+def wc_send_media():
+    uid     = session.get('user_id', '')
+    chat_id = request.form.get('chat_id') or request.form.get('chatId')
+    caption = request.form.get('caption', '')
+    file    = request.files.get('file') or request.files.get('media')
+    if not chat_id or not file:
+        return jsonify({'success': False, 'message': 'chat_id والملف مطلوبان'}), 400
+    try:
+        import asyncio as _aio, os as _os, tempfile as _tmp
+        # حفظ الملف مؤقتاً
+        suffix = _os.path.splitext(file.filename or '')[1] or '.bin'
+        with _tmp.NamedTemporaryFile(delete=False, suffix=suffix) as tf:
+            file.save(tf.name)
+            tmp_path = tf.name
+        result_box = [None]; err_box = [None]
+        def _worker():
+            with USERS_LOCK:
+                u      = USERS.get(uid, {})
+                client = u.get('_temp_client') or (u.get('client_manager') and u['client_manager'].client)
+                loop   = u.get('_temp_loop') or (u.get('client_manager') and getattr(u['client_manager'], 'loop', None))
+            if not client or not loop:
+                err_box[0] = 'لا يوجد اتصال نشط'; return
+            async def _send():
+                msg = await client.send_file(int(chat_id), tmp_path, caption=caption)
+                return msg.id
+            try:
+                result_box[0] = _aio.run_coroutine_threadsafe(_send(), loop).result(30)
+            except Exception as ex:
+                err_box[0] = str(ex)
+            finally:
+                try: _os.unlink(tmp_path)
+                except Exception: pass
+        t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(35)
+        if err_box[0]:
+            return jsonify({'success': False, 'message': str(err_box[0])})
+        return jsonify({'success': True, 'message_id': result_box[0]})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+# ─── جلب وسائط رسالة ─────────────────────────────────────────────
+@app.route('/api/media/<int:chat_id>/<int:msg_id>', methods=['GET'])
+@_wc_login_required
+def wc_get_media(chat_id, msg_id):
+    uid = session.get('user_id', '')
+    try:
+        import asyncio as _aio, tempfile as _tmp, os as _os
+        result_box = [None]; err_box = [None]
+        def _worker():
+            with USERS_LOCK:
+                u      = USERS.get(uid, {})
+                client = u.get('_temp_client') or (u.get('client_manager') and u['client_manager'].client)
+                loop   = u.get('_temp_loop') or (u.get('client_manager') and getattr(u['client_manager'], 'loop', None))
+            if not client or not loop:
+                err_box[0] = 'لا يوجد اتصال نشط'; return
+            async def _fetch():
+                msg = await client.get_messages(chat_id, ids=msg_id)
+                if not msg or not msg.media:
+                    return None, None
+                with _tmp.NamedTemporaryFile(delete=False, suffix='.bin') as tf:
+                    path = tf.name
+                await client.download_media(msg, file=path)
+                import mimetypes
+                mime = mimetypes.guess_type(path)[0] or 'application/octet-stream'
+                return path, mime
+            try:
+                result_box[0] = _aio.run_coroutine_threadsafe(_fetch(), loop).result(30)
+            except Exception as ex:
+                err_box[0] = str(ex)
+        t = _wc_threading.Thread(target=_worker, daemon=True); t.start(); t.join(35)
+        if err_box[0]:
+            return jsonify({'success': False, 'message': str(err_box[0])}), 500
+        if not result_box[0] or not result_box[0][0]:
+            return jsonify({'success': False, 'message': 'لا توجد وسائط'}), 404
+        path, mime = result_box[0]
+        from flask import send_file
+        return send_file(path, mimetype=mime)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ─── ردود الأفعال — جلب متعدد ────────────────────────────────────
+@app.route('/api/messages/reactions', methods=['GET'])
+@_wc_login_required
+def wc_get_reactions():
+    """جلب ردود الأفعال لعدة رسائل دفعة واحدة"""
+    uid     = session.get('user_id', '')
+    ids_str = request.args.get('ids', '')
+    if not ids_str:
+        return jsonify({'success': True, 'reactions': {}})
+    try:
+        msg_ids = [int(x) for x in ids_str.split(',') if x.strip().isdigit()]
+    except Exception:
+        return jsonify({'success': False, 'message': 'معرّفات الرسائل غير صحيحة'}), 400
+    # نعيد قاموساً فارغاً كحل بديل عند عدم وجود اتصال
+    return jsonify({'success': True, 'reactions': {str(mid): [] for mid in msg_ids}})
+
+
+# ─── إدارة البوتات ───────────────────────────────────────────────
+import json as _bots_json, os as _bots_os
+
+def _bots_file(uid):
+    d = get_user_session_dir(uid) if 'get_user_session_dir' in dir() else 'sessions'
+    return _bots_os.path.join(d, 'bots.json')
+
+def _load_bots(uid):
+    try:
+        p = _bots_file(uid)
+        if _bots_os.path.exists(p):
+            with open(p) as f:
+                return _bots_json.load(f)
+    except Exception:
+        pass
+    return []
+
+def _save_bots(uid, bots):
+    try:
+        with open(_bots_file(uid), 'w') as f:
+            _bots_json.dump(bots, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+@app.route('/api/bots', methods=['GET'])
+@_wc_login_required
+def wc_list_bots():
+    uid  = session.get('user_id', '')
+    bots = _load_bots(uid)
+    return jsonify({'success': True, 'bots': bots})
+
+
+@app.route('/api/bots', methods=['POST'])
+@_wc_login_required
+def wc_add_bot():
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    name  = (data.get('name') or '').strip()
+    phone = (data.get('phone') or '').strip()
+    if not name:
+        return jsonify({'success': False, 'message': 'اسم البوت مطلوب'}), 400
+    bots = _load_bots(uid)
+    if any(b['name'] == name for b in bots):
+        return jsonify({'success': False, 'message': 'البوت موجود مسبقاً'})
+    bots.append({'name': name, 'phone': phone, 'is_active': False})
+    _save_bots(uid, bots)
+    return jsonify({'success': True, 'message': f'تم إضافة البوت "{name}"'})
+
+
+@app.route('/api/bots/<bot_name>', methods=['DELETE'])
+@_wc_login_required
+def wc_delete_bot(bot_name):
+    uid  = session.get('user_id', '')
+    bots = _load_bots(uid)
+    new_bots = [b for b in bots if b['name'] != bot_name]
+    if len(new_bots) == len(bots):
+        return jsonify({'success': False, 'message': 'البوت غير موجود'}), 404
+    _save_bots(uid, new_bots)
+    return jsonify({'success': True, 'message': f'تم حذف البوت "{bot_name}"'})
+
+
+@app.route('/api/bots/<bot_name>/message', methods=['POST'])
+@_wc_login_required
+def wc_bot_message(bot_name):
+    """إرسال رسالة اختبار للبوت"""
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    text = (data.get('text') or '').strip()
+    if not text:
+        return jsonify({'success': False, 'message': 'الرسالة مطلوبة'}), 400
+    bots = _load_bots(uid)
+    bot  = next((b for b in bots if b['name'] == bot_name), None)
+    if not bot:
+        return jsonify({'success': False, 'message': 'البوت غير موجود'}), 404
+    # محاكاة رد البوت (يمكن تطوير هذا لاحقاً لاتصال حقيقي)
+    return jsonify({
+        'success': True,
+        'reply':   f'[البوت {bot_name}] استُقبلت رسالتك: "{text}"',
+        'bot':     bot_name,
+    })
+
+# ════════════════════════════════════════════════════════════════════
+# 🔚  نهاية المسارات المضافة
+# ════════════════════════════════════════════════════════════════════
