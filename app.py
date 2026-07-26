@@ -17244,36 +17244,7 @@ def wc_pin_msg():
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-@app.route('/api/messages/bookmark', methods=['POST'])
-@_wc_login_required
-def wc_bookmark():
-    return jsonify({'success': True})
-
-
-@app.route('/api/messages/bookmarks', methods=['GET'])
-@_wc_login_required
-def wc_get_bookmarks():
-    return jsonify({'success': True, 'bookmarks': []})
-
-
-# ════════════════════════════════════════════════════════════════════
-# 📁  المجلدات
-# ════════════════════════════════════════════════════════════════════
-
-@app.route('/api/folders', methods=['GET'])
-@_wc_login_required
-def wc_get_folders():
-    return jsonify({'success': True, 'folders': []})
-
-
-@app.route('/api/folders', methods=['POST'])
-@_wc_login_required
-def wc_create_folder():
-    data = request.get_json(force=True) or {}
-    name = (data.get('name') or '').strip()
-    if not name:
-        return jsonify({'success': False, 'message': 'اسم المجلد مطلوب'}), 400
-    return jsonify({'success': True, 'folder_id': 1, 'name': name})
+# (bookmark, folders — تم نقلها للأسفل مع التطبيق الحقيقي)
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -18410,6 +18381,283 @@ def wc_bot_message(bot_name):
         'reply':   f'[البوت {bot_name}] استُقبلت رسالتك: "{text}"',
         'bot':     bot_name,
     })
+
+
+# ════════════════════════════════════════════════════════════════════
+# 🔒  إعدادات الخصوصية — المرحلة 14
+# ════════════════════════════════════════════════════════════════════
+
+@app.route('/api/privacy/settings', methods=['GET'])
+@_wc_login_required
+def wc_get_privacy_settings():
+    uid = session.get('user_id', '')
+    s   = load_settings(uid) or {}
+    return jsonify({'success': True, 'privacy': {
+        'last_seen':    s.get('privacy_last_seen',    'everyone'),
+        'photo':        s.get('privacy_photo',        'everyone'),
+        'phone':        s.get('privacy_phone',        'everyone'),
+        'read_receipts':s.get('privacy_read_receipts','everyone'),
+    }})
+
+
+@app.route('/api/privacy/settings', methods=['POST'])
+@_wc_login_required
+def wc_update_privacy_settings():
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    key  = (data.get('key') or '').strip()
+    val  = data.get('value', '')
+    if not key:
+        return jsonify({'success': False, 'message': 'المفتاح مطلوب'}), 400
+    s = load_settings(uid) or {}
+    s[f'privacy_{key}'] = val
+    save_settings(uid, s)
+    # محاولة تطبيق الإعداد عبر تيليجرام
+    try:
+        from telethon.tl.functions.account import SetPrivacyRequest
+        from telethon.tl.types import (
+            InputPrivacyKeyStatusTimestamp, InputPrivacyKeyProfilePhoto,
+            InputPrivacyKeyPhoneNumber, InputPrivacyKeyChatInvite,
+            InputPrivacyValueAllowAll, InputPrivacyValueAllowContacts,
+            InputPrivacyValueDisallowAll
+        )
+        _key_map = {
+            'last_seen': InputPrivacyKeyStatusTimestamp,
+            'photo':     InputPrivacyKeyProfilePhoto,
+            'phone':     InputPrivacyKeyPhoneNumber,
+        }
+        _val_map = {
+            'everyone': InputPrivacyValueAllowAll,
+            'contacts': InputPrivacyValueAllowContacts,
+            'nobody':   InputPrivacyValueDisallowAll,
+        }
+        if key in _key_map and val in _val_map:
+            async def _apply(client):
+                await client(SetPrivacyRequest(
+                    key=_key_map[key](), rules=[_val_map[val]()]))
+            _wc_run_on_client(uid, _apply, timeout=10)
+    except Exception:
+        pass  # حفظ الإعداد محلياً على الأقل
+    return jsonify({'success': True})
+
+
+@app.route('/api/blocked/users', methods=['GET'])
+@_wc_login_required
+def wc_get_blocked_users():
+    uid = session.get('user_id', '')
+    try:
+        async def _fetch(client):
+            from telethon.tl.functions.contacts import GetBlockedRequest
+            result = await client(GetBlockedRequest(offset=0, limit=100))
+            users = []
+            for u in getattr(result, 'users', []):
+                users.append({
+                    'id':              u.id,
+                    'blocked_user_id': u.id,
+                    'name': f"{getattr(u,'first_name','') or ''} {getattr(u,'last_name','') or ''}".strip() or str(u.id),
+                    'username': getattr(u, 'username', None),
+                    'phone':    getattr(u, 'phone', None),
+                })
+            return users
+        users = _wc_run_on_client(uid, _fetch, timeout=15)
+        return jsonify({'success': True, 'users': users})
+    except Exception as e:
+        return jsonify({'success': True, 'users': [], 'error': str(e)})
+
+
+# ════════════════════════════════════════════════════════════════════
+# 💾  التخزين والكاش — المرحلة 13
+# ════════════════════════════════════════════════════════════════════
+
+@app.route('/api/settings/storage', methods=['GET'])
+@_wc_login_required
+def wc_storage_info():
+    import shutil, os as _os
+    base = _os.path.dirname(_os.path.abspath(__file__))
+    def _dir_size(path):
+        total = 0
+        try:
+            for root, dirs, files in _os.walk(path):
+                for f in files:
+                    try: total += _os.path.getsize(_os.path.join(root, f))
+                    except: pass
+        except: pass
+        return total
+    uploads_size  = _dir_size(_os.path.join(base, 'uploads'))
+    sessions_size = _dir_size(_os.path.join(base, 'sessions'))
+    data_size     = _dir_size(_os.path.join(base, 'data'))
+    total = uploads_size + sessions_size + data_size
+    def _fmt(b):
+        for u in ('B','KB','MB','GB'):
+            if b < 1024: return f"{b:.1f} {u}"
+            b /= 1024
+        return f"{b:.1f} TB"
+    return jsonify({'success': True, 'storage': {
+        'total':    _fmt(total),
+        'uploads':  _fmt(uploads_size),
+        'sessions': _fmt(sessions_size),
+        'data':     _fmt(data_size),
+        'total_bytes': total,
+    }})
+
+
+@app.route('/api/settings/clear-cache', methods=['POST'])
+@_wc_login_required
+def wc_clear_cache():
+    uid = session.get('user_id', '')
+    _wc_cache_del_prefix(f'wc_chats:{uid}')
+    _wc_cache_del_prefix(f'wc_msgs:{uid}')
+    return jsonify({'success': True, 'message': 'تم مسح الكاش بنجاح'})
+
+
+# ════════════════════════════════════════════════════════════════════
+# 📁  المجلدات الحقيقية (SQLite/JSON) — المرحلة 6
+# ════════════════════════════════════════════════════════════════════
+
+def _load_folders(uid: str) -> list:
+    s = load_settings(uid) or {}
+    return s.get('_folders', [])
+
+def _save_folders(uid: str, folders: list):
+    s = load_settings(uid) or {}
+    s['_folders'] = folders
+    save_settings(uid, s)
+
+@app.route('/api/folders', methods=['GET'])
+@_wc_login_required
+def wc_get_folders():
+    uid = session.get('user_id', '')
+    return jsonify({'success': True, 'folders': _load_folders(uid)})
+
+@app.route('/api/folders', methods=['POST'])
+@_wc_login_required
+def wc_create_folder():
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    name = (data.get('name') or '').strip()
+    icon = (data.get('icon') or '📁').strip()
+    if not name:
+        return jsonify({'success': False, 'message': 'اسم المجلد مطلوب'}), 400
+    folders = _load_folders(uid)
+    new_id  = int(__import__('time').time() * 1000)
+    folder  = {'id': new_id, 'name': name, 'icon': icon,
+               'chats': [], 'members': [uid], 'created_at': new_id}
+    folders.append(folder)
+    _save_folders(uid, folders)
+    socketio.emit('folder_created', {'folder': folder}, room=f'user_{uid}')
+    return jsonify({'success': True, 'folder': folder, 'folder_id': new_id})
+
+@app.route('/api/folders/<int:folder_id>', methods=['DELETE'])
+@_wc_login_required
+def wc_delete_folder(folder_id):
+    uid     = session.get('user_id', '')
+    folders = _load_folders(uid)
+    folders = [f for f in folders if f.get('id') != folder_id]
+    _save_folders(uid, folders)
+    socketio.emit('folder_deleted', {'folder_id': folder_id}, room=f'user_{uid}')
+    return jsonify({'success': True})
+
+@app.route('/api/folders/<int:folder_id>/chats', methods=['GET'])
+@_wc_login_required
+def wc_folder_chats(folder_id):
+    uid     = session.get('user_id', '')
+    folders = _load_folders(uid)
+    folder  = next((f for f in folders if f.get('id') == folder_id), None)
+    if not folder:
+        return jsonify({'success': False, 'message': 'المجلد غير موجود'}), 404
+    return jsonify({'success': True, 'chats': folder.get('chats', [])})
+
+@app.route('/api/folders/<int:folder_id>/chats', methods=['POST'])
+@_wc_login_required
+def wc_add_chat_to_folder(folder_id):
+    uid     = session.get('user_id', '')
+    data    = request.get_json(force=True) or {}
+    chat_id = data.get('chat_id')
+    chat_title = data.get('chat_title', '')
+    if not chat_id:
+        return jsonify({'success': False, 'message': 'chat_id مطلوب'}), 400
+    folders = _load_folders(uid)
+    for f in folders:
+        if f.get('id') == folder_id:
+            chats = f.get('chats', [])
+            if str(chat_id) not in [str(c.get('id')) for c in chats]:
+                chats.append({'id': chat_id, 'title': chat_title})
+                f['chats'] = chats
+            break
+    _save_folders(uid, folders)
+    return jsonify({'success': True})
+
+@app.route('/api/folders/<int:folder_id>/chats/<int:chat_id>', methods=['DELETE'])
+@_wc_login_required
+def wc_remove_chat_from_folder(folder_id, chat_id):
+    uid     = session.get('user_id', '')
+    folders = _load_folders(uid)
+    for f in folders:
+        if f.get('id') == folder_id:
+            f['chats'] = [c for c in f.get('chats', []) if str(c.get('id')) != str(chat_id)]
+            break
+    _save_folders(uid, folders)
+    return jsonify({'success': True})
+
+@app.route('/api/folders/<int:folder_id>/members', methods=['POST'])
+@_wc_login_required
+def wc_add_folder_member(folder_id):
+    uid       = session.get('user_id', '')
+    data      = request.get_json(force=True) or {}
+    member_id = str(data.get('user_id') or '')
+    if not member_id:
+        return jsonify({'success': False, 'message': 'user_id مطلوب'}), 400
+    folders = _load_folders(uid)
+    for f in folders:
+        if f.get('id') == folder_id:
+            members = f.get('members', [])
+            if member_id not in members:
+                members.append(member_id)
+                f['members'] = members
+            break
+    _save_folders(uid, folders)
+    socketio.emit('folder_member_added', {'folder_id': folder_id, 'user_id': member_id},
+                  room=f'user_{uid}')
+    return jsonify({'success': True})
+
+
+# ════════════════════════════════════════════════════════════════════
+# 🔖  الإشارات المرجعية الحقيقية — المرحلة 17
+# ════════════════════════════════════════════════════════════════════
+
+def _load_bookmarks(uid: str) -> list:
+    s = load_settings(uid) or {}
+    return s.get('_bookmarks', [])
+
+def _save_bookmarks(uid: str, bk: list):
+    s = load_settings(uid) or {}
+    s['_bookmarks'] = bk
+    save_settings(uid, s)
+
+@app.route('/api/messages/bookmark', methods=['POST'])
+@_wc_login_required
+def wc_bookmark():
+    uid  = session.get('user_id', '')
+    data = request.get_json(force=True) or {}
+    bk   = _load_bookmarks(uid)
+    entry = {
+        'chat_id':    data.get('chat_id'),
+        'message_id': data.get('message_id'),
+        'text':       data.get('text', ''),
+        'saved_at':   int(__import__('time').time()),
+    }
+    if not any(b.get('chat_id') == entry['chat_id'] and
+               b.get('message_id') == entry['message_id'] for b in bk):
+        bk.append(entry)
+        _save_bookmarks(uid, bk)
+    return jsonify({'success': True})
+
+@app.route('/api/messages/bookmarks', methods=['GET'])
+@_wc_login_required
+def wc_get_bookmarks():
+    uid = session.get('user_id', '')
+    return jsonify({'success': True, 'bookmarks': _load_bookmarks(uid)})
+
 
 # ════════════════════════════════════════════════════════════════════
 # 🔚  نهاية المسارات المضافة
